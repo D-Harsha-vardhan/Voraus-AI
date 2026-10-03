@@ -68,11 +68,12 @@ The project is built as a full-stack application with a modern, scalable archite
 - **Navigation**: Jetpack Navigation Compose
 - **Networking**: Retrofit & OkHttp
 
-### Backend (API)
+### Backend & Database
 - **Framework**: NestJS (Node.js)
+- **Database**: Supabase (PostgreSQL)
+- **ORM**: Prisma
+- **Internal Admin Tools**: DronaHQ
 - **Language**: TypeScript
-- **Database ORM**: Prisma
-- **Architecture**: Modular Monolith
 - **Testing**: Vitest
 
 ---
@@ -111,7 +112,10 @@ The project is built as a full-stack application with a modern, scalable archite
 
 ---
 
-## 🎨 UI/UX Design Principles
-- **Clean & Premium**: White/light background with a vibrant blue primary accent.
-- **Dynamic & Floating**: Floating navigation bars and soft-shadow cards for a modern feel.
-- **User-Centric**: Clear call-to-actions, warning highlights for missing documents, and distinct status badges.
+## 🛠 Internal Tools & Database
+
+### Supabase
+We use **Supabase** as our primary backend-as-a-service and PostgreSQL database provider. It ensures secure, scalable, and real-time data management for user profiles, document statuses, and authentication.
+
+### DronaHQ
+To manage the platform, verify applicant documents, and oversee the AI interactions, we utilize **DronaHQ** as our internal tool builder. It allows our administrative team to seamlessly interact with the backend APIs, securely review user data, and update application statuses without needing to write custom dashboard code.
