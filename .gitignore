@@ -1,0 +1,21 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Android/IntelliJ
+.idea/
+.gradle/
+build/
+local.properties
+*.iml
+*.class
+*.apk
+*.aab
+*.dex
+
+# Mac
+.DS_Store
+
+# Misc
+*.log

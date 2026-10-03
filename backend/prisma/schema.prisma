@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String      @id @default(uuid())
+  email            String      @unique
+  passwordHash     String?
+  authProvider     String      @default("local")
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  applicantProfile Applicant?
+}
+
+model Applicant {
+  id                String       @id @default(uuid())
+  userId            String       @unique
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName          String
+  phone             String?
+  location          String?
+  dateOfBirth       DateTime?
+  availability      String?
+  journeyGoal       String?
+  profileCompletion Int          @default(0)
+  journeyStatus     String       @default("onboarding")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  education                 Education[]
+  employment                Employment[]
+  skills                    Skill[]
+  languages                 Language[]
+  documents                 Document[]
+  motivation                Motivation?
+  media                     Media[]
+  qualifications            Qualification[]
+  recommendations           Recommendation[]
+  applicantRecommendations  ApplicantRecommendation[]
+  consultantActions         ConsultantAction[]
+  notifications             Notification[]
+  agentRuns                 AgentRun[]
+}
+
+model Education {
+  id                 String    @id @default(uuid())
+  applicantId        String
+  applicant          Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  institution        String
+  degree             String
+  fieldOfStudy       String
+  graduationDate     DateTime?
+  cgpa               String?
+  country            String?
+  verificationStatus String    @default("pending")
+}
+
+model Employment {
+  id                 String    @id @default(uuid())
+  applicantId        String
+  applicant          Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  employer           String
+  role               String
+  responsibilities   String?
+  startDate          DateTime?
+  endDate            DateTime?
+  verificationStatus String    @default("pending")
+}
+
+model Skill {
+  id          String    @id @default(uuid())
+  applicantId String
+  applicant   Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  skill       String
+  proficiency String?
+  source      String?
+}
+
+model Language {
+  id                 String    @id @default(uuid())
+  applicantId        String
+  applicant          Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  language           String
+  proficiency        String
+  certificateId      String?
+  verificationStatus String    @default("pending")
+}
+
+model Document {
+  id                 String    @id @default(uuid())
+  applicantId        String
+  applicant          Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  documentType       String
+  fileName           String
+  storagePath        String
+  uploadStatus       String    @default("uploaded")
+  processingStatus   String    @default("pending")
+  extractedData      Json?
+  verificationStatus String    @default("pending")
+  uploadedAt         DateTime  @default(now())
+}
+
+model Motivation {
+  id                 String    @id @default(uuid())
+  applicantId        String    @unique
+  applicant          Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  reasonForGermany   String?
+  preferredPathway   String?
+  longTermGoal       String?
+  aiSummary          String?
+}
+
+model Media {
+  id               String    @id @default(uuid())
+  applicantId      String
+  applicant        Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  mediaType        String
+  storagePath      String
+  transcript       String?
+  processingStatus String    @default("pending")
+}
+
+model Qualification {
+  id                       String    @id @default(uuid())
+  applicantId              String
+  applicant                Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  qualificationStatus      String    @default("insufficient_information")
+  scoreOrReasoningSummary  String?
+  evaluatedAt              DateTime  @default(now())
+  
+  requirements             QualificationRequirement[]
+}
+
+model QualificationRequirement {
+  id                 String        @id @default(uuid())
+  qualificationId    String
+  qualification      Qualification @relation(fields: [qualificationId], references: [id], onDelete: Cascade)
+  requirement        String
+  status             String
+  evidence           String?
+  missingInformation String?
+}
+
+model Recommendation {
+  id                 String    @id @default(uuid())
+  applicantId        String
+  applicant          Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  recommendationType String
+  title              String
+  explanation        String
+  priority           String    @default("normal")
+  source             String?
+  createdAt          DateTime  @default(now())
+}
+
+model Opportunity {
+  id                   String    @id @default(uuid())
+  source               String
+  institution          String
+  programName          String
+  location             String?
+  degreeType           String?
+  requirements         Json?
+  languageRequirements Json?
+  url                  String?
+  lastUpdated          DateTime  @default(now())
+
+  applicantRecommendations ApplicantRecommendation[]
+}
+
+model ApplicantRecommendation {
+  id               String    @id @default(uuid())
+  applicantId      String
+  applicant        Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  opportunityId    String
+  opportunity      Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  matchReason      String?
+  requirementGaps  Json?
+  matchStatus      String    @default("pending")
+}
+
+model ConsultantAction {
+  id          String    @id @default(uuid())
+  applicantId String
+  applicant   Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  consultantId String
+  action      String
+  comment     String?
+  createdAt   DateTime  @default(now())
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  applicantId String
+  applicant   Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  read        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+model AgentRun {
+  id            String    @id @default(uuid())
+  applicantId   String
+  applicant     Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  agentName     String
+  inputSummary  String?
+  outputSummary String?
+  status        String    @default("completed")
+  createdAt     DateTime  @default(now())
+}
