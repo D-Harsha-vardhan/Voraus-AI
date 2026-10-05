@@ -55,7 +55,7 @@ fun OpportunitiesScreen() {
             }
 
             LazyColumn(
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp), // Nav bar padding
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f)
             ) {
@@ -64,8 +64,9 @@ fun OpportunitiesScreen() {
                         institution = "Technical University of Munich",
                         program = "M.Sc. Computer Science",
                         location = "Munich, Germany",
-                        match = "High Match",
-                        reasons = listOf("Computer Science background", "Required degree", "Language requirement met"),
+                        match = "92% Match",
+                        matchBreakdown = "Degree: 100% • English: 100% • GPA: 80%",
+                        reasons = listOf("Computer Science background", "Required degree", "English met"),
                         missing = listOf("German B1", "APS Certificate"),
                         iconLetter = "TU"
                     )
@@ -75,10 +76,11 @@ fun OpportunitiesScreen() {
                         institution = "RWTH Aachen University",
                         program = "M.Sc. Artificial Intelligence",
                         location = "Aachen, Germany",
-                        match = "High Match",
+                        match = "85% Match",
+                        matchBreakdown = "Degree: 90% • English: 100% • GPA: 70%",
                         reasons = listOf("Required degree completed", "IELTS requirement met"),
-                        missing = listOf("APS Certificate"),
-                        iconLetter = "RWTH"
+                        missing = listOf("APS Certificate", "German B1"),
+                        iconLetter = "RW"
                     )
                 }
             }
@@ -92,6 +94,7 @@ fun OpportunityCard(
     program: String,
     location: String,
     match: String,
+    matchBreakdown: String,
     reasons: List<String>,
     missing: List<String>,
     iconLetter: String
@@ -137,6 +140,8 @@ fun OpportunityCard(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(location, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(matchBreakdown, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
             

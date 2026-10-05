@@ -40,6 +40,7 @@ fun ProfileScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
+                .padding(bottom = 100.dp) // Nav bar padding
         ) {
             // Profile Card
             Card(
@@ -64,8 +65,10 @@ fun ProfileScreen(
                         Icon(Icons.Default.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(40.dp))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Rahul Sharma", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("rahul.sharma@example.com", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    val userName = com.example.edujourneygermany.auth.UserSession.userName
+                    val userEmail = com.example.edujourneygermany.auth.UserSession.userEmail
+                    Text(if (userName.isNotEmpty()) userName else "Applicant", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(if (userEmail.isNotEmpty()) userEmail else "Not provided", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedButton(
                         onClick = onNavigateToEditProfile,
@@ -80,36 +83,46 @@ fun ProfileScreen(
             
             // Sections
             ProfileSection(title = "Personal Information", status = "Verified", statusColor = Color(0xFF4CAF50)) {
-                ProfileInfoRow("Date of Birth", "15 May 1998")
-                ProfileInfoRow("Nationality", "Indian")
-                ProfileInfoRow("Passport Number", "Z1234567")
+                ProfileInfoRow("Date of Birth", "15 May 1998", "Verified by Passport")
+                ProfileInfoRow("Nationality", "Indian", "Verified by Passport")
+                ProfileInfoRow("Passport Number", "Z1234567", "AI-extracted from Passport")
             }
             
-            ProfileSection(title = "Contact Details", status = "Verified", statusColor = Color(0xFF4CAF50)) {
-                ProfileInfoRow("Phone", "+91 98765 43210")
-                ProfileInfoRow("Location", "Mumbai, India")
+            ProfileSection(title = "Contact Details", status = "Applicant-provided", statusColor = Color(0xFF2196F3)) {
+                ProfileInfoRow("Phone", "+91 98765 43210", "Applicant-provided")
+                ProfileInfoRow("Location", "Mumbai, India", "Applicant-provided")
             }
             
             ProfileSection(title = "Education", status = "Verified", statusColor = Color(0xFF4CAF50)) {
-                ProfileInfoRow("Degree", "B.Tech in Computer Science")
-                ProfileInfoRow("University", "ABC University")
-                ProfileInfoRow("Graduation", "2020")
+                ProfileInfoRow("Degree", "B.Tech in Computer Science", "Verified by APS")
+                ProfileInfoRow("University", "ABC University", "Verified by APS")
+                ProfileInfoRow("Graduation", "2020", "Applicant-provided")
             }
             
             ProfileSection(title = "Experience", status = "Needs Review", statusColor = Color(0xFFFF9800)) {
-                ProfileInfoRow("Role", "Software Engineer")
-                ProfileInfoRow("Company", "Tech Solutions Inc.")
-                ProfileInfoRow("Duration", "2 Years")
+                ProfileInfoRow("Role", "Software Engineer", "Applicant-provided")
+                ProfileInfoRow("Company", "Tech Solutions Inc.", "Applicant-provided")
+                ProfileInfoRow("Duration", "2 Years", "AI-extracted from CV")
+            }
+            
+            ProfileSection(title = "Skills", status = "AI-generated", statusColor = Color(0xFF9C27B0)) {
+                ProfileInfoRow("Top Skills", "Java, Kotlin, Spring Boot", "AI-extracted from CV")
+                ProfileInfoRow("Frameworks", "Jetpack Compose", "Applicant-provided")
             }
             
             ProfileSection(title = "Languages", status = "Verified", statusColor = Color(0xFF4CAF50)) {
-                ProfileInfoRow("English", "IELTS 7.5 (C1)")
-                ProfileInfoRow("German", "A1")
+                ProfileInfoRow("English", "IELTS 7.5 (C1)", "Verified by IELTS Certificate")
+                ProfileInfoRow("German", "A1", "Applicant-provided")
+            }
+            
+            ProfileSection(title = "Motivation & Goals", status = "AI-generated", statusColor = Color(0xFF9C27B0)) {
+                ProfileInfoRow("Goal", "Study Master's in Germany", "Applicant-provided")
+                ProfileInfoRow("Summary", "Highly motivated to pursue research in AI.", "AI-extracted from Video")
             }
             
             ProfileSection(title = "Social Links", status = "Optional", statusColor = Color(0xFF9E9E9E)) {
-                ProfileInfoRow("LinkedIn", "linkedin.com/in/rahulsharma")
-                ProfileInfoRow("GitHub", "github.com/rahulsharma")
+                ProfileInfoRow("LinkedIn", "linkedin.com/in/applicant", "Applicant-provided")
+                ProfileInfoRow("GitHub", "github.com/applicant", "Applicant-provided")
             }
         }
     }
@@ -165,14 +178,15 @@ fun ProfileSection(
 }
 
 @Composable
-fun ProfileInfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+fun ProfileInfoRow(label: String, value: String, provenance: String = "Applicant-provided") {
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        }
+        Text(provenance, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
     }
 }

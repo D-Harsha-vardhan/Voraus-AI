@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AiAdvisorScreen() {
+fun AiAdvisorScreen(onBookConsultant: () -> Unit = {}) {
     var messageText by remember { mutableStateOf("") }
     
     Scaffold(
@@ -39,6 +39,7 @@ fun AiAdvisorScreen() {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
+                .padding(bottom = 100.dp) // Nav bar padding
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -51,10 +52,18 @@ fun AiAdvisorScreen() {
                     UserMessage("What universities should I consider?")
                 }
                 item {
-                    AiComplexMessage()
+                    AiComplexMessage(onBookConsultant)
                 }
             }
 
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SuggestionChip(onClick = { messageText = "How to apply for APS?" }, label = { Text("How to apply for APS?") })
+                    SuggestionChip(onClick = { messageText = "German language courses" }, label = { Text("German language") })
+                }
+                
             // Input field area
             Surface(
                 color = MaterialTheme.colorScheme.background,
@@ -116,7 +125,7 @@ fun UserMessage(text: String) {
 }
 
 @Composable
-fun AiComplexMessage() {
+fun AiComplexMessage(onBookConsultant: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
@@ -174,10 +183,32 @@ fun AiComplexMessage() {
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "These recommendations are based on your B.Tech in Computer Science, IELTS 7.0 and German A2. You're missing an APS certificate for most programs.",
+                    text = "These recommendations are based on your B.Tech in Computer Science and IELTS 7.5 (English met). You're missing a German B1 certificate and an APS certificate for most programs.",
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     style = MaterialTheme.typography.bodySmall
                 )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { /* TODO */ }, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f)) {
+                        Text("Generate CV", style = MaterialTheme.typography.labelSmall)
+                    }
+                    Button(onClick = { /* TODO */ }, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f)) {
+                        Text("Upload Docs", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedButton(
+                    onClick = onBookConsultant,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("Book a Call with Educaro Consultant", fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

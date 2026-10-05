@@ -34,6 +34,7 @@ fun HomeDashboardScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
+                .padding(bottom = 100.dp) // Extra padding for the floating nav bar
         ) {
             // Header Section
             Row(
@@ -55,8 +56,9 @@ fun HomeDashboardScreen(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
+                        val userName = com.example.edujourneygermany.auth.UserSession.userName
                         Text(
-                            text = "Hello, Rahul!",
+                            text = "Hello, ${if (userName.isNotEmpty()) userName.split(" ")[0] else "Applicant"}!",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -258,7 +260,16 @@ fun HomeDashboardScreen(
                         subtitle = "Agent checking details",
                         isCompleted = false,
                         isActive = true,
-                        isLast = false
+                        isLast = false,
+                        onClick = { onNavigate("verification") }
+                    )
+                    JourneyStep(
+                        title = "Video Introduction",
+                        subtitle = "Record your 2-min intro",
+                        isCompleted = false,
+                        isActive = false,
+                        isLast = false,
+                        onClick = { onNavigate("video_intro") }
                     )
                     JourneyStep(
                         title = "APS Setup",
@@ -285,12 +296,17 @@ fun JourneyStep(
     subtitle: String,
     isCompleted: Boolean,
     isActive: Boolean = false,
-    isLast: Boolean
+    isLast: Boolean,
+    onClick: (() -> Unit)? = null
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
 
-    Row(modifier = Modifier.fillMaxWidth()) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+        .padding(vertical = if (onClick != null) 8.dp else 0.dp)
+    ) {
         // Timeline graphic
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

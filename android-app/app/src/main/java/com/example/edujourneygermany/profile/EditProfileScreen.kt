@@ -23,8 +23,8 @@ fun EditProfileScreen(
     onSaveSuccess: () -> Unit
 ) {
     // State variables for form fields (mocked with initial data)
-    var name by remember { mutableStateOf("Rahul Sharma") }
-    var email by remember { mutableStateOf("rahul.sharma@example.com") }
+    var name by remember { mutableStateOf(if (com.example.edujourneygermany.auth.UserSession.userName.isNotEmpty()) com.example.edujourneygermany.auth.UserSession.userName else "Applicant") }
+    var email by remember { mutableStateOf(if (com.example.edujourneygermany.auth.UserSession.userEmail.isNotEmpty()) com.example.edujourneygermany.auth.UserSession.userEmail else "applicant@example.com") }
     
     var dob by remember { mutableStateOf("15 May 1998") }
     var nationality by remember { mutableStateOf("Indian") }

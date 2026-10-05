@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DocumentsScreen() {
+fun DocumentsScreen(onNavigateToExtraction: (String) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -42,15 +42,15 @@ fun DocumentsScreen() {
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).padding(bottom = 100.dp) // Nav bar padding
             ) {
-                item { DocumentItem("CV / Resume", "Verified") }
-                item { DocumentItem("Degree Certificate", "Processing") }
-                item { DocumentItem("Marksheet", "Verified") }
-                item { DocumentItem("IELTS Certificate", "Missing") }
-                item { DocumentItem("German Certificate", "Not Uploaded") }
-                item { DocumentItem("Experience Letter", "Not Uploaded") }
-                item { DocumentItem("Other Documents", "Not Uploaded") }
+                item { DocumentItem("CV / Resume", "Verified") { onNavigateToExtraction("CV") } }
+                item { DocumentItem("Degree Certificate", "Processing") { onNavigateToExtraction("Degree Certificate") } }
+                item { DocumentItem("Marksheet", "Verified") { onNavigateToExtraction("Marksheet") } }
+                item { DocumentItem("IELTS Certificate", "Missing") { onNavigateToExtraction("IELTS Certificate") } }
+                item { DocumentItem("German Certificate", "Not Uploaded") { onNavigateToExtraction("German Certificate") } }
+                item { DocumentItem("Experience Letter", "Not Uploaded") { onNavigateToExtraction("Experience Letter") } }
+                item { DocumentItem("Other Documents", "Not Uploaded") { onNavigateToExtraction("Other Documents") } }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -67,7 +67,7 @@ fun DocumentsScreen() {
 }
 
 @Composable
-fun DocumentItem(title: String, status: String) {
+fun DocumentItem(title: String, status: String, onActionClick: () -> Unit = {}) {
     val statusColor = when (status) {
         "Verified" -> Color(0xFF4CAF50)
         "Processing", "Needs Review" -> Color(0xFFFF9800)
@@ -113,7 +113,7 @@ fun DocumentItem(title: String, status: String) {
                 }
             }
             OutlinedButton(
-                onClick = { /* View or Upload */ },
+                onClick = onActionClick,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 modifier = Modifier.height(32.dp)
             ) {

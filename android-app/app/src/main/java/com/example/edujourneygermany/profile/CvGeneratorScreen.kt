@@ -46,7 +46,8 @@ fun CvGeneratorScreen() {
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
-                    Text("Rahul Sharma", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    val userName = com.example.edujourneygermany.auth.UserSession.userName
+                    Text(if (userName.isNotEmpty()) userName else "Applicant", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     Text("Software Engineer", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(24.dp))
                     

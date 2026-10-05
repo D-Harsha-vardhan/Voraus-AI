@@ -12,14 +12,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.edujourneygermany.presentation.components.FloatingNavigationBar
 import com.example.edujourneygermany.presentation.HomeDashboardScreen
+import com.example.edujourneygermany.presentation.VerificationScreen
+import com.example.edujourneygermany.presentation.ConsultantDashboardScreen
 import com.example.edujourneygermany.profile.ProfileScreen
 import com.example.edujourneygermany.profile.EditProfileScreen
 import com.example.edujourneygermany.profile.CvGeneratorScreen
+import com.example.edujourneygermany.profile.VideoIntroScreen
 import com.example.edujourneygermany.auth.LoginScreen
 import com.example.edujourneygermany.auth.SplashScreen
 import com.example.edujourneygermany.auth.RegistrationScreen
 import com.example.edujourneygermany.auth.GoalSelectionScreen
 import com.example.edujourneygermany.documents.DocumentsScreen
+import com.example.edujourneygermany.documents.ExtractionReviewScreen
 import com.example.edujourneygermany.qualification.QualificationScreen
 import com.example.edujourneygermany.advisor.AiAdvisorScreen
 import com.example.edujourneygermany.opportunities.OpportunitiesScreen
@@ -81,14 +85,40 @@ fun AppNavigation() {
             composable("cv") {
                 CvGeneratorScreen()
             }
+            composable("video_intro") {
+                VideoIntroScreen(onBack = { navController.popBackStack() })
+            }
             composable("documents") {
-                DocumentsScreen()
+                DocumentsScreen(
+                    onNavigateToExtraction = { docType ->
+                        navController.navigate("extraction_review/$docType")
+                    }
+                )
+            }
+            composable("extraction_review/{docType}") { backStackEntry ->
+                val docType = backStackEntry.arguments?.getString("docType") ?: "Document"
+                ExtractionReviewScreen(
+                    documentType = docType,
+                    onConfirm = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable("qualification") {
                 QualificationScreen()
             }
+            composable("verification") {
+                VerificationScreen(
+                    onVerificationComplete = { navController.navigate("home") },
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("advisor") {
-                AiAdvisorScreen()
+                AiAdvisorScreen(onBookConsultant = { navController.navigate("consultant_dashboard") })
+            }
+            composable("consultant_dashboard") {
+                ConsultantDashboardScreen(
+                    onLogout = { navController.navigate("register") { popUpTo(0) } }
+                )
             }
             composable("opportunities") {
                 OpportunitiesScreen()

@@ -50,7 +50,7 @@ fun FloatingNavigationBar(
                 icon = Icons.Default.Add,
                 isSelected = false,
                 isCenterPlus = true,
-                onClick = { /* Action to add */ }
+                onClick = { onNavigate("documents") }
             )
             NavBarItem(
                 icon = Icons.Default.MailOutline,

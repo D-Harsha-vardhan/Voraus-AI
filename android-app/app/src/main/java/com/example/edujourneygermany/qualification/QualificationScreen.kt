@@ -38,6 +38,7 @@ fun QualificationScreen() {
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp)
+                .padding(bottom = 100.dp) // Nav bar padding
         ) {
             // Overall Status Card
             Card(
@@ -52,14 +53,14 @@ fun QualificationScreen() {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(
-                            progress = 0.68f,
+                            progress = 0.60f,
                             modifier = Modifier.size(64.dp),
                             color = Color(0xFF4CAF50),
                             trackColor = Color(0xFF4CAF50).copy(alpha = 0.2f),
                             strokeWidth = 6.dp
                         )
                         Text(
-                            text = "68%",
+                            text = "60%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -68,14 +69,14 @@ fun QualificationScreen() {
                     Spacer(modifier = Modifier.width(20.dp))
                     Column {
                         Text(
-                            "Partially Qualified",
+                            "Conditionally eligible",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "You meet 7 out of 10 requirements",
+                            "You meet 3 out of 5 requirements",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -100,13 +101,13 @@ fun QualificationScreen() {
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 ) {
-                    item { RequirementItem("Bachelor's Degree", "Met", Icons.Default.Check, Color(0xFF4CAF50), Icons.Default.CheckCircle, Color(0xFFE0E0E0)) }
+                    item { RequirementItem("Bachelor's Degree", "Met", Icons.Default.Check, Color(0xFF4CAF50), Icons.Default.CheckCircle, Color(0xFF4CAF50)) }
                     item { Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)) }
                     item { RequirementItem("IELTS (6.5+)", "Met", Icons.Default.Check, Color(0xFF4CAF50), Icons.Default.CheckCircle, Color(0xFF4CAF50)) }
                     item { Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)) }
-                    item { RequirementItem("German B1", "Missing", Icons.Default.Warning, Color(0xFFFF9800), Icons.Default.Warning, Color(0xFFFF9800)) }
+                    item { RequirementItem("German B1", "Missing", Icons.Default.Warning, Color(0xFFFF9800), Icons.Default.Warning, Color(0xFFFF9800), onFixClick = { /* TODO */ }) }
                     item { Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)) }
-                    item { RequirementItem("APS Certificate", "Missing", Icons.Default.Clear, Color(0xFFE53935), Icons.Default.Clear, Color(0xFFE53935)) }
+                    item { RequirementItem("APS Certificate", "Missing", Icons.Default.Clear, Color(0xFFE53935), Icons.Default.Clear, Color(0xFFE53935), onFixClick = { /* TODO */ }) }
                     item { Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)) }
                     item { RequirementItem("Work Experience", "Met", Icons.Default.Check, Color(0xFF4CAF50), Icons.Default.CheckCircle, Color(0xFF81C784)) }
                 }
@@ -134,7 +135,8 @@ fun RequirementItem(
     statusIcon: ImageVector, 
     statusColor: Color, 
     leftIcon: ImageVector, 
-    leftIconColor: Color
+    leftIconColor: Color,
+    onFixClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
@@ -142,7 +144,14 @@ fun RequirementItem(
     ) {
         Icon(leftIcon, contentDescription = null, tint = leftIconColor, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.width(16.dp))
-        Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            if (onFixClick != null) {
+                TextButton(onClick = onFixClick, contentPadding = PaddingValues(0.dp), modifier = Modifier.height(24.dp)) {
+                    Text("Fix this", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
         
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(statusIcon, contentDescription = status, tint = statusColor, modifier = Modifier.size(16.dp))

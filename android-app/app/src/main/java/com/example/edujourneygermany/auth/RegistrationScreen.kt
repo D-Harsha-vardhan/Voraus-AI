@@ -25,6 +25,11 @@ fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) 
     var confirmPassword by remember { mutableStateOf("") }
     var agreeToTerms by remember { mutableStateOf(false) }
 
+    val passwordsMatch = password == confirmPassword && password.isNotEmpty()
+    val isValidPassword = password.length >= 6
+    val isValidEmail = email.contains("@") && email.contains(".")
+    val isFormValid = passwordsMatch && isValidPassword && isValidEmail && agreeToTerms
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -123,6 +128,15 @@ fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) 
                     ),
                     singleLine = true
                 )
+                
+                if (password.isNotEmpty() && confirmPassword.isNotEmpty() && password != confirmPassword) {
+                    Text(
+                        text = "Passwords do not match",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -155,9 +169,14 @@ fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) 
             
             // Register Button
             Button(
-                onClick = { onRegisterSuccess() },
+                onClick = { 
+                    com.example.edujourneygermany.auth.UserSession.userEmail = email
+                    com.example.edujourneygermany.auth.UserSession.userName = com.example.edujourneygermany.auth.UserSession.extractNameFromEmail(email)
+                    onRegisterSuccess() 
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
+                enabled = isFormValid,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Register", fontWeight = FontWeight.Bold, fontSize = 16.sp)
