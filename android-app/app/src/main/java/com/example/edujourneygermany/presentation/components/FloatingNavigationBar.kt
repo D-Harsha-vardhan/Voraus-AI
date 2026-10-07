@@ -2,19 +2,30 @@ package com.example.edujourneygermany.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun FloatingNavigationBar(
@@ -24,43 +35,76 @@ fun FloatingNavigationBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 24.dp),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        Row(
+        // White Navigation Bar
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
-                .background(Color(0xFF007AFF), shape = RoundedCornerShape(36.dp))
-                .padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .height(72.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = Color.White,
+            shadowElevation = 8.dp
         ) {
-            NavBarItem(
-                icon = Icons.Default.Home,
-                isSelected = currentRoute == "home",
-                onClick = { onNavigate("home") }
-            )
-            NavBarItem(
-                icon = Icons.Default.Search,
-                isSelected = currentRoute == "opportunities",
-                onClick = { onNavigate("opportunities") }
-            )
-            NavBarItem(
-                icon = Icons.Default.Add,
-                isSelected = false,
-                isCenterPlus = true,
-                onClick = { onNavigate("documents") }
-            )
-            NavBarItem(
-                icon = Icons.Default.MailOutline,
-                isSelected = currentRoute == "advisor",
-                onClick = { onNavigate("advisor") }
-            )
-            NavBarItem(
-                icon = Icons.Default.PersonOutline,
-                isSelected = currentRoute == "profile",
-                onClick = { onNavigate("profile") }
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                NavBarItem(
+                    icon = Icons.Default.Home,
+                    label = "Home",
+                    isSelected = currentRoute == "home",
+                    onClick = { onNavigate("home") },
+                    modifier = Modifier.weight(1f)
+                )
+                NavBarItem(
+                    icon = Icons.Outlined.Timeline,
+                    label = "Journey",
+                    isSelected = currentRoute == "opportunities",
+                    onClick = { onNavigate("opportunities") },
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Spacer for the center button
+                Spacer(modifier = Modifier.weight(0.8f))
+                
+                NavBarItem(
+                    icon = Icons.Outlined.ChatBubbleOutline,
+                    label = "Messages",
+                    isSelected = currentRoute == "advisor",
+                    onClick = { onNavigate("advisor") },
+                    modifier = Modifier.weight(1f)
+                )
+                NavBarItem(
+                    icon = Icons.Outlined.PersonOutline,
+                    label = "Profile",
+                    isSelected = currentRoute == "profile",
+                    onClick = { onNavigate("profile") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        
+        // Floating Action Button in the center overlapping the white bar
+        Box(
+            modifier = Modifier
+                .padding(bottom = 16.dp) // Lift it up to overlap slightly
+                .size(64.dp)
+                .shadow(8.dp, CircleShape)
+                .clip(CircleShape)
+                .background(Color(0xFF1C64F2)) // The blue color from image
+                .clickable { /* Action to add */ },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add",
+                tint = Color.White,
+                modifier = Modifier.size(32.dp)
             )
         }
     }
@@ -69,32 +113,35 @@ fun FloatingNavigationBar(
 @Composable
 fun NavBarItem(
     icon: ImageVector,
+    label: String,
     isSelected: Boolean,
-    isCenterPlus: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = Modifier
-            .size(52.dp)
-            .clip(CircleShape)
-            .background(
-                when {
-                    isSelected -> Color.White
-                    isCenterPlus -> Color(0xFF3395FF) // slightly lighter blue
-                    else -> Color.Transparent
-                }
-            )
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
+    val color = if (isSelected) Color(0xFF1C64F2) else Color(0xFF8A93A6)
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
-            tint = when {
-                isSelected -> Color(0xFF007AFF)
-                else -> Color.White
-            },
-            modifier = Modifier.size(28.dp)
+            contentDescription = label,
+            tint = color,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+            color = color
         )
     }
 }
