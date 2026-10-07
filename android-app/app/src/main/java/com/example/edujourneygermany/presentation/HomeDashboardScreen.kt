@@ -1,289 +1,406 @@
 package com.example.edujourneygermany.presentation
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.edujourneygermany.R
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.edujourneygermany.theme.PrimaryBlue
+
+import com.example.edujourneygermany.data.UserProfileStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeDashboardScreen(
-    onNavigate: (String) -> Unit,
-    viewModel: JourneyViewModel = viewModel()
+    onNavigate: (String) -> Unit
 ) {
-    val steps by viewModel.steps.collectAsState()
-    
-    // Calculate progress based on completed steps
-    val completedCount = steps.count { it.status == StepStatus.Completed }
-    val progress = if (steps.isNotEmpty()) completedCount.toFloat() / steps.size else 0f
-    val progressPercentage = (progress * 100).toInt()
-    val context = LocalContext.current
-
     Scaffold(
-        containerColor = Color(0xFFF8FAFC)
     ) { paddingValues ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp),
-            contentPadding = PaddingValues(bottom = 100.dp, top = 24.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 100.dp) // Extra padding for the floating nav bar
         ) {
-            item {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            // Header Section
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        val userName = com.example.edujourneygermany.auth.UserSession.userName.ifEmpty { "Adithya" }
                         Text(
-                            text = "Good morning, $userName \uD83D\uDC4B",
+                            text = if (UserProfileStore.fullName.isNotEmpty()) "Hello, ${UserProfileStore.fullName}!" else "Hello!",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
+                            color = MaterialTheme.colorScheme.onBackground
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Your Germany journey is on track.",
+                            text = "Your Germany Journey",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
                     }
+                }
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+
+            // Progress Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = "Progress",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Profile 40% Completed",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Text(
+                            "40%",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LinearProgressIndicator(
+                        progress = 0.4f,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { onNavigate("profile") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Complete Profile")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Your Goal Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFE2E8F0)),
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Avatar placeholder
-                        Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray)
+                        Icon(Icons.Default.School, contentDescription = "Goal", tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Your Goal", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text("Master's in Germany", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Study", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                     }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            item {
-                // Progress Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Circular Progress
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(56.dp)) {
-                                CircularProgressIndicator(
-                                    progress = progress,
-                                    modifier = Modifier.fillMaxSize(),
-                                    color = Color(0xFF10B981),
-                                    trackColor = Color(0xFFE2E8F0),
-                                    strokeWidth = 4.dp
-                                )
-                                Text("$progressPercentage%", fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                Text(
-                                    "Profile Completion",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1E293B)
-                                )
-                                Text(
-                                    "$completedCount of ${steps.size} steps completed",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Gray
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        LinearProgressIndicator(
-                            progress = progress,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),
-                            color = PrimaryBlue,
-                            trackColor = Color(0xFFE2E8F0)
-                        )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Next Step Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)), // Light orange warning background
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Warning, contentDescription = "Alert", tint = Color(0xFFF57C00))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Next Step", style = MaterialTheme.typography.titleMedium, color = Color(0xFFF57C00), fontWeight = FontWeight.Bold)
                     }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            item {
-                // Target Selection Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Upload APS Certificate", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE65100))
+                    Text("Required for university applications", style = MaterialTheme.typography.bodyMedium, color = Color(0xFFE65100).copy(alpha = 0.8f))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { onNavigate("documents") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("🇩🇪", fontSize = 24.sp)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Germany", fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B))
-                        }
-                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+                        Text("Upload Now", color = Color.White)
                     }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            item {
-                // Action Icons Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    ActionIcon("Start Journey", "🛫", PrimaryBlue) { onNavigate("goal") }
-                    ActionIcon("AI Assistant", "🤖", Color(0xFF6366F1)) { onNavigate("advisor") }
-                    ActionIcon("My Profile", "👤", Color(0xFF8B5CF6)) { onNavigate("profile") }
-                    ActionIcon("Messages", "💬", Color(0xFFD946EF)) { }
-                }
-                Spacer(modifier = Modifier.height(32.dp))
-            }
+            Spacer(modifier = Modifier.height(24.dp))
 
-            item {
-                Text(
-                    text = "Your Journey Progress",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            itemsIndexed(steps) { index, step ->
-                JourneyProgressItem(
-                    index = index + 1,
-                    step = step,
-                    onClick = { 
-                        if (step.status == StepStatus.Completed || step.status == StepStatus.InProgress) {
-                            step.route?.let { onNavigate(it) }
-                        } else {
-                            Toast.makeText(context, "Please complete previous steps first", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                )
-                if (index < steps.size - 1) {
-                    Divider(color = Color(0xFFF1F5F9), modifier = Modifier.padding(start = 40.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ActionIcon(title: String, emoji: String, color: Color, onClick: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(color.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(emoji, fontSize = 24.sp)
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(title, style = MaterialTheme.typography.bodySmall, color = Color.Gray, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun JourneyProgressItem(index: Int, step: JourneyStepData, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Number Circle
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
-                .background(if (step.status == StepStatus.Completed) Color(0xFF10B981) else Color(0xFFE2E8F0)),
-            contentAlignment = Alignment.Center
-        ) {
+            // Quick Actions
             Text(
-                text = index.toString(),
-                color = if (step.status == StepStatus.Completed) Color.White else Color.Gray,
+                "Quick Actions",
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                fontSize = 12.sp
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Person, title = "Profile") { onNavigate("profile") }
+                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Folder, title = "Documents") { onNavigate("documents") }
+                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Checklist, title = "Qualification") { onNavigate("qualification") }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.School, title = "Universities") { onNavigate("opportunities") }
+                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.ChatBubble, title = "AI Advisor") { onNavigate("advisor") }
+                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Description, title = "CV Generator") { onNavigate("cv") }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Journey Section
+            Text(
+                "Your Journey to Germany",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    JourneyStep(
+                        title = "Upload Documents",
+                        subtitle = "CV, Degree, IELTS",
+                        isCompleted = true,
+                        isLast = false
+                    )
+                    JourneyStep(
+                        title = "Profile Verification",
+                        subtitle = "Agent checking details",
+                        isCompleted = false,
+                        isActive = true,
+                        isLast = false,
+                        onClick = { onNavigate("verification") }
+                    )
+                    JourneyStep(
+                        title = "Video Introduction",
+                        subtitle = "Record your 2-min intro",
+                        isCompleted = false,
+                        isActive = false,
+                        isLast = false,
+                        onClick = { onNavigate("video_intro") }
+                    )
+                    JourneyStep(
+                        title = "APS Setup",
+                        subtitle = "Apply for APS certificate",
+                        isCompleted = false,
+                        isLast = false
+                    )
+                    JourneyStep(
+                        title = "University Applications",
+                        subtitle = "Apply to matched programs",
+                        isCompleted = false,
+                        isLast = true
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+@Composable
+fun JourneyStep(
+    title: String,
+    subtitle: String,
+    isCompleted: Boolean,
+    isActive: Boolean = false,
+    isLast: Boolean,
+    onClick: (() -> Unit)? = null
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+        .padding(vertical = if (onClick != null) 8.dp else 0.dp)
+    ) {
+        // Timeline graphic
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(32.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(if (isCompleted || isActive) primaryColor else inactiveColor),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isCompleted) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = "Completed",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                } else if (isActive) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                    )
+                }
+            }
+            if (!isLast) {
+                Canvas(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .height(48.dp)
+                ) {
+                    drawLine(
+                        color = if (isCompleted) primaryColor else inactiveColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, size.height),
+                        strokeWidth = 2.dp.toPx()
+                    )
+                }
+            }
+        }
+        
         Spacer(modifier = Modifier.width(16.dp))
         
-        Text(
-            text = step.title,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF1E293B),
-            modifier = Modifier.weight(1f)
-        )
-        
-        // Status Badge
-        val (bgColor, textColor, text) = when (step.status) {
-            StepStatus.Completed -> Triple(Color(0xFFD1FAE5), Color(0xFF059669), "Completed")
-            StepStatus.InProgress -> Triple(Color(0xFFFEF3C7), Color(0xFFD97706), "In Progress")
-            StepStatus.Pending -> Triple(Color(0xFFF1F5F9), Color(0xFF64748B), "Pending")
-        }
-        
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(bgColor)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
+        // Content
+        Column(modifier = Modifier.padding(bottom = if (isLast) 0.dp else 24.dp)) {
             Text(
-                text = text,
-                color = textColor,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (isActive || isCompleted) FontWeight.Bold else FontWeight.Normal,
+                color = if (isActive || isCompleted) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
-        Spacer(modifier = Modifier.width(8.dp))
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(16.dp))
+    }
+}
+
+@Composable
+fun QuickActionCard(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    title: String,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.aspectRatio(1f),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
