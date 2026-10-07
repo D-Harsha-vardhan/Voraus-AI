@@ -40,7 +40,7 @@ class AiAdvisorViewModel : ViewModel() {
     private var currentFlowIndex = 0
     private val userAnswers = mutableMapOf<String, String>()
 
-    private val apiKey = "sk_KFTF1wvMEfshej4N9PdT5Saw62s2Dt80" // Note: In production, store this securely
+    private val apiKey = "187e7a22-6051-484d-a4d3-749c41d13c90" // Note: In production, store this securely
 
     init {
         showNextFlowQuestion()
@@ -112,10 +112,15 @@ class AiAdvisorViewModel : ViewModel() {
                 // Parse response
                 val aiResponseText = if (response.isJsonObject) {
                     val obj = response.asJsonObject
-                    if (obj.has("message")) obj.get("message").asString
-                    else if (obj.has("response")) obj.get("response").asString
-                    else if (obj.has("text")) obj.get("text").asString
-                    else response.toString()
+                    if (obj.has("response") && obj.get("response").isJsonObject && obj.getAsJsonObject("response").has("reply")) {
+                        obj.getAsJsonObject("response").get("reply").asString
+                    } else if (obj.has("message")) {
+                        obj.get("message").asString
+                    } else if (obj.has("text")) {
+                        obj.get("text").asString
+                    } else {
+                        response.toString()
+                    }
                 } else if (response.isJsonPrimitive) {
                     response.asString
                 } else {
