@@ -64,12 +64,6 @@ fun AppNavigation() {
             }
             composable("onboarding_about_you") {
                 OnboardingAboutYouScreen(
-                    onNext = { navController.navigate("onboarding_extended_profile") },
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("onboarding_extended_profile") {
-                OnboardingExtendedProfileScreen(
                     onNext = { navController.navigate("onboarding_documents") },
                     onBack = { navController.popBackStack() }
                 )

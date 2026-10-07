@@ -19,6 +19,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Context
+import android.util.Base64
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import com.example.edujourneygermany.network.RetrofitClient
+import com.example.edujourneygermany.network.UploadDocumentRequestDto
+import com.example.edujourneygermany.data.UserProfileStore
+import java.io.InputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +36,24 @@ fun OnboardingDocumentsScreen(onNext: () -> Unit, onBack: () -> Unit) {
     var languageUri by remember { mutableStateOf<Uri?>(null) }
     var resumeUri by remember { mutableStateOf<Uri?>(null) }
     var otherUri by remember { mutableStateOf<Uri?>(null) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var isUploading by remember { mutableStateOf(false) }
+
+    fun uriToBase64(uri: Uri): String? {
+        return try {
+            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+            val bytes = inputStream?.readBytes()
+            inputStream?.close()
+            if (bytes != null) {
+                Base64.encodeToString(bytes, Base64.NO_WRAP)
+            } else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 
     val passportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> passportUri = uri }
     val degreeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> degreeUri = uri }
@@ -73,13 +99,13 @@ fun OnboardingDocumentsScreen(onNext: () -> Unit, onBack: () -> Unit) {
             // Progress Bar
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 LinearProgressIndicator(
-                    progress = 4f / 4f,
+                    progress = 3f / 3f,
                     modifier = Modifier.weight(1f).height(6.dp),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("4/4", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text("3/3", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -134,7 +160,67 @@ fun OnboardingDocumentsScreen(onNext: () -> Unit, onBack: () -> Unit) {
             Spacer(modifier = Modifier.weight(1f))
             
             Button(
-                onClick = onNext,
+                onClick = {
+                    if (isUploading) return@Button
+                    isUploading = true
+                    coroutineScope.launch {
+                        try {
+                            // Upload Passport
+                            if (passportUri != null) {
+                                val base64 = uriToBase64(passportUri!!)
+                                if (base64 != null) {
+                                    val res = RetrofitClient.api.uploadDocument(
+                                        request = UploadDocumentRequestDto("passport", base64)
+                                    )
+                                    if (res.extractedData != null) {
+                                        val mapData = res.extractedData
+                                        mapData["fullName"]?.let { UserProfileStore.fullName = it }
+                                        mapData["dob"]?.let { UserProfileStore.dob = it }
+                                        mapData["passportNumber"]?.let { UserProfileStore.passportNumber = it }
+                                        mapData["nationality"]?.let { UserProfileStore.nationality = it }
+                                    }
+                                }
+                            }
+                            
+                            // Upload Degree
+                            if (degreeUri != null) {
+                                val base64 = uriToBase64(degreeUri!!)
+                                if (base64 != null) {
+                                    val res = RetrofitClient.api.uploadDocument(
+                                        request = UploadDocumentRequestDto("degree", base64)
+                                    )
+                                    if (res.extractedData != null) {
+                                        val mapData = res.extractedData
+                                        mapData["degree"]?.let { UserProfileStore.degree = it }
+                                        mapData["institution"]?.let { UserProfileStore.university = it }
+                                        mapData["graduationYear"]?.let { UserProfileStore.graduationYear = it }
+                                    }
+                                }
+                            }
+
+                            // Upload Language
+                            if (languageUri != null) {
+                                val base64 = uriToBase64(languageUri!!)
+                                if (base64 != null) {
+                                    val res = RetrofitClient.api.uploadDocument(
+                                        request = UploadDocumentRequestDto("language", base64)
+                                    )
+                                    if (res.extractedData != null) {
+                                        val mapData = res.extractedData
+                                        mapData["proficiency"]?.let { UserProfileStore.englishLevel = it }
+                                    }
+                                }
+                            }
+                            
+                            onNext()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            onNext() // proceed anyway on error
+                        } finally {
+                            isUploading = false
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
@@ -142,7 +228,13 @@ fun OnboardingDocumentsScreen(onNext: () -> Unit, onBack: () -> Unit) {
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Next \u2192", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                if (isUploading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Extracting Profile Data...", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                } else {
+                    Text("Complete Onboarding \u2192", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
             }
         }
     }

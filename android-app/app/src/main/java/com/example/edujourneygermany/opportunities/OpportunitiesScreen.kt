@@ -18,10 +18,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.edujourneygermany.data.AppViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpportunitiesScreen() {
+fun OpportunitiesScreen(viewModel: AppViewModel = viewModel()) {
     var selectedTab by remember { mutableStateOf(0) }
+    val opportunities by viewModel.opportunities.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         topBar = {
@@ -54,34 +59,29 @@ fun OpportunitiesScreen() {
                 )
             }
 
-            LazyColumn(
-                contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp), // Nav bar padding
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                item {
-                    OpportunityCard(
-                        institution = "Technical University of Munich",
-                        program = "M.Sc. Computer Science",
-                        location = "Munich, Germany",
-                        match = "92% Match",
-                        matchBreakdown = "Degree: 100% • English: 100% • GPA: 80%",
-                        reasons = listOf("Computer Science background", "Required degree", "English met"),
-                        missing = listOf("German B1", "APS Certificate"),
-                        iconLetter = "TU"
-                    )
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-                item {
-                    OpportunityCard(
-                        institution = "RWTH Aachen University",
-                        program = "M.Sc. Artificial Intelligence",
-                        location = "Aachen, Germany",
-                        match = "85% Match",
-                        matchBreakdown = "Degree: 90% • English: 100% • GPA: 70%",
-                        reasons = listOf("Required degree completed", "IELTS requirement met"),
-                        missing = listOf("APS Certificate", "German B1"),
-                        iconLetter = "RW"
-                    )
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp), // Nav bar padding
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(opportunities.size) { index ->
+                        val opp = opportunities[index]
+                        OpportunityCard(
+                            institution = opp.institution,
+                            program = opp.programName,
+                            location = opp.location,
+                            match = opp.matchStatus,
+                            matchBreakdown = "Degree: ${opp.degreeType}", // Mock mapped
+                            reasons = listOf("Backend matched"), // Mock
+                            missing = listOf("Requirements check pending"), // Mock
+                            iconLetter = opp.institution.take(2).uppercase()
+                        )
+                    }
                 }
             }
         }
