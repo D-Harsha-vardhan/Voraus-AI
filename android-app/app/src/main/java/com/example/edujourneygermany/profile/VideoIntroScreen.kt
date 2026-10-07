@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VideoIntroScreen(onBack: () -> Unit) {
+fun VideoIntroScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit) {
     var isRecording by remember { mutableStateOf(false) }
     var hasRecorded by remember { mutableStateOf(false) }
 
@@ -137,7 +137,7 @@ fun VideoIntroScreen(onBack: () -> Unit) {
                         Text("Retake")
                     }
                     Button(
-                        onClick = onBack,
+                        onClick = onSaveSuccess,
                         modifier = Modifier.weight(1f).height(56.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {

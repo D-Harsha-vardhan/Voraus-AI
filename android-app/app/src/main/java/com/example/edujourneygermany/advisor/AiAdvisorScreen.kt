@@ -21,10 +21,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AiAdvisorScreen(onBookConsultant: () -> Unit = {}) {
+fun AiAdvisorScreen(
+    onBookConsultant: () -> Unit = {},
+    viewModel: AiAdvisorViewModel = viewModel()
+) {
     var messageText by remember { mutableStateOf("") }
+    val messages by viewModel.messages.collectAsState()
     
     Scaffold(
         topBar = {
@@ -48,11 +54,15 @@ fun AiAdvisorScreen(onBookConsultant: () -> Unit = {}) {
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
             ) {
-                item {
-                    UserMessage("What universities should I consider?")
-                }
-                item {
-                    AiComplexMessage(onBookConsultant)
+                items(messages.size) { index ->
+                    val msg = messages[index]
+                    if (msg.isUser) {
+                        UserMessage(msg.text)
+                    } else {
+                        // If it's a very long/complex message we could use AiComplexMessage,
+                        // but for standard text responses from DronaHQ, we'll use a simpler AI message UI
+                        AiSimpleMessage(msg.text, msg.isLoading)
+                    }
                 }
             }
 
@@ -60,8 +70,18 @@ fun AiAdvisorScreen(onBookConsultant: () -> Unit = {}) {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    SuggestionChip(onClick = { messageText = "How to apply for APS?" }, label = { Text("How to apply for APS?") })
-                    SuggestionChip(onClick = { messageText = "German language courses" }, label = { Text("German language") })
+                    SuggestionChip(
+                        onClick = { 
+                            viewModel.sendMessage("How to apply for APS?") 
+                        }, 
+                        label = { Text("How to apply for APS?") }
+                    )
+                    SuggestionChip(
+                        onClick = { 
+                            viewModel.sendMessage("German language courses") 
+                        }, 
+                        label = { Text("German language") }
+                    )
                 }
                 
             // Input field area
@@ -88,7 +108,12 @@ fun AiAdvisorScreen(onBookConsultant: () -> Unit = {}) {
                             unfocusedIndicatorColor = Color.Transparent
                         )
                     )
-                    IconButton(onClick = { /* TODO: Send message */ }) {
+                    IconButton(onClick = { 
+                        if (messageText.isNotBlank()) {
+                            viewModel.sendMessage(messageText)
+                            messageText = ""
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
@@ -120,6 +145,54 @@ fun UserMessage(text: String) {
                 color = Color.White,
                 style = MaterialTheme.typography.bodyMedium
             )
+        }
+    }
+}
+
+@Composable
+fun AiSimpleMessage(text: String, isLoading: Boolean = false) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.SmartToy, contentDescription = "AI", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        Card(
+            shape = RoundedCornerShape(
+                topStart = 4.dp,
+                topEnd = 20.dp,
+                bottomStart = 20.dp,
+                bottomEnd = 20.dp
+            ),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = text,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
         }
     }
 }

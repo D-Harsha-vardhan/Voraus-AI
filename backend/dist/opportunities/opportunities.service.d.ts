@@ -2,8 +2,30 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class OpportunitiesService {
     private prisma;
     constructor(prisma: PrismaService);
-    getAllOpportunities(): Promise<any>;
-    getOpportunity(id: string): Promise<any>;
+    getAllOpportunities(): Promise<{
+        id: string;
+        location: string | null;
+        institution: string;
+        source: string;
+        requirements: string | null;
+        programName: string;
+        degreeType: string | null;
+        languageRequirements: string | null;
+        url: string | null;
+        lastUpdated: Date;
+    }[]>;
+    getOpportunity(id: string): Promise<{
+        id: string;
+        location: string | null;
+        institution: string;
+        source: string;
+        requirements: string | null;
+        programName: string;
+        degreeType: string | null;
+        languageRequirements: string | null;
+        url: string | null;
+        lastUpdated: Date;
+    }>;
     matchOpportunitiesForApplicant(applicantId: string): Promise<({
         institution: string;
         programName: string;
