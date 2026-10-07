@@ -13,6 +13,7 @@ interface DronaHqApi {
     @POST("webhook/1f6ac931-615a-4d7a-aa58-c714de559b06")
     suspend fun sendMessage(
         @Header("Authorization") authHeader: String,
+        @Header("api-key") apiKeyHeader: String,
         @Body request: WebhookRequest
     ): JsonElement
 }
