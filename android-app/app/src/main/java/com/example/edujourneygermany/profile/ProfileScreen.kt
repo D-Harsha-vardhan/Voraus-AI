@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import com.example.edujourneygermany.data.UserProfileStore
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -40,7 +42,6 @@ fun ProfileScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
-                .padding(bottom = 100.dp) // Nav bar padding
         ) {
             // Profile Card
             Card(
@@ -65,10 +66,12 @@ fun ProfileScreen(
                         Icon(Icons.Default.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(40.dp))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    val userName = com.example.edujourneygermany.auth.UserSession.userName
-                    val userEmail = com.example.edujourneygermany.auth.UserSession.userEmail
-                    Text(if (userName.isNotEmpty()) userName else "Applicant", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text(if (userEmail.isNotEmpty()) userEmail else "Not provided", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    Text(
+                        text = if (UserProfileStore.fullName.isNotEmpty()) UserProfileStore.fullName else "Your Name", 
+                        style = MaterialTheme.typography.titleLarge, 
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text("user@example.com", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedButton(
                         onClick = onNavigateToEditProfile,
@@ -83,46 +86,36 @@ fun ProfileScreen(
             
             // Sections
             ProfileSection(title = "Personal Information", status = "Verified", statusColor = Color(0xFF4CAF50)) {
-                ProfileInfoRow("Date of Birth", "15 May 1998", "Verified by Passport")
-                ProfileInfoRow("Nationality", "Indian", "Verified by Passport")
-                ProfileInfoRow("Passport Number", "Z1234567", "AI-extracted from Passport")
+                ProfileInfoRow("Date of Birth", UserProfileStore.dob.ifEmpty { "Not provided" })
+                ProfileInfoRow("Nationality", UserProfileStore.nationality.ifEmpty { "Not provided" })
+                ProfileInfoRow("Passport Number", UserProfileStore.passportNumber.ifEmpty { "Not provided" })
             }
             
-            ProfileSection(title = "Contact Details", status = "Applicant-provided", statusColor = Color(0xFF2196F3)) {
-                ProfileInfoRow("Phone", "+91 98765 43210", "Applicant-provided")
-                ProfileInfoRow("Location", "Mumbai, India", "Applicant-provided")
+            ProfileSection(title = "Contact Details", status = "Verified", statusColor = Color(0xFF4CAF50)) {
+                ProfileInfoRow("Phone", UserProfileStore.phone.ifEmpty { "Not provided" })
+                ProfileInfoRow("Location", UserProfileStore.location.ifEmpty { "Not provided" })
             }
             
             ProfileSection(title = "Education", status = "Verified", statusColor = Color(0xFF4CAF50)) {
-                ProfileInfoRow("Degree", "B.Tech in Computer Science", "Verified by APS")
-                ProfileInfoRow("University", "ABC University", "Verified by APS")
-                ProfileInfoRow("Graduation", "2020", "Applicant-provided")
+                ProfileInfoRow("Degree", UserProfileStore.degree.ifEmpty { "Not provided" })
+                ProfileInfoRow("University", UserProfileStore.university.ifEmpty { "Not provided" })
+                ProfileInfoRow("Graduation", UserProfileStore.graduationYear.ifEmpty { "Not provided" })
             }
             
             ProfileSection(title = "Experience", status = "Needs Review", statusColor = Color(0xFFFF9800)) {
-                ProfileInfoRow("Role", "Software Engineer", "Applicant-provided")
-                ProfileInfoRow("Company", "Tech Solutions Inc.", "Applicant-provided")
-                ProfileInfoRow("Duration", "2 Years", "AI-extracted from CV")
-            }
-            
-            ProfileSection(title = "Skills", status = "AI-generated", statusColor = Color(0xFF9C27B0)) {
-                ProfileInfoRow("Top Skills", "Java, Kotlin, Spring Boot", "AI-extracted from CV")
-                ProfileInfoRow("Frameworks", "Jetpack Compose", "Applicant-provided")
+                ProfileInfoRow("Role", UserProfileStore.role.ifEmpty { "Not provided" })
+                ProfileInfoRow("Company", UserProfileStore.company.ifEmpty { "Not provided" })
+                ProfileInfoRow("Duration", UserProfileStore.experienceDuration.ifEmpty { "Not provided" })
             }
             
             ProfileSection(title = "Languages", status = "Verified", statusColor = Color(0xFF4CAF50)) {
-                ProfileInfoRow("English", "IELTS 7.5 (C1)", "Verified by IELTS Certificate")
-                ProfileInfoRow("German", "A1", "Applicant-provided")
-            }
-            
-            ProfileSection(title = "Motivation & Goals", status = "AI-generated", statusColor = Color(0xFF9C27B0)) {
-                ProfileInfoRow("Goal", "Study Master's in Germany", "Applicant-provided")
-                ProfileInfoRow("Summary", "Highly motivated to pursue research in AI.", "AI-extracted from Video")
+                ProfileInfoRow("English", UserProfileStore.englishLevel.ifEmpty { "Not provided" })
+                ProfileInfoRow("German", UserProfileStore.germanLevel.ifEmpty { "Not provided" })
             }
             
             ProfileSection(title = "Social Links", status = "Optional", statusColor = Color(0xFF9E9E9E)) {
-                ProfileInfoRow("LinkedIn", "linkedin.com/in/applicant", "Applicant-provided")
-                ProfileInfoRow("GitHub", "github.com/applicant", "Applicant-provided")
+                ProfileInfoRow("LinkedIn", UserProfileStore.linkedIn.ifEmpty { "Not provided" })
+                ProfileInfoRow("GitHub", UserProfileStore.github.ifEmpty { "Not provided" })
             }
         }
     }
@@ -178,15 +171,14 @@ fun ProfileSection(
 }
 
 @Composable
-fun ProfileInfoRow(label: String, value: String, provenance: String = "Applicant-provided") {
-    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-            Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-        }
-        Text(provenance, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+fun ProfileInfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
     }
 }
