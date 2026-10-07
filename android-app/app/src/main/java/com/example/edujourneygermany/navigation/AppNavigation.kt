@@ -108,8 +108,7 @@ fun AppNavigation() {
             }
             composable("home") {
                 HomeDashboardScreen(
-                    onNavigate = { route -> navController.navigate(route) },
-                    viewModel = journeyViewModel
+                    onNavigate = { route -> navController.navigate(route) }
                 )
             }
             composable("profile") {
