@@ -31,6 +31,10 @@ object OcrHelper {
             val originalBitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
             inputStream.close()
             
+            if (originalBitmap == null) {
+                return@withContext mapOf("api_error" to "Could not decode image. Please ensure you uploaded a valid image file (JPEG, PNG), not a PDF.")
+            }
+            
             // Downscale to max 2048 dimension
             val maxDim = 2048
             val scale = Math.min(maxDim.toFloat() / originalBitmap.width, maxDim.toFloat() / originalBitmap.height)
@@ -74,7 +78,10 @@ object OcrHelper {
 
             val textObj = org.json.JSONObject()
             textObj.put("type", "text")
-            textObj.put("text", "Transcribe all text from this image and structure it. Return ONLY a valid JSON object. IMPORTANT: You must use the following EXACT keys if the information is present: $targetKeys. Do NOT return keys if the information is not found. Do NOT include any explanations, safety warnings, or markdown blocks.")
+            val contextHint = if (documentType.contains("Language")) {
+                " Note: 'english_level' is the English proficiency (e.g. IELTS 7.5, TOEFL 100, B2) and 'german_level' is the German proficiency (e.g. Goethe B1, TestDaF 4)."
+            } else ""
+            textObj.put("text", "Transcribe all text from this image and structure it. Return ONLY a valid JSON object. IMPORTANT: You must use the following EXACT keys if the information is present: $targetKeys.$contextHint Do NOT return keys if the information is not found. Do NOT include any explanations, safety warnings, or markdown blocks.")
 
             content.put(imageObj)
             content.put(textObj)
