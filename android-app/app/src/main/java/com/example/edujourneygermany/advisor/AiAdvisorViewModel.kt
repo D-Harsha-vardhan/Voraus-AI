@@ -130,8 +130,22 @@ class AiAdvisorViewModel : ViewModel() {
                         } else chatMessage
                     }
                 }
+            } catch (e: retrofit2.HttpException) {
+                // Replace loading message with specific HTTP error
+                val errorMsg = if (e.code() == 401) {
+                    "I'm sorry, but my API key appears to be invalid or expired. Please update it in the dashboard."
+                } else {
+                    "Sorry, I couldn't reach the server right now. Error: HTTP ${e.code()}"
+                }
+                _messages.update { list ->
+                    list.mapIndexed { index, chatMessage ->
+                        if (index == loadingIndex) {
+                            ChatMessage(errorMsg, isUser = false)
+                        } else chatMessage
+                    }
+                }
             } catch (e: Exception) {
-                // Replace loading message with error
+                // Replace loading message with general error
                 _messages.update { list ->
                     list.mapIndexed { index, chatMessage ->
                         if (index == loadingIndex) {
