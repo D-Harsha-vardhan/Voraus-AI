@@ -105,6 +105,7 @@ class AiAdvisorViewModel : ViewModel() {
                 // Call DronaHQ webhook
                 val response = RetrofitClient.dronaHqApi.sendMessage(
                     authHeader = "Bearer $apiKey",
+                    apiKeyHeader = apiKey,
                     request = WebhookRequest(message = userText)
                 )
 
