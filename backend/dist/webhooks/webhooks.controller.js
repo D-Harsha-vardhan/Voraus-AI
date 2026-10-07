@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10,9 +11,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
-import { Controller, Post, Body, Headers } from '@nestjs/common';
-import { WebhooksService } from './webhooks.service';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WebhooksController = void 0;
+const common_1 = require("@nestjs/common");
+const webhooks_service_1 = require("./webhooks.service");
 let WebhooksController = class WebhooksController {
     webhooksService;
     constructor(webhooksService) {
@@ -24,17 +26,17 @@ let WebhooksController = class WebhooksController {
         return this.webhooksService.processConsultantAction(payload);
     }
 };
+exports.WebhooksController = WebhooksController;
 __decorate([
-    Post('dronahq'),
-    __param(0, Headers('x-dronahq-signature')),
-    __param(1, Body()),
+    (0, common_1.Post)('dronahq'),
+    __param(0, (0, common_1.Headers)('x-dronahq-signature')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], WebhooksController.prototype, "handleDronaHQWebhook", null);
-WebhooksController = __decorate([
-    Controller('webhooks'),
-    __metadata("design:paramtypes", [typeof (_a = typeof WebhooksService !== "undefined" && WebhooksService) === "function" ? _a : Object])
+exports.WebhooksController = WebhooksController = __decorate([
+    (0, common_1.Controller)('webhooks'),
+    __metadata("design:paramtypes", [webhooks_service_1.WebhooksService])
 ], WebhooksController);
-export { WebhooksController };
 //# sourceMappingURL=webhooks.controller.js.map
