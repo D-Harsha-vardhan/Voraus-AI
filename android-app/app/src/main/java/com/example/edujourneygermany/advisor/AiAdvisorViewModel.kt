@@ -39,6 +39,7 @@ class AiAdvisorViewModel : ViewModel() {
 
     private var currentFlowIndex = 0
     private val userAnswers = mutableMapOf<String, String>()
+    private var isFirstDronaHqMessage = true
 
     private val apiKey = "187e7a22-6051-484d-a4d3-749c41d13c90" // Note: In production, store this securely
 
@@ -102,11 +103,20 @@ class AiAdvisorViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
+                // Prepend context to the first message sent to DronaHQ
+                val payloadMessage = if (isFirstDronaHqMessage && userAnswers.isNotEmpty()) {
+                    isFirstDronaHqMessage = false
+                    val contextStr = userAnswers.entries.joinToString(", ") { "${it.key}: ${it.value}" }
+                    "Context: [User Profile: $contextStr]\n\nUser Question: $userText"
+                } else {
+                    userText
+                }
+
                 // Call DronaHQ webhook
                 val response = RetrofitClient.dronaHqApi.sendMessage(
                     authHeader = "Bearer $apiKey",
                     apiKeyHeader = apiKey,
-                    request = WebhookRequest(message = userText)
+                    request = WebhookRequest(message = payloadMessage)
                 )
 
                 // Parse response
