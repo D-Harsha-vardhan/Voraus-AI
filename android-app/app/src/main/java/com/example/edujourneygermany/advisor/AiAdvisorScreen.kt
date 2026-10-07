@@ -1,8 +1,10 @@
 package com.example.edujourneygermany.advisor
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,11 +23,31 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AiAdvisorScreen(onBookConsultant: () -> Unit = {}) {
+fun AiAdvisorScreen(
+    onBookConsultant: () -> Unit = {},
+    viewModel: AiAdvisorViewModel = viewModel()
+) {
     var messageText by remember { mutableStateOf("") }
+    var showOptionsSheet by remember { mutableStateOf(false) }
+    val messages by viewModel.messages.collectAsState()
+    val currentOptions by viewModel.currentOptions.collectAsState()
+    val isFlowComplete by viewModel.isFlowComplete.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -42,54 +65,110 @@ fun AiAdvisorScreen(onBookConsultant: () -> Unit = {}) {
                 .padding(bottom = 100.dp) // Nav bar padding
         ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
             ) {
-                item {
-                    UserMessage("What universities should I consider?")
-                }
-                item {
-                    AiComplexMessage(onBookConsultant)
+                items(messages.size) { index ->
+                    val msg = messages[index]
+                    if (msg.isUser) {
+                        UserMessage(msg.text, msg.quotedQuestion)
+                    } else {
+                        // Show "Choose" button only on the last message if flow is not complete
+                        val isLastAndFlowActive = !isFlowComplete && index == messages.lastIndex && !msg.isLoading
+                        AiSimpleMessage(
+                            text = msg.text, 
+                            isLoading = msg.isLoading,
+                            onOptionsClick = if (isLastAndFlowActive) { { showOptionsSheet = true } } else null
+                        )
+                    }
                 }
             }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SuggestionChip(onClick = { messageText = "How to apply for APS?" }, label = { Text("How to apply for APS?") })
-                    SuggestionChip(onClick = { messageText = "German language courses" }, label = { Text("German language") })
-                }
-                
-            // Input field area
-            Surface(
-                color = MaterialTheme.colorScheme.background,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                Row(
+            if (isFlowComplete) {
+                // Input field area
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    TextField(
-                        value = messageText,
-                        onValueChange = { messageText = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Ask me anything...", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White, RoundedCornerShape(24.dp))
+                            .border(1.dp, Color.LightGray.copy(alpha = 0.8f), RoundedCornerShape(24.dp))
+                            .padding(horizontal = 8.dp, vertical = 0.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextField(
+                            value = messageText,
+                            onValueChange = { messageText = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Ask me anything...", color = Color.Gray) },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
+                            )
                         )
+                        IconButton(onClick = { 
+                            if (messageText.isNotBlank()) {
+                                viewModel.sendMessage(messageText)
+                                messageText = ""
+                            }
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = Color(0xFF1976D2))
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (showOptionsSheet && currentOptions.isNotEmpty()) {
+            ModalBottomSheet(
+                onDismissRequest = { showOptionsSheet = false },
+                containerColor = MaterialTheme.colorScheme.surface
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp, top = 8.dp)
+                ) {
+                    Text(
+                        text = "Choose",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
-                    IconButton(onClick = { /* TODO: Send message */ }) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    currentOptions.forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.sendMessage(option)
+                                    showOptionsSheet = false
+                                }
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            RadioButton(
+                                selected = false,
+                                onClick = null
+                            )
+                        }
                     }
                 }
             }
@@ -98,7 +177,7 @@ fun AiAdvisorScreen(onBookConsultant: () -> Unit = {}) {
 }
 
 @Composable
-fun UserMessage(text: String) {
+fun UserMessage(text: String, quotedQuestion: String? = null) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
@@ -114,11 +193,149 @@ fun UserMessage(text: String) {
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
             modifier = Modifier.widthIn(max = 280.dp)
         ) {
-            Text(
-                text = text,
-                modifier = Modifier.padding(16.dp),
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
+            Column(modifier = Modifier.padding(8.dp)) {
+                if (quotedQuestion != null) {
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.2f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                            // Green accent bar
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .width(4.dp)
+                                    .background(Color(0xFF10B981))
+                            )
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(
+                                    text = "Educaro AI",
+                                    color = Color(0xFF10B981),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = quotedQuestion,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 2
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+                Text(
+                    text = text,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AiSimpleMessage(text: String, isLoading: Boolean = false, onOptionsClick: (() -> Unit)? = null) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.Top
+    ) {
+        Card(
+            shape = RoundedCornerShape(
+                topStart = 20.dp,
+                topEnd = 20.dp,
+                bottomStart = 4.dp,
+                bottomEnd = 20.dp
+            ),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            modifier = Modifier.widthIn(max = 280.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (isLoading) {
+                    TypingIndicator()
+                } else {
+                    Text(
+                        text = text,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    
+                    if (onOptionsClick != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOptionsClick() }
+                                .padding(top = 12.dp, bottom = 4.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.FormatListBulleted, 
+                                contentDescription = "Choose",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Choose",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TypingIndicator() {
+    val dots = listOf(
+        remember { Animatable(0f) },
+        remember { Animatable(0f) },
+        remember { Animatable(0f) }
+    )
+
+    dots.forEachIndexed { index, animatable ->
+        LaunchedEffect(animatable) {
+            delay(index * 150L)
+            animatable.animateTo(
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = keyframes {
+                        durationMillis = 1200
+                        0.0f at 0 using LinearOutSlowInEasing
+                        1.0f at 300 using LinearOutSlowInEasing
+                        0.0f at 600 using LinearOutSlowInEasing
+                        0.0f at 1200 using LinearOutSlowInEasing
+                    },
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+        }
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
+    ) {
+        dots.forEach { animatable ->
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .offset(y = (-8).dp * animatable.value)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
             )
         }
     }
@@ -131,27 +348,16 @@ fun AiComplexMessage(onBookConsultant: () -> Unit = {}) {
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.Top
     ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.SmartToy, contentDescription = "AI", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        
         Card(
             shape = RoundedCornerShape(
-                topStart = 4.dp,
+                topStart = 20.dp,
                 topEnd = 20.dp,
-                bottomStart = 20.dp,
+                bottomStart = 4.dp,
                 bottomEnd = 20.dp
             ),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.widthIn(max = 320.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(

@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10,9 +11,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
-import { AuthService } from './auth.service';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthController = void 0;
+const common_1 = require("@nestjs/common");
+const auth_service_1 = require("./auth.service");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -28,31 +30,31 @@ let AuthController = class AuthController {
         return this.authService.logout();
     }
 };
+exports.AuthController = AuthController;
 __decorate([
-    Post('register'),
-    __param(0, Body()),
+    (0, common_1.Post)('register'),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
-    HttpCode(HttpStatus.OK),
-    Post('login'),
-    __param(0, Body()),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, common_1.Post)('login'),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
-    HttpCode(HttpStatus.OK),
-    Post('logout'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, common_1.Post)('logout'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "logout", null);
-AuthController = __decorate([
-    Controller('auth'),
-    __metadata("design:paramtypes", [typeof (_a = typeof AuthService !== "undefined" && AuthService) === "function" ? _a : Object])
+exports.AuthController = AuthController = __decorate([
+    (0, common_1.Controller)('auth'),
+    __metadata("design:paramtypes", [auth_service_1.AuthService])
 ], AuthController);
-export { AuthController };
 //# sourceMappingURL=auth.controller.js.map

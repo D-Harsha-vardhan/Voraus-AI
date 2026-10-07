@@ -1,3 +1,31 @@
 <resources>
-    <string name="app_name">Voraus AI</string>
+    <string name="app_name">Educaro</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="sign_in_subtitle">Sign in to continue your journey</string>
+    <string name="student_tab">Student</string>
+    <string name="consultant_tab">Consultant</string>
+    <string name="email_address">Email address</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="sign_in_button">Sign In</string>
+    <string name="or_continue_with">Or continue with</string>
+    <string name="continue_with_google">Google</string>
+    <string name="continue_with_apple">Apple</string>
+    <string name="dont_have_account">Don\'t have an account? </string>
+    <string name="sign_up">Sign Up</string>
+    <string name="your_dreams_our_ai">Your Dreams.\nOur AI. Germany.</string>
+    <string name="from_your_goals">From your goals to your future —\nwe build your path, step by step.</string>
+    <string name="get_started">Get Started -></string>
+    <string name="educaro_brand">Educaro</string>
+    <string name="educaro_tagline">Your Germany Journey, Powered by AI</string>
+
+    <string name="step_1_goal">1. Goal</string>
+    <string name="what_is_main_goal">What is your main goal in Germany?</string>
+    <string name="goal_study">Study</string>
+    <string name="goal_study_desc">Pursue a degree at a German university</string>
+    <string name="goal_vocational">Vocational Training</string>
+    <string name="goal_vocational_desc">Gain practical skills &amp; certification</string>
+    <string name="goal_employment">Employment</string>
+    <string name="goal_employment_desc">Find a job and grow your career</string>
+    <string name="next_btn">Next -></string>
 </resources>

@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -7,9 +8,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ApplicantService = void 0;
+const common_1 = require("@nestjs/common");
+const prisma_service_1 = require("../prisma/prisma.service");
 let ApplicantService = class ApplicantService {
     prisma;
     constructor(prisma) {
@@ -17,7 +19,7 @@ let ApplicantService = class ApplicantService {
     }
     async getProfile(applicantId) {
         if (!applicantId)
-            throw new NotFoundException('Applicant ID required');
+            throw new common_1.NotFoundException('Applicant ID required');
         const applicant = await this.prisma.applicant.findUnique({
             where: { id: applicantId },
             include: {
@@ -30,22 +32,22 @@ let ApplicantService = class ApplicantService {
             }
         });
         if (!applicant) {
-            throw new NotFoundException('Applicant not found');
+            throw new common_1.NotFoundException('Applicant not found');
         }
         return applicant;
     }
     async updateProfile(applicantId, updateData) {
         if (!applicantId)
-            throw new NotFoundException('Applicant ID required');
+            throw new common_1.NotFoundException('Applicant ID required');
         return this.prisma.applicant.update({
             where: { id: applicantId },
             data: updateData,
         });
     }
 };
-ApplicantService = __decorate([
-    Injectable(),
-    __metadata("design:paramtypes", [typeof (_a = typeof PrismaService !== "undefined" && PrismaService) === "function" ? _a : Object])
+exports.ApplicantService = ApplicantService;
+exports.ApplicantService = ApplicantService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], ApplicantService);
-export { ApplicantService };
 //# sourceMappingURL=applicant.service.js.map

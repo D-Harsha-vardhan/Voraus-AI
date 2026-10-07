@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10,9 +11,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
-import { Controller, Get, Post, Req } from '@nestjs/common';
-import { QualificationService } from './qualification.service';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.QualificationController = void 0;
+const common_1 = require("@nestjs/common");
+const qualification_service_1 = require("./qualification.service");
 let QualificationController = class QualificationController {
     qualificationService;
     constructor(qualificationService) {
@@ -27,23 +29,23 @@ let QualificationController = class QualificationController {
         return this.qualificationService.evaluateQualification(applicantId);
     }
 };
+exports.QualificationController = QualificationController;
 __decorate([
-    Get(),
-    __param(0, Req()),
+    (0, common_1.Get)(),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], QualificationController.prototype, "getQualificationStatus", null);
 __decorate([
-    Post('evaluate'),
-    __param(0, Req()),
+    (0, common_1.Post)('evaluate'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], QualificationController.prototype, "evaluateQualification", null);
-QualificationController = __decorate([
-    Controller('qualification'),
-    __metadata("design:paramtypes", [typeof (_a = typeof QualificationService !== "undefined" && QualificationService) === "function" ? _a : Object])
+exports.QualificationController = QualificationController = __decorate([
+    (0, common_1.Controller)('qualification'),
+    __metadata("design:paramtypes", [qualification_service_1.QualificationService])
 ], QualificationController);
-export { QualificationController };
 //# sourceMappingURL=qualification.controller.js.map
