@@ -1,5 +1,8 @@
 package com.example.edujourneygermany.auth
 
+import com.example.edujourneygermany.data.Supabase
+import io.github.jan.supabase.auth.auth
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -217,7 +220,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                         isLoading = true
                         errorMessage = null
                         try {
-                            Supabase.client.auth.signInWith(Email) {
+                            Supabase.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
                                 this.email = currentEmail
                                 this.password = currentPassword
                             }
