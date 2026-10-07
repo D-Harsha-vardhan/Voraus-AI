@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class ChatMessage(val text: String, val isUser: Boolean, val isLoading: Boolean = false)
+data class ChatMessage(val text: String, val isUser: Boolean, val isLoading: Boolean = false, val quotedQuestion: String? = null)
 
 data class FlowQuestion(
     val key: String,
@@ -61,18 +61,20 @@ class AiAdvisorViewModel : ViewModel() {
     fun sendMessage(userText: String) {
         if (userText.isBlank()) return
 
-        // Add user message
-        _messages.update { it + ChatMessage(userText, isUser = true) }
-        
         if (!_isFlowComplete.value) {
             // We are still in the flow
             val q = flowQuestions[currentFlowIndex]
+            _messages.update { it + ChatMessage(userText, isUser = true, quotedQuestion = q.question) }
+            
             userAnswers[q.key] = userText
             currentFlowIndex++
             _currentOptions.value = emptyList() // clear options briefly
             showNextFlowQuestion()
             return
         }
+
+        // Add user message for normal chat
+        _messages.update { it + ChatMessage(userText, isUser = true) }
 
         // Add loading message
         val loadingIndex = _messages.value.size

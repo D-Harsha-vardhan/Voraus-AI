@@ -3,6 +3,7 @@ package com.example.edujourneygermany.advisor
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -32,6 +34,7 @@ fun AiAdvisorScreen(
     viewModel: AiAdvisorViewModel = viewModel()
 ) {
     var messageText by remember { mutableStateOf("") }
+    var showOptionsSheet by remember { mutableStateOf(false) }
     val messages by viewModel.messages.collectAsState()
     val currentOptions by viewModel.currentOptions.collectAsState()
     val isFlowComplete by viewModel.isFlowComplete.collectAsState()
@@ -61,31 +64,20 @@ fun AiAdvisorScreen(
                 items(messages.size) { index ->
                     val msg = messages[index]
                     if (msg.isUser) {
-                        UserMessage(msg.text)
+                        UserMessage(msg.text, msg.quotedQuestion)
                     } else {
-                        // If it's a very long/complex message we could use AiComplexMessage,
-                        // but for standard text responses from DronaHQ, we'll use a simpler AI message UI
-                        AiSimpleMessage(msg.text, msg.isLoading)
+                        // Show "Choose" button only on the last message if flow is not complete
+                        val isLastAndFlowActive = !isFlowComplete && index == messages.lastIndex && !msg.isLoading
+                        AiSimpleMessage(
+                            text = msg.text, 
+                            isLoading = msg.isLoading,
+                            onOptionsClick = if (isLastAndFlowActive) { { showOptionsSheet = true } } else null
+                        )
                     }
                 }
             }
 
-            if (currentOptions.isNotEmpty()) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    items(currentOptions) { option ->
-                        SuggestionChip(
-                            onClick = { 
-                                viewModel.sendMessage(option) 
-                            }, 
-                            label = { Text(option) }
-                        )
-                    }
-                }
-            } else if (isFlowComplete) {
+            if (isFlowComplete) {
                 // Input field area
                 Surface(
                     color = MaterialTheme.colorScheme.background,
@@ -122,11 +114,54 @@ fun AiAdvisorScreen(
                 }
             }
         }
+        
+        if (showOptionsSheet && currentOptions.isNotEmpty()) {
+            ModalBottomSheet(
+                onDismissRequest = { showOptionsSheet = false },
+                containerColor = MaterialTheme.colorScheme.surface
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp, top = 8.dp)
+                ) {
+                    Text(
+                        text = "Choose",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    currentOptions.forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.sendMessage(option)
+                                    showOptionsSheet = false
+                                }
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            RadioButton(
+                                selected = false,
+                                onClick = null
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun UserMessage(text: String) {
+fun UserMessage(text: String, quotedQuestion: String? = null) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
@@ -142,18 +177,52 @@ fun UserMessage(text: String) {
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
             modifier = Modifier.widthIn(max = 280.dp)
         ) {
-            Text(
-                text = text,
-                modifier = Modifier.padding(16.dp),
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Column(modifier = Modifier.padding(8.dp)) {
+                if (quotedQuestion != null) {
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.2f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                            // Green accent bar
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .width(4.dp)
+                                    .background(Color(0xFF10B981))
+                            )
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(
+                                    text = "Educaro AI",
+                                    color = Color(0xFF10B981),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = quotedQuestion,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 2
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+                Text(
+                    text = text,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }
 
 @Composable
-fun AiSimpleMessage(text: String, isLoading: Boolean = false) {
+fun AiSimpleMessage(text: String, isLoading: Boolean = false, onOptionsClick: (() -> Unit)? = null) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
@@ -194,6 +263,33 @@ fun AiSimpleMessage(text: String, isLoading: Boolean = false) {
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    
+                    if (onOptionsClick != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOptionsClick() }
+                                .padding(top = 12.dp, bottom = 4.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.FormatListBulleted, 
+                                contentDescription = "Choose",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Choose",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
                 }
             }
         }
