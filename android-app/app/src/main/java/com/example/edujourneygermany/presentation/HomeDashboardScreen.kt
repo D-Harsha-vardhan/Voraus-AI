@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import com.example.edujourneygermany.data.UserProfileStore
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeDashboardScreen(
@@ -56,9 +58,8 @@ fun HomeDashboardScreen(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        val userName = com.example.edujourneygermany.auth.UserSession.userName
                         Text(
-                            text = "Hello, ${if (userName.isNotEmpty()) userName.split(" ")[0] else "Applicant"}!",
+                            text = if (UserProfileStore.fullName.isNotEmpty()) "Hello, ${UserProfileStore.fullName}!" else "Hello!",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
