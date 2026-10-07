@@ -1,5 +1,9 @@
 package com.example.edujourneygermany.auth
 
+import com.example.edujourneygermany.data.Supabase
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,6 +29,9 @@ import androidx.compose.ui.text.style.TextAlign
 fun LoginScreen(onLoginSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -122,12 +129,41 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             
             // Login Button
             Button(
-                onClick = { onLoginSuccess() },
+                onClick = { 
+                    val currentEmail = email
+                    val currentPassword = password
+                    scope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        try {
+                            Supabase.client.auth.signInWith(Email) {
+                                this.email = currentEmail
+                                this.password = currentPassword
+                            }
+                            com.example.edujourneygermany.auth.UserSession.userEmail = currentEmail
+                            com.example.edujourneygermany.auth.UserSession.userName = com.example.edujourneygermany.auth.UserSession.extractNameFromEmail(currentEmail)
+                            onLoginSuccess()
+                        } catch (e: Exception) {
+                            errorMessage = e.message ?: "Login failed"
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Log In", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(if (isLoading) "Logging In..." else "Log In", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+            
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             
             Spacer(modifier = Modifier.height(16.dp))

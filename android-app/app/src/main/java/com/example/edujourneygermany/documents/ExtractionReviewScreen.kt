@@ -1,5 +1,6 @@
 package com.example.edujourneygermany.documents
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,20 +14,40 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.example.edujourneygermany.auth.OcrHelper
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExtractionReviewScreen(
     documentType: String,
+    imageUri: Uri?,
     onConfirm: () -> Unit,
     onBack: () -> Unit
 ) {
-    // Mock extracted fields based on document type
-    var field1 by remember { mutableStateOf(if (documentType == "Degree Certificate") "B.Tech in Computer Science" else "Field 1") }
-    var field2 by remember { mutableStateOf(if (documentType == "Degree Certificate") "ABC University" else "Field 2") }
-    var field3 by remember { mutableStateOf(if (documentType == "Degree Certificate") "2020" else "Field 3") }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    var isLoading by remember { mutableStateOf(true) }
+    var isUploading by remember { mutableStateOf(false) }
+    
+    // Extracted Fields Map
+    var extractedData by remember { mutableStateOf(mapOf<String, String>()) }
+
+    LaunchedEffect(imageUri, documentType) {
+        if (imageUri != null) {
+            val data = OcrHelper.extractData(context, imageUri, documentType)
+            extractedData = data
+            isLoading = false
+        } else {
+            isLoading = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -49,38 +70,82 @@ fun ExtractionReviewScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        "We used AI to extract information from your $documentType. Please review and edit if necessary.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
             
-            Text("Extracted Information", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
+            if (imageUri != null) {
+                AsyncImage(
+                    model = imageUri,
+                    contentDescription = "Document Preview",
+                    modifier = Modifier.fillMaxWidth().height(200.dp).padding(bottom = 16.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+            
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
 
-            ExtractionField(label = if (documentType == "Degree Certificate") "Degree Name" else "Extracted Field 1", value = field1, onValueChange = { field1 = it })
-            ExtractionField(label = if (documentType == "Degree Certificate") "University Name" else "Extracted Field 2", value = field2, onValueChange = { field2 = it })
-            ExtractionField(label = if (documentType == "Degree Certificate") "Graduation Year" else "Extracted Field 3", value = field3, onValueChange = { field3 = it })
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "We used AI to extract information from your $documentType. Please review and edit if necessary.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text("Extracted Information", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Confirm and Save", fontWeight = FontWeight.Bold)
+                if (extractedData.isNotEmpty()) {
+                    extractedData.forEach { (key, value) ->
+                        val formattedLabel = key.split("_").joinToString(" ") { 
+                            it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(java.util.Locale.getDefault()) else char.toString() } 
+                        }
+                        ExtractionField(
+                            label = formattedLabel,
+                            value = value,
+                            onValueChange = { newValue ->
+                                extractedData = extractedData.toMutableMap().apply { put(key, newValue) }
+                            }
+                        )
+                    }
+                } else {
+                    Text("No specific fields could be extracted.", modifier = Modifier.padding(16.dp))
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = {
+                        isUploading = true
+                        scope.launch {
+                            if (imageUri != null) {
+                                OcrHelper.uploadDocumentAndData(context, imageUri, documentType, extractedData)
+                            }
+                            isUploading = false
+                            onConfirm()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isUploading
+                ) {
+                    if (isUploading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                    } else {
+                        Text("Confirm and Save", fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
     }
