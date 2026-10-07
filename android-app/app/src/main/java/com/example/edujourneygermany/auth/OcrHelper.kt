@@ -66,8 +66,10 @@ object OcrHelper {
             val targetKeys = when (documentType) {
                 "Passport" -> "full_name, passport_number, location"
                 "Degree" -> "degree, university, graduation_year"
+                "EnglishLanguage" -> "english_level"
+                "GermanLanguage" -> "german_level"
                 "Resume" -> "phone_number, role, company, location"
-                else -> "full_name, passport_number, phone_number, location, degree, university, graduation_year, role, company"
+                else -> "full_name, passport_number, phone_number, location, degree, university, graduation_year, role, company, english_level, german_level"
             }
 
             val textObj = org.json.JSONObject()
@@ -167,7 +169,7 @@ object OcrHelper {
                     val allowedColumns = setOf(
                         "full_name", "passport_number", "phone_number", 
                         "location", "degree", "university", "graduation_year", 
-                        "role", "company"
+                        "role", "company", "english_level", "german_level"
                     )
                     val validUpdates = updates.filterKeys { it in allowedColumns }
                     

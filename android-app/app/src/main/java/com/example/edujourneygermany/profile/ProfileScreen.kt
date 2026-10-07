@@ -56,6 +56,8 @@ fun ProfileScreen(
                 profileResult["graduation_year"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.graduationYear = it }
                 profileResult["role"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.role = it }
                 profileResult["company"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.company = it }
+                profileResult["english_level"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.englishLevel = it }
+                profileResult["german_level"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.germanLevel = it }
             }
         } catch (e: Exception) {
             e.printStackTrace()
