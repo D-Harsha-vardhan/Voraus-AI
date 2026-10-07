@@ -133,8 +133,8 @@ object OcrHelper {
                 }
             } else {
                 val error = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "No error stream"
-                Log.e("OcrHelper", "NVIDIA API Error (\${connection.responseCode}): $error")
-                updates["api_error"] = "Error \${connection.responseCode}: \$error"
+                Log.e("OcrHelper", "NVIDIA API Error (${connection.responseCode}): $error")
+                updates["api_error"] = "Error ${connection.responseCode}: $error"
             }
 
         } catch (e: Exception) {
