@@ -29,7 +29,8 @@ import androidx.navigation.NavController
 fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, onBack: () -> Unit) {
     var passportUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var degreeUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
-    var languageUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var englishUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var germanUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var resumeUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var otherUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -48,10 +49,16 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
             navController.navigate("extraction_review/Degree?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
         }
     }
-    val languageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
+    val englishLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
         uri?.let {
-            languageUri = it.toString()
-            navController.navigate("extraction_review/Language?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
+            englishUri = it.toString()
+            navController.navigate("extraction_review/EnglishLanguage?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
+        }
+    }
+    val germanLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
+        uri?.let {
+            germanUri = it.toString()
+            navController.navigate("extraction_review/GermanLanguage?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
         }
     }
     val resumeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
@@ -78,6 +85,15 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { /* TODO: Add dynamic languages */ },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Custom Language")
+            }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -135,12 +151,23 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
             Spacer(modifier = Modifier.height(12.dp))
             
             DocumentUploadCard(
-                title = "Language Certificate",
-                isUploaded = languageUri != null,
+                title = "English Language Certificate",
+                isUploaded = englishUri != null,
                 icon = Icons.Default.Description,
-                isError = languageUri == null, // Show red if not uploaded? The image shows "Not Uploaded" in red. Let's pass a special state
-                statusText = if (languageUri != null) "Uploaded" else "Not Uploaded",
-                onClick = { languageLauncher.launch("*/*") }
+                isError = englishUri == null,
+                statusText = if (englishUri != null) "Uploaded" else "Not Uploaded",
+                onClick = { englishLauncher.launch("*/*") }
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            DocumentUploadCard(
+                title = "German Language Certificate",
+                isUploaded = germanUri != null,
+                icon = Icons.Default.Description,
+                isError = germanUri == null,
+                statusText = if (germanUri != null) "Uploaded" else "Not Uploaded",
+                onClick = { germanLauncher.launch("*/*") }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
