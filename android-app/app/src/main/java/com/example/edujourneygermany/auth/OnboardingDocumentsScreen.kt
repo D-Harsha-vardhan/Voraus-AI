@@ -12,6 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,20 +22,50 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.navigation.NavController
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingDocumentsScreen(onNext: () -> Unit, onBack: () -> Unit) {
-    var passportUri by remember { mutableStateOf<Uri?>(null) }
-    var degreeUri by remember { mutableStateOf<Uri?>(null) }
-    var languageUri by remember { mutableStateOf<Uri?>(null) }
-    var resumeUri by remember { mutableStateOf<Uri?>(null) }
-    var otherUri by remember { mutableStateOf<Uri?>(null) }
+fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, onBack: () -> Unit) {
+    var passportUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var degreeUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var languageUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var resumeUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var otherUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
 
-    val passportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> passportUri = uri }
-    val degreeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> degreeUri = uri }
-    val languageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> languageUri = uri }
-    val resumeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> resumeUri = uri }
-    val otherLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> otherUri = uri }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val passportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
+        uri?.let {
+            passportUri = it.toString()
+            navController.navigate("extraction_review/Passport?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
+        }
+    }
+    val degreeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
+        uri?.let {
+            degreeUri = it.toString()
+            navController.navigate("extraction_review/Degree?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
+        }
+    }
+    val languageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
+        uri?.let {
+            languageUri = it.toString()
+            navController.navigate("extraction_review/Language?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
+        }
+    }
+    val resumeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
+        uri?.let {
+            resumeUri = it.toString()
+            navController.navigate("extraction_review/Resume?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
+        }
+    }
+    val otherLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
+        uri?.let {
+            otherUri = it.toString()
+            navController.navigate("extraction_review/Other?uri=${java.net.URLEncoder.encode(it.toString(), "UTF-8")}")
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -88,7 +120,7 @@ fun OnboardingDocumentsScreen(onNext: () -> Unit, onBack: () -> Unit) {
                 title = "Passport",
                 isUploaded = passportUri != null,
                 icon = Icons.Default.Description,
-                onClick = { passportLauncher.launch("*/*") }
+                onClick = { passportLauncher.launch("image/*") }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -97,7 +129,7 @@ fun OnboardingDocumentsScreen(onNext: () -> Unit, onBack: () -> Unit) {
                 title = "Degree Certificate",
                 isUploaded = degreeUri != null,
                 icon = Icons.Default.Description,
-                onClick = { degreeLauncher.launch("*/*") }
+                onClick = { degreeLauncher.launch("image/*") }
             )
             
             Spacer(modifier = Modifier.height(12.dp))

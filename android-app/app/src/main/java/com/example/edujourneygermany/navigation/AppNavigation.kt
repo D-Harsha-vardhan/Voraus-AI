@@ -23,7 +23,7 @@ import com.example.edujourneygermany.auth.SplashScreen
 import com.example.edujourneygermany.auth.RegistrationScreen
 import com.example.edujourneygermany.auth.GoalSelectionScreen
 import com.example.edujourneygermany.auth.OnboardingAboutYouScreen
-import com.example.edujourneygermany.auth.OnboardingExtendedProfileScreen
+
 import com.example.edujourneygermany.auth.OnboardingDocumentsScreen
 import com.example.edujourneygermany.documents.DocumentsScreen
 import com.example.edujourneygermany.documents.ExtractionReviewScreen
@@ -64,18 +64,13 @@ fun AppNavigation() {
             }
             composable("onboarding_about_you") {
                 OnboardingAboutYouScreen(
-                    onNext = { navController.navigate("onboarding_extended_profile") },
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("onboarding_extended_profile") {
-                OnboardingExtendedProfileScreen(
                     onNext = { navController.navigate("onboarding_documents") },
                     onBack = { navController.popBackStack() }
                 )
             }
             composable("onboarding_documents") {
                 OnboardingDocumentsScreen(
+                    navController = navController,
                     onNext = { 
                         navController.navigate("home") {
                             popUpTo("splash") { inclusive = false }
@@ -120,10 +115,22 @@ fun AppNavigation() {
                     }
                 )
             }
-            composable("extraction_review/{docType}") { backStackEntry ->
+            composable(
+                "extraction_review/{docType}?uri={uri}",
+                arguments = listOf(
+                    androidx.navigation.navArgument("uri") { 
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
                 val docType = backStackEntry.arguments?.getString("docType") ?: "Document"
+                val uriStr = backStackEntry.arguments?.getString("uri")
+                val uri = if (!uriStr.isNullOrEmpty()) android.net.Uri.parse(uriStr) else null
                 ExtractionReviewScreen(
                     documentType = docType,
+                    imageUri = uri,
                     onConfirm = { navController.popBackStack() },
                     onBack = { navController.popBackStack() }
                 )
