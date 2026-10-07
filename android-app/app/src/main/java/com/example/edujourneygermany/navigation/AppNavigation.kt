@@ -22,6 +22,9 @@ import com.example.edujourneygermany.auth.LoginScreen
 import com.example.edujourneygermany.auth.SplashScreen
 import com.example.edujourneygermany.auth.RegistrationScreen
 import com.example.edujourneygermany.auth.GoalSelectionScreen
+import com.example.edujourneygermany.auth.OnboardingAboutYouScreen
+import com.example.edujourneygermany.auth.OnboardingExtendedProfileScreen
+import com.example.edujourneygermany.auth.OnboardingDocumentsScreen
 import com.example.edujourneygermany.documents.DocumentsScreen
 import com.example.edujourneygermany.documents.ExtractionReviewScreen
 import com.example.edujourneygermany.qualification.QualificationScreen
@@ -55,7 +58,29 @@ fun AppNavigation() {
             }
             composable("goal") {
                 GoalSelectionScreen(
-                    onNext = { navController.navigate("home") },
+                    onNext = { navController.navigate("onboarding_about_you") },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("onboarding_about_you") {
+                OnboardingAboutYouScreen(
+                    onNext = { navController.navigate("onboarding_extended_profile") },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("onboarding_extended_profile") {
+                OnboardingExtendedProfileScreen(
+                    onNext = { navController.navigate("onboarding_documents") },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("onboarding_documents") {
+                OnboardingDocumentsScreen(
+                    onNext = { 
+                        navController.navigate("home") {
+                            popUpTo("splash") { inclusive = false }
+                        }
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
