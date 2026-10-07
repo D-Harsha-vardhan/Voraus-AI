@@ -17,28 +17,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.edujourneygermany.R
+import com.example.edujourneygermany.theme.PrimaryBlue
+
+data class GoalData(
+    val titleRes: Int,
+    val descRes: Int,
+    val icon: ImageVector,
+    val iconColor: Color
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoalSelectionScreen(onNext: () -> Unit, onBack: () -> Unit) {
     var selectedGoal by remember { mutableStateOf<Int?>(0) }
 
+    val goals = listOf(
+        GoalData(R.string.goal_study, R.string.goal_study_desc, Icons.Default.School, PrimaryBlue),
+        GoalData(R.string.goal_vocational, R.string.goal_vocational_desc, Icons.Default.BusinessCenter, Color(0xFF10B981)),
+        GoalData(R.string.goal_employment, R.string.goal_employment_desc, Icons.Default.Work, Color(0xFF8B5CF6))
+    )
+
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color.White
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -46,50 +62,33 @@ fun GoalSelectionScreen(onNext: () -> Unit, onBack: () -> Unit) {
                 .padding(paddingValues)
                 .padding(horizontal = 24.dp)
         ) {
-            Text(
-                "What is your goal in Germany?",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Select one option. You can change this later.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                stringResource(R.string.step_1_goal),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.what_is_main_goal),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.Gray
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            GoalOptionCard(
-                title = "Study",
-                description = "Get a degree at a German university",
-                icon = Icons.Default.School,
-                isSelected = selectedGoal == 0,
-                onClick = { selectedGoal = 0 }
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            GoalOptionCard(
-                title = "Vocational Training",
-                description = "Learn a skilled profession",
-                icon = Icons.Default.BusinessCenter,
-                isSelected = selectedGoal == 1,
-                onClick = { selectedGoal = 1 },
-                iconColor = Color(0xFF4CAF50) // Green
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            GoalOptionCard(
-                title = "Employment",
-                description = "Build your career in Germany",
-                icon = Icons.Default.Work,
-                isSelected = selectedGoal == 2,
-                onClick = { selectedGoal = 2 },
-                iconColor = Color(0xFF1E88E5) // Blue
-            )
+            goals.forEachIndexed { index, goal ->
+                GoalOptionCard(
+                    title = stringResource(goal.titleRes),
+                    description = stringResource(goal.descRes),
+                    icon = goal.icon,
+                    isSelected = selectedGoal == index,
+                    onClick = { selectedGoal = index },
+                    iconColor = goal.iconColor
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             
             Spacer(modifier = Modifier.weight(1f))
             
@@ -99,11 +98,11 @@ fun GoalSelectionScreen(onNext: () -> Unit, onBack: () -> Unit) {
                     .fillMaxWidth()
                     .height(56.dp)
                     .padding(bottom = 24.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                 enabled = selectedGoal != null
             ) {
-                Text("Next", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(stringResource(R.string.next_btn), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
             }
         }
     }
@@ -116,21 +115,19 @@ fun GoalOptionCard(
     icon: ImageVector,
     isSelected: Boolean,
     onClick: () -> Unit,
-    iconColor: Color = Color(0xFF3949AB) // Default indigo/blue
+    iconColor: Color
 ) {
+    val borderColor = if (isSelected) PrimaryBlue else Color(0xFFE2E8F0)
+    val bgColor = if (isSelected) PrimaryBlue.copy(alpha = 0.05f) else Color.White
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.05f) else Color.White
-        ),
-        border = BorderStroke(
-            1.dp,
-            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 0.dp else 2.dp)
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        border = BorderStroke(2.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier.padding(20.dp),
@@ -146,9 +143,18 @@ fun GoalOptionCard(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    title, 
+                    style = MaterialTheme.typography.titleMedium, 
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(
+                    description, 
+                    style = MaterialTheme.typography.bodySmall, 
+                    color = Color.Gray
+                )
             }
         }
     }

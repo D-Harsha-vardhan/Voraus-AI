@@ -10,6 +10,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.ui.unit.dp
+import com.example.edujourneygermany.presentation.JourneyViewModel
 import com.example.edujourneygermany.presentation.components.FloatingNavigationBar
 import com.example.edujourneygermany.presentation.HomeDashboardScreen
 import com.example.edujourneygermany.presentation.VerificationScreen
@@ -32,6 +40,7 @@ import com.example.edujourneygermany.notifications.NotificationsScreen
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val journeyViewModel: JourneyViewModel = viewModel()
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -55,7 +64,10 @@ fun AppNavigation() {
             }
             composable("goal") {
                 GoalSelectionScreen(
-                    onNext = { navController.navigate("home") },
+                    onNext = { 
+                        journeyViewModel.completeStep("1")
+                        navController.navigate("home") 
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -66,7 +78,8 @@ fun AppNavigation() {
             }
             composable("home") {
                 HomeDashboardScreen(
-                    onNavigate = { route -> navController.navigate(route) }
+                    onNavigate = { route -> navController.navigate(route) },
+                    viewModel = journeyViewModel
                 )
             }
             composable("profile") {
@@ -79,14 +92,23 @@ fun AppNavigation() {
             composable("edit_profile") {
                 EditProfileScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onSaveSuccess = { navController.popBackStack() }
+                    onSaveSuccess = { 
+                        journeyViewModel.completeStep("2")
+                        navController.popBackStack() 
+                    }
                 )
             }
             composable("cv") {
                 CvGeneratorScreen()
             }
             composable("video_intro") {
-                VideoIntroScreen(onBack = { navController.popBackStack() })
+                VideoIntroScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = {
+                        journeyViewModel.completeStep("4")
+                        navController.popBackStack()
+                    }
+                )
             }
             composable("documents") {
                 DocumentsScreen(
@@ -99,16 +121,39 @@ fun AppNavigation() {
                 val docType = backStackEntry.arguments?.getString("docType") ?: "Document"
                 ExtractionReviewScreen(
                     documentType = docType,
-                    onConfirm = { navController.popBackStack() },
+                    onConfirm = { 
+                        journeyViewModel.completeStep("3")
+                        navController.popBackStack() 
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
             composable("qualification") {
                 QualificationScreen()
             }
+            composable("merge_profile") {
+                // Dummy screen for AI merge, immediately finishes and goes to verification
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(1000)
+                    journeyViewModel.completeStep("5")
+                    navController.navigate("verification") {
+                        popUpTo("home")
+                    }
+                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = com.example.edujourneygermany.theme.PrimaryBlue)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("AI is merging your profile...")
+                    }
+                }
+            }
             composable("verification") {
                 VerificationScreen(
-                    onVerificationComplete = { navController.navigate("home") },
+                    onVerificationComplete = { 
+                        journeyViewModel.completeStep("6")
+                        navController.navigate("home") 
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }

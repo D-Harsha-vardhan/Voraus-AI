@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10,9 +11,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
-import { Controller, Get, Put, Body, Req } from '@nestjs/common';
-import { ApplicantService } from './applicant.service';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ApplicantController = void 0;
+const common_1 = require("@nestjs/common");
+const applicant_service_1 = require("./applicant.service");
 let ApplicantController = class ApplicantController {
     applicantService;
     constructor(applicantService) {
@@ -27,24 +29,24 @@ let ApplicantController = class ApplicantController {
         return this.applicantService.updateProfile(applicantId, updateData);
     }
 };
+exports.ApplicantController = ApplicantController;
 __decorate([
-    Get('me'),
-    __param(0, Req()),
+    (0, common_1.Get)('me'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], ApplicantController.prototype, "getProfile", null);
 __decorate([
-    Put('profile'),
-    __param(0, Req()),
-    __param(1, Body()),
+    (0, common_1.Put)('profile'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], ApplicantController.prototype, "updateProfile", null);
-ApplicantController = __decorate([
-    Controller('applicant'),
-    __metadata("design:paramtypes", [typeof (_a = typeof ApplicantService !== "undefined" && ApplicantService) === "function" ? _a : Object])
+exports.ApplicantController = ApplicantController = __decorate([
+    (0, common_1.Controller)('applicant'),
+    __metadata("design:paramtypes", [applicant_service_1.ApplicantService])
 ], ApplicantController);
-export { ApplicantController };
 //# sourceMappingURL=applicant.controller.js.map

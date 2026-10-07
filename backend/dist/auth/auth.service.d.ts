@@ -4,12 +4,12 @@ export declare class AuthService {
     constructor(prisma: PrismaService);
     register(registerDto: any): Promise<{
         message: string;
-        applicantId: any;
+        applicantId: string;
     }>;
     login(loginDto: any): Promise<{
         message: string;
         token: string;
-        applicantId: any;
+        applicantId: string | undefined;
     }>;
     logout(): Promise<{
         message: string;
