@@ -47,14 +47,34 @@ class AiAdvisorViewModel : ViewModel() {
     }
 
     private fun showNextFlowQuestion() {
-        if (currentFlowIndex < flowQuestions.size) {
-            val q = flowQuestions[currentFlowIndex]
-            _messages.update { it + ChatMessage(q.question, isUser = false) }
-            _currentOptions.value = q.options
-        } else {
-            _isFlowComplete.value = true
-            _currentOptions.value = emptyList()
-            _messages.update { it + ChatMessage(afterFlowMessage, isUser = false) }
+        viewModelScope.launch {
+            // Add loading message
+            val loadingIndex = _messages.value.size
+            _messages.update { it + ChatMessage("Thinking...", isUser = false, isLoading = true) }
+            
+            kotlinx.coroutines.delay(1000) // Simulate typing delay
+
+            if (currentFlowIndex < flowQuestions.size) {
+                val q = flowQuestions[currentFlowIndex]
+                _messages.update { list ->
+                    list.mapIndexed { index, chatMessage ->
+                        if (index == loadingIndex) {
+                            ChatMessage(q.question, isUser = false)
+                        } else chatMessage
+                    }
+                }
+                _currentOptions.value = q.options
+            } else {
+                _isFlowComplete.value = true
+                _currentOptions.value = emptyList()
+                _messages.update { list ->
+                    list.mapIndexed { index, chatMessage ->
+                        if (index == loadingIndex) {
+                            ChatMessage(afterFlowMessage, isUser = false)
+                        } else chatMessage
+                    }
+                }
+            }
         }
     }
 
