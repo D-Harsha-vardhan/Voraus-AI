@@ -79,14 +79,8 @@ fun AppNavigation() {
                 com.example.edujourneygermany.auth.OnboardingAboutYouScreen(
                     onNext = { 
                         journeyViewModel.completeStep("2")
-                        navController.navigate("onboarding_extended_profile") 
+                        navController.navigate("onboarding_documents") 
                     },
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("onboarding_extended_profile") {
-                com.example.edujourneygermany.auth.OnboardingExtendedProfileScreen(
-                    onNext = { navController.navigate("onboarding_documents") },
                     onBack = { navController.popBackStack() }
                 )
             }
