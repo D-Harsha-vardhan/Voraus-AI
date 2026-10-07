@@ -27,6 +27,7 @@ import kotlinx.coroutines.delay
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +41,13 @@ fun AiAdvisorScreen(
     val messages by viewModel.messages.collectAsState()
     val currentOptions by viewModel.currentOptions.collectAsState()
     val isFlowComplete by viewModel.isFlowComplete.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -57,6 +65,7 @@ fun AiAdvisorScreen(
                 .padding(bottom = 100.dp) // Nav bar padding
         ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp),
@@ -235,27 +244,16 @@ fun AiSimpleMessage(text: String, isLoading: Boolean = false, onOptionsClick: ((
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.Top
     ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.SmartToy, contentDescription = "AI", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        
         Card(
             shape = RoundedCornerShape(
-                topStart = 4.dp,
+                topStart = 20.dp,
                 topEnd = 20.dp,
-                bottomStart = 20.dp,
+                bottomStart = 4.dp,
                 bottomEnd = 20.dp
             ),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.widthIn(max = 280.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 if (isLoading) {
@@ -350,27 +348,16 @@ fun AiComplexMessage(onBookConsultant: () -> Unit = {}) {
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.Top
     ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.SmartToy, contentDescription = "AI", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        
         Card(
             shape = RoundedCornerShape(
-                topStart = 4.dp,
+                topStart = 20.dp,
                 topEnd = 20.dp,
-                bottomStart = 20.dp,
+                bottomStart = 4.dp,
                 bottomEnd = 20.dp
             ),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.widthIn(max = 320.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
