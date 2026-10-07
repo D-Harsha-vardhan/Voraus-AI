@@ -13,15 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.painterResource
 import com.example.edujourneygermany.R
+import com.example.edujourneygermany.theme.PrimaryBlue
 
 @Composable
 fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit) {
@@ -43,9 +42,11 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit) {
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = 0.3f),
-                            Color.Black.copy(alpha = 0.7f)
-                        )
+                            Color.Black.copy(alpha = 0.1f),
+                            Color.Black.copy(alpha = 0.8f)
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
                     )
                 )
         )
@@ -53,68 +54,79 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(24.dp)
         ) {
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(48.dp))
             
-            Icon(
-                imageVector = Icons.Default.School,
-                contentDescription = "Logo",
-                modifier = Modifier.size(80.dp),
-                tint = Color.White
+            // Logo & Tagline (Centered Top)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.School,
+                    contentDescription = "Logo",
+                    modifier = Modifier.size(28.dp),
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.educaro_brand),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.educaro_tagline),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.9f),
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // Title & Subtitle (Left Aligned Bottom)
+            Text(
+                text = stringResource(R.string.your_dreams_our_ai),
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                lineHeight = 40.sp
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                "EduJourney\nGermany",
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                lineHeight = 40.sp
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            Text(
-                "Your AI-powered journey\nto Study, Work or Train\nin Germany",
-                style = MaterialTheme.typography.titleMedium,
+                text = stringResource(R.string.from_your_goals),
+                style = MaterialTheme.typography.bodyLarge,
                 color = Color.White.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center,
                 lineHeight = 24.sp
             )
             
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(32.dp))
             
+            // Get Started Button
             Button(
                 onClick = onGetStarted,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
             ) {
-                Text("Get Started", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            TextButton(onClick = onLogin) {
                 Text(
-                    text = buildAnnotatedString {
-                        withStyle(style = SpanStyle(color = Color.White.copy(alpha = 0.7f))) {
-                            append("Already have an account? ")
-                        }
-                        withStyle(style = SpanStyle(color = Color.White, fontWeight = FontWeight.Bold)) {
-                            append("Log In")
-                        }
-                    }
+                    text = stringResource(R.string.get_started), 
+                    fontWeight = FontWeight.Bold, 
+                    fontSize = 16.sp, 
+                    color = Color.White
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

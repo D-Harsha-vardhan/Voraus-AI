@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -7,10 +8,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b;
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { AiService } from '../ai/ai.service';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DocumentsService = void 0;
+const common_1 = require("@nestjs/common");
+const prisma_service_1 = require("../prisma/prisma.service");
+const ai_service_1 = require("../ai/ai.service");
 let DocumentsService = class DocumentsService {
     prisma;
     aiService;
@@ -26,7 +28,7 @@ let DocumentsService = class DocumentsService {
     async getDocument(id) {
         const doc = await this.prisma.document.findUnique({ where: { id } });
         if (!doc)
-            throw new NotFoundException('Document not found');
+            throw new common_1.NotFoundException('Document not found');
         return doc;
     }
     async uploadDocument(applicantId, documentType, fileData) {
@@ -63,9 +65,10 @@ let DocumentsService = class DocumentsService {
         return this.prisma.document.delete({ where: { id } });
     }
 };
-DocumentsService = __decorate([
-    Injectable(),
-    __metadata("design:paramtypes", [typeof (_a = typeof PrismaService !== "undefined" && PrismaService) === "function" ? _a : Object, typeof (_b = typeof AiService !== "undefined" && AiService) === "function" ? _b : Object])
+exports.DocumentsService = DocumentsService;
+exports.DocumentsService = DocumentsService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        ai_service_1.AiService])
 ], DocumentsService);
-export { DocumentsService };
 //# sourceMappingURL=documents.service.js.map
