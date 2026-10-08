@@ -17,6 +17,10 @@ import java.util.UUID
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
+object DocumentMemory {
+    val extractedDataCache = mutableMapOf<String, Map<String, String>>()
+}
+
 object OcrHelper {
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
@@ -28,12 +32,12 @@ object OcrHelper {
         val updates = mutableMapOf<String, String>()
         
         val expectedKeysList = when (documentType) {
-            "Passport" -> listOf("full_name", "passport_number", "location")
-            "Degree", "Degree Certificate" -> listOf("degree", "university", "graduation_year")
-            "EnglishLanguage", "IELTS Certificate" -> listOf("english_level")
-            "GermanLanguage", "German Certificate" -> listOf("german_level")
-            "Resume", "CV" -> listOf("phone_number", "role", "company", "location")
-            else -> listOf("full_name", "passport_number", "phone_number", "location", "degree", "university", "graduation_year", "role", "company", "english_level", "german_level")
+            "Passport" -> listOf("full_name", "passport_number", "location", "date_of_expiry", "date_of_birth", "nationality")
+            "Degree", "Degree Certificate", "Marksheet" -> listOf("degree", "university", "graduation_year", "student_name", "date_of_issue")
+            "EnglishLanguage", "IELTS Certificate" -> listOf("english_level", "candidate_name", "test_date", "certificate_number")
+            "GermanLanguage", "German Certificate" -> listOf("german_level", "candidate_name", "test_date", "certificate_number")
+            "Resume", "CV", "Experience Letter" -> listOf("phone_number", "role", "company", "location", "employee_name", "employment_start_date", "employment_end_date")
+            else -> listOf("full_name", "passport_number", "phone_number", "location", "degree", "university", "graduation_year", "role", "company", "english_level", "german_level", "date_of_expiry", "candidate_name", "test_date", "student_name")
         }
         
         // Pre-fill updates with empty strings so fields ALWAYS appear in the UI, even if image load fails
@@ -85,8 +89,10 @@ object OcrHelper {
             val textObj = org.json.JSONObject()
             textObj.put("type", "text")
             val contextHint = when {
-                documentType == "Passport" -> " Note: For 'full_name', carefully combine the Given Name and Surname into a single string (e.g., 'John Doe'). Do NOT duplicate names from the MRZ."
-                documentType.contains("Language") || documentType.contains("Certificate") -> " Note: For language certificates, extract the overall 'CEFR Level' (e.g., B1, B2) or the test score band."
+                documentType == "Passport" -> " Note: For 'full_name', combine the Given Name and Surname in the exact format 'Given Name Surname' (e.g. 'Kartikey Sharma'). Do NOT reverse them. Do NOT duplicate names from the MRZ. Also accurately extract 'date_of_expiry', 'date_of_birth', and 'nationality' for security verification."
+                documentType.contains("Language") || documentType.contains("Certificate") && !documentType.contains("Degree") -> " Note: For language certificates, extract the overall 'CEFR Level' (e.g., B1, B2). Also extract 'candidate_name', 'test_date', and 'certificate_number'. If a field like certificate_number is not visible on the document, return an empty string."
+                documentType.contains("Degree") || documentType == "Marksheet" -> " Note: Extract 'student_name' and 'date_of_issue' for security verification. If a field is not present, return an empty string."
+                documentType == "Resume" || documentType == "CV" || documentType == "Experience Letter" -> " Note: Extract 'employee_name', 'employment_start_date', and 'employment_end_date' if available."
                 else -> ""
             }
             

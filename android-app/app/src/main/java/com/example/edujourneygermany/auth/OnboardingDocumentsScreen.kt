@@ -86,15 +86,7 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* TODO: Add dynamic languages */ },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Custom Language")
-            }
-        },
+
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
@@ -136,7 +128,13 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                 title = "Passport",
                 isUploaded = passportUri != null,
                 icon = Icons.Default.Description,
-                onClick = { passportLauncher.launch("image/*") }
+                onClick = { 
+                    if (passportUri != null) {
+                        navController.navigate("extraction_review/Passport?uri=${java.net.URLEncoder.encode(passportUri, "UTF-8")}")
+                    } else {
+                        passportLauncher.launch("image/*") 
+                    }
+                }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -145,7 +143,13 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                 title = "Degree Certificate",
                 isUploaded = degreeUri != null,
                 icon = Icons.Default.Description,
-                onClick = { degreeLauncher.launch("image/*") }
+                onClick = { 
+                    if (degreeUri != null) {
+                        navController.navigate("extraction_review/Degree?uri=${java.net.URLEncoder.encode(degreeUri, "UTF-8")}")
+                    } else {
+                        degreeLauncher.launch("image/*") 
+                    }
+                }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -156,7 +160,13 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                 icon = Icons.Default.Description,
                 isError = englishUri == null,
                 statusText = if (englishUri != null) "Uploaded" else "Not Uploaded",
-                onClick = { englishLauncher.launch("*/*") }
+                onClick = { 
+                    if (englishUri != null) {
+                        navController.navigate("extraction_review/EnglishLanguage?uri=${java.net.URLEncoder.encode(englishUri, "UTF-8")}")
+                    } else {
+                        englishLauncher.launch("*/*") 
+                    }
+                }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -167,7 +177,13 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                 icon = Icons.Default.Description,
                 isError = germanUri == null,
                 statusText = if (germanUri != null) "Uploaded" else "Not Uploaded",
-                onClick = { germanLauncher.launch("*/*") }
+                onClick = { 
+                    if (germanUri != null) {
+                        navController.navigate("extraction_review/GermanLanguage?uri=${java.net.URLEncoder.encode(germanUri, "UTF-8")}")
+                    } else {
+                        germanLauncher.launch("*/*") 
+                    }
+                }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -176,7 +192,13 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                 title = "Resume (CV)",
                 isUploaded = resumeUri != null,
                 icon = Icons.Default.Description,
-                onClick = { resumeLauncher.launch("*/*") }
+                onClick = { 
+                    if (resumeUri != null) {
+                        navController.navigate("extraction_review/Resume?uri=${java.net.URLEncoder.encode(resumeUri, "UTF-8")}")
+                    } else {
+                        resumeLauncher.launch("*/*") 
+                    }
+                }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -187,7 +209,13 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                 icon = Icons.Default.Description,
                 statusText = if (otherUri != null) "Uploaded" else "Optional",
                 isNeutral = otherUri == null,
-                onClick = { otherLauncher.launch("*/*") }
+                onClick = { 
+                    if (otherUri != null) {
+                        navController.navigate("extraction_review/Other?uri=${java.net.URLEncoder.encode(otherUri, "UTF-8")}")
+                    } else {
+                        otherLauncher.launch("*/*") 
+                    }
+                }
             )
             
             Spacer(modifier = Modifier.weight(1f))
