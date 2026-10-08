@@ -189,7 +189,14 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
                         selectedTab = 1
                     },
                     onSaveAndViewDetails = {
-                        financeDetailMode = true
+                        // Auto-select first popular uni if none chosen
+                        if (selectedUni == null && popularUnis.isNotEmpty()) {
+                            selectedUni = popularUnis.first()
+                            searchQuery = popularUnis.first().name
+                        }
+                        if (selectedUni != null) {
+                            financeDetailMode = true
+                        }
                     }
                 )
             } else {
@@ -921,8 +928,8 @@ fun FinanceDetailView(uni: SimpleUni, onBack: () -> Unit) {
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .fillMaxWidth()
+            // No verticalScroll here - parent Column in Scaffold already handles scrolling
     ) {
         // University Header Card
         Card(
