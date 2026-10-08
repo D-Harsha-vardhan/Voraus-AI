@@ -27,10 +27,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.net.Uri
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-data class SimpleUni(val name: String, val shortName: String, val type: String = "Public")
+data class SimpleUni(val name: String, val shortName: String, val type: String = "Public", val city: String = "Germany", val applyLink: String = "")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +43,7 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
     var expanded by remember { mutableStateOf(false) }
     var selectedUni by remember { mutableStateOf<SimpleUni?>(null) }
     var visaDetailMode by remember { mutableStateOf(false) } // Toggle for Visa details view
+    var financeDetailMode by remember { mutableStateOf(false) } // Toggle for Finance details view
     
     // Load universities dynamically
     val allUnis = remember {
@@ -54,14 +57,16 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
                 val parts = line!!.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)".toRegex()).map { it.trim('\"', ' ') }
                 if (parts.size >= 5) {
                     val fullName = parts[1] // university is at index 1
+                    val cityVal = parts[2] // city is at index 2
                     val type = parts[4] // type is at index 4 (TU9, Public, etc)
+                    val applyLink = if (parts.size > 8) parts[8] else ""
                     
                     var shortName = fullName.split(" ").mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").take(4)
                     if (fullName.contains("(TUM)")) shortName = "TUM"
                     if (fullName.contains("RWTH")) shortName = "RWTH"
                     if (fullName.contains("KIT")) shortName = "KIT"
                     
-                    list.add(SimpleUni(fullName, shortName, type))
+                    list.add(SimpleUni(fullName, shortName, type, cityVal, applyLink))
                 }
             }
             reader.close()
@@ -89,10 +94,19 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
         topBar = {
             TopAppBar(
                 title = { 
-                    Text("Finance & Visa Agent", fontWeight = FontWeight.Bold, color = Color(0xFF1E293B), fontSize = 18.sp)
+                    val titleText = if (financeDetailMode) "${selectedUni?.shortName ?: "TUM"} – Finance Details" else "Finance & Visa Agent"
+                    Text(titleText, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B), fontSize = 18.sp)
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        if (financeDetailMode) {
+                            financeDetailMode = false
+                        } else if (visaDetailMode) {
+                            visaDetailMode = false
+                        } else {
+                            onBackClick()
+                        }
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color(0xFF1E293B))
                     }
                 },
@@ -112,7 +126,12 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
             
             if (visaDetailMode && selectedTab == 1) {
                 VisaDetailView(onBack = { visaDetailMode = false })
-                return@Scaffold
+                return@Column
+            }
+
+            if (financeDetailMode && selectedTab == 0 && selectedUni != null) {
+                FinanceDetailView(uni = selectedUni!!, onBack = { financeDetailMode = false })
+                return@Column
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -168,6 +187,9 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
                     },
                     onVisaRequirementsClick = {
                         selectedTab = 1
+                    },
+                    onSaveAndViewDetails = {
+                        financeDetailMode = true
                     }
                 )
             } else {
@@ -503,7 +525,8 @@ fun FinanceContent(
     selectedUni: SimpleUni?, onUniSelected: (SimpleUni) -> Unit,
     onClearSearch: () -> Unit,
     onCostCalculatorClick: () -> Unit,
-    onVisaRequirementsClick: () -> Unit
+    onVisaRequirementsClick: () -> Unit,
+    onSaveAndViewDetails: () -> Unit
 ) {
     // Search Bar with Dropdown
     Text("Search University or College", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B))
@@ -742,7 +765,7 @@ fun FinanceContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = { /* Save action */ },
+            onClick = onSaveAndViewDetails,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(24.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
@@ -889,5 +912,234 @@ fun ToolCard(modifier: Modifier = Modifier, title: String, subtitle: String, ico
             Spacer(modifier = Modifier.height(4.dp))
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B), lineHeight = 16.sp)
         }
+    }
+}
+@Composable
+fun FinanceDetailView(uni: SimpleUni, onBack: () -> Unit) {
+    val context = LocalContext.current
+    var selectedCurrency by remember { mutableStateOf("EUR") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        // University Header Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(uni.shortName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(uni.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(12.dp))
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text("${uni.city}, Germany", style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
+                        }
+                    }
+                    Icon(Icons.Default.FavoriteBorder, contentDescription = null, tint = Color(0xFF64748B))
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(uni.type, "Top 50 (QS)", "English-taught").forEach { tag ->
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFF1F5F9), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(tag, fontSize = 11.sp, color = Color(0xFF475569), fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Program Details
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Program Details", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                Spacer(modifier = Modifier.height(12.dp))
+                DetailRow("Course", "M.Sc. Computer Science")
+                DetailRow("Duration", "2 years")
+                DetailRow("Tuition Fee", "€ 0 (Public University)")
+                DetailRow("Semester Contribution", "€ 150 / semester")
+                DetailRow("Intake", "Winter Semester (Oct)")
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF8FAFC), RoundedCornerShape(8.dp))
+                        .padding(10.dp)
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Fee information is based on the official university website and last verified on 21 Apr 2025.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF64748B),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (uni.applyLink.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uni.applyLink))
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Icon(Icons.Default.Link, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("View source", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Estimated Expenses
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Estimated Expenses (1st Year)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                    // EUR / INR pill toggle
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFF1F5F9))
+                            .padding(3.dp)
+                    ) {
+                        listOf("EUR", "INR").forEach { currency ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (selectedCurrency == currency) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                    .clickable { selectedCurrency = currency }
+                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    currency,
+                                    color = if (selectedCurrency == currency) Color.White else Color(0xFF64748B),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                // Cost rows
+                val items = if (selectedCurrency == "EUR") listOf(
+                    Triple(Icons.Default.School, "Tuition Fees", "€ 0"),
+                    Triple(Icons.Default.CalendarToday, "Semester Contribution", "€ 150"),
+                    Triple(Icons.Default.Home, "Living Expenses", "€ 11,400"),
+                    Triple(Icons.Default.HealthAndSafety, "Health Insurance", "€ 1,200"),
+                    Triple(Icons.Default.Flight, "Visa & Travel", "€ 800"),
+                    Triple(Icons.Default.Settings, "Initial Setup", "€ 1,200")
+                ) else listOf(
+                    Triple(Icons.Default.School, "Tuition Fees", "₹ 0"),
+                    Triple(Icons.Default.CalendarToday, "Semester Contribution", "₹ 13,400"),
+                    Triple(Icons.Default.Home, "Living Expenses", "₹ 10,19,000"),
+                    Triple(Icons.Default.HealthAndSafety, "Health Insurance", "₹ 1,07,400"),
+                    Triple(Icons.Default.Flight, "Visa & Travel", "₹ 71,600"),
+                    Triple(Icons.Default.Settings, "Initial Setup", "₹ 1,07,400")
+                )
+                items.forEach { (icon, label, amount) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(icon, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f), color = Color(0xFF1E293B))
+                        Text(amount, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B))
+                    }
+                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color(0xFFE2E8F0))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Total", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                    Text(
+                        if (selectedCurrency == "EUR") "€ 14,750" else "₹ 13,21,000",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Apply Now button
+        Button(
+            onClick = {
+                val url = uni.applyLink.ifEmpty { "https://www.uni-assist.de/en/" }
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                context.startActivity(intent)
+            },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(26.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1FAB71))
+        ) {
+            Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Apply Now", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B), modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B), textAlign = TextAlign.End, modifier = Modifier.weight(1.2f))
     }
 }
