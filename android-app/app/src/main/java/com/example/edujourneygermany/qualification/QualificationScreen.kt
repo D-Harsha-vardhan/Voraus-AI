@@ -24,10 +24,31 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QualificationScreen() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val visaRequirements = androidx.compose.runtime.remember {
+        val list = mutableListOf<Pair<String, String>>()
+        try {
+            val reader = java.io.BufferedReader(java.io.InputStreamReader(context.assets.open("germany_csv/42_visa_documents_checklist.csv")))
+            reader.readLine() // skip header
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                if (line.isNullOrBlank()) continue
+                // CSV columns: order,document,app_group,required,what_to_prepare,tip
+                // Since some columns have quotes (like what_to_prepare), we need a basic regex split
+                val parts = line!!.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)".toRegex()).map { it.trim('\"', ' ') }
+                if (parts.size >= 5) {
+                    list.add(Pair(parts[1], parts[4]))
+                }
+            }
+            reader.close()
+        } catch (e: Exception) {}
+        list
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Qualification", fontWeight = FontWeight.Bold) },
+                title = { Text("Finance/Visa Advisor", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
@@ -53,14 +74,14 @@ fun QualificationScreen() {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(
-                            progress = 0.60f,
+                            progress = 0.20f,
                             modifier = Modifier.size(64.dp),
                             color = Color(0xFF4CAF50),
                             trackColor = Color(0xFF4CAF50).copy(alpha = 0.2f),
                             strokeWidth = 6.dp
                         )
                         Text(
-                            text = "60%",
+                            text = "20%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -69,14 +90,14 @@ fun QualificationScreen() {
                     Spacer(modifier = Modifier.width(20.dp))
                     Column {
                         Text(
-                            "Conditionally eligible",
+                            "Visa Readiness",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "You meet 3 out of 5 requirements",
+                            "You have prepared 2 out of ${visaRequirements.size} documents",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -86,7 +107,7 @@ fun QualificationScreen() {
 
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                "Requirements",
+                "Document Checklist",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -101,15 +122,34 @@ fun QualificationScreen() {
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 ) {
-                    item { RequirementItem("Bachelor's Degree", "Met", Icons.Default.Check, Color(0xFF4CAF50), Icons.Default.CheckCircle, Color(0xFF4CAF50)) }
-                    item { Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)) }
-                    item { RequirementItem("IELTS (6.5+)", "Met", Icons.Default.Check, Color(0xFF4CAF50), Icons.Default.CheckCircle, Color(0xFF4CAF50)) }
-                    item { Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)) }
-                    item { RequirementItem("German B1", "Missing", Icons.Default.Warning, Color(0xFFFF9800), Icons.Default.Warning, Color(0xFFFF9800), onFixClick = { /* TODO */ }) }
-                    item { Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)) }
-                    item { RequirementItem("APS Certificate", "Missing", Icons.Default.Clear, Color(0xFFE53935), Icons.Default.Clear, Color(0xFFE53935), onFixClick = { /* TODO */ }) }
-                    item { Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)) }
-                    item { RequirementItem("Work Experience", "Met", Icons.Default.Check, Color(0xFF4CAF50), Icons.Default.CheckCircle, Color(0xFF81C784)) }
+                    if (visaRequirements.isEmpty()) {
+                        item {
+                            Text("No requirements found.", modifier = Modifier.padding(16.dp))
+                        }
+                    } else {
+                        items(visaRequirements.size) { index ->
+                            val req = visaRequirements[index]
+                            // For mock purposes, mark the first two as Met, others as Pending
+                            val isMet = index < 2
+                            val status = if (isMet) "Prepared" else "Pending"
+                            val statusIcon = if (isMet) Icons.Default.Check else Icons.Default.Warning
+                            val statusColor = if (isMet) Color(0xFF4CAF50) else Color(0xFFFF9800)
+                            val leftIcon = if (isMet) Icons.Default.CheckCircle else Icons.Default.Warning
+
+                            RequirementItem(
+                                title = req.first,
+                                subtitle = req.second,
+                                status = status,
+                                statusIcon = statusIcon,
+                                statusColor = statusColor,
+                                leftIcon = leftIcon,
+                                leftIconColor = statusColor
+                            )
+                            if (index < visaRequirements.size - 1) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                            }
+                        }
+                    }
                 }
             }
             
@@ -121,7 +161,7 @@ fun QualificationScreen() {
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
             ) {
-                Text("View Details", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("Generate Document Checklist", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.height(8.dp)) // padding for bottom nav
         }
@@ -131,12 +171,12 @@ fun QualificationScreen() {
 @Composable
 fun RequirementItem(
     title: String, 
+    subtitle: String,
     status: String, 
     statusIcon: ImageVector, 
     statusColor: Color, 
     leftIcon: ImageVector, 
-    leftIconColor: Color,
-    onFixClick: (() -> Unit)? = null
+    leftIconColor: Color
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
@@ -146,13 +186,11 @@ fun RequirementItem(
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-            if (onFixClick != null) {
-                TextButton(onClick = onFixClick, contentPadding = PaddingValues(0.dp), modifier = Modifier.height(24.dp)) {
-                    Text("Fix this", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                }
-            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         }
         
+        Spacer(modifier = Modifier.width(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(statusIcon, contentDescription = status, tint = statusColor, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
