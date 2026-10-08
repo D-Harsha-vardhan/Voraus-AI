@@ -132,6 +132,8 @@ class AiAdvisorViewModel : ViewModel() {
                     
                     CRITICAL: Do NOT just repeat the examples below. You MUST search your knowledge base to find the actual best-matching universities and programs for the user's specific profile (course, GPA, level, language).
                     
+                    ONLY output the [UNIVERSITY_RECOMMENDATIONS] block if the user EXPLICITLY asks for university recommendations or a list of universities. If the user asks a general question (like about tuition fees, visas, or cities), DO NOT output the block.
+                    
                     When recommending universities, you MUST output a special block formatted exactly like this (use exactly these tags, no markdown, no bullet points, no headers):
                     
                     [UNIVERSITY_RECOMMENDATIONS]
