@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,11 +42,73 @@ fun ExtractionReviewScreen(
 
     LaunchedEffect(imageUri, documentType) {
         if (imageUri != null) {
-            val data = OcrHelper.extractData(context, imageUri, documentType)
-            extractedData = data
-            isLoading = false
+            val cachedData = com.example.edujourneygermany.auth.DocumentMemory.extractedDataCache[documentType]
+            if (cachedData != null) {
+                extractedData = cachedData
+                isLoading = false
+            } else {
+                val data = OcrHelper.extractData(context, imageUri, documentType)
+                extractedData = data
+                isLoading = false
+            }
         } else {
             isLoading = false
+        }
+    }
+
+    val securityWarning by remember(extractedData, documentType) {
+        derivedStateOf {
+            val baseName = com.example.edujourneygermany.data.UserProfileStore.fullName.trim()
+            
+            if (documentType == "Passport") {
+                val extractedName = extractedData["full_name"]?.trim() ?: ""
+                if (extractedName.isNotBlank() && baseName.isNotBlank() && !extractedName.equals(baseName, ignoreCase = true)) {
+                    return@derivedStateOf "Security Alert: Name on Passport ($extractedName) does not match your profile name ($baseName)."
+                }
+                
+                val expiry = extractedData["date_of_expiry"]?.trim() ?: ""
+                if (expiry.isNotBlank()) {
+                    val parts = expiry.split(Regex("[^0-9]"))
+                    val yearStr = parts.find { it.length == 4 }
+                    if (yearStr != null && yearStr.toInt() < java.time.LocalDate.now().year) {
+                        return@derivedStateOf "Security Alert: Passport appears to be expired (Year: $yearStr). Please provide a valid passport."
+                    }
+                }
+            } else if (documentType.contains("Language") || documentType.contains("Certificate") && !documentType.contains("Degree")) {
+                val extractedName = extractedData["candidate_name"]?.trim() ?: ""
+                if (extractedName.isNotBlank() && baseName.isNotBlank() && !extractedName.equals(baseName, ignoreCase = true)) {
+                    return@derivedStateOf "Security Alert: Candidate Name ($extractedName) does not match your profile name ($baseName)."
+                }
+                
+                val testDate = extractedData["test_date"]?.trim() ?: ""
+                if (testDate.isNotBlank()) {
+                    val parts = testDate.split(Regex("[^0-9]"))
+                    val yearStr = parts.find { it.length == 4 }
+                    if (yearStr != null && java.time.LocalDate.now().year - yearStr.toInt() > 2) {
+                        return@derivedStateOf "Warning: This certificate appears to be more than 2 years old (Year: $yearStr) and may not be accepted by universities."
+                    }
+                }
+            } else if (documentType.contains("Degree") || documentType == "Marksheet") {
+                val extractedName = extractedData["student_name"]?.trim() ?: ""
+                if (extractedName.isNotBlank() && baseName.isNotBlank() && !extractedName.equals(baseName, ignoreCase = true)) {
+                    return@derivedStateOf "Security Alert: Student Name ($extractedName) does not match your profile name ($baseName)."
+                }
+                
+                val issueDate = extractedData["date_of_issue"]?.trim() ?: ""
+                if (issueDate.isNotBlank()) {
+                    val parts = issueDate.split(Regex("[^0-9]"))
+                    val yearStr = parts.find { it.length == 4 }
+                    if (yearStr != null && yearStr.toInt() > java.time.LocalDate.now().year) {
+                        return@derivedStateOf "Security Alert: Issue date ($yearStr) cannot be in the future."
+                    }
+                }
+            } else if (documentType == "Resume" || documentType == "CV" || documentType == "Experience Letter") {
+                val extractedName = extractedData["employee_name"]?.trim() ?: ""
+                if (extractedName.isNotBlank() && baseName.isNotBlank() && !extractedName.equals(baseName, ignoreCase = true)) {
+                    return@derivedStateOf "Security Alert: Name on document ($extractedName) does not match your profile name ($baseName)."
+                }
+            }
+            null
         }
     }
 
@@ -101,8 +164,26 @@ fun ExtractionReviewScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
-                
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (securityWarning != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Warning, contentDescription = "Security Alert", tint = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                securityWarning!!,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 Text("Extracted Information", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -128,6 +209,9 @@ fun ExtractionReviewScreen(
                 Button(
                     onClick = {
                         isUploading = true
+                        // Save manual edits to memory so they aren't lost if the user comes back
+                        com.example.edujourneygermany.auth.DocumentMemory.extractedDataCache[documentType] = extractedData
+                        
                         scope.launch {
                             if (imageUri != null) {
                                 OcrHelper.uploadDocumentAndData(context, imageUri, documentType, extractedData)
@@ -138,7 +222,7 @@ fun ExtractionReviewScreen(
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !isUploading
+                    enabled = !isUploading && securityWarning == null
                 ) {
                     if (isUploading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
