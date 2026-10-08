@@ -44,6 +44,8 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
     var selectedUni by remember { mutableStateOf<SimpleUni?>(null) }
     var visaDetailMode by remember { mutableStateOf(false) } // Toggle for Visa details view
     var financeDetailMode by remember { mutableStateOf(false) } // Toggle for Finance details view
+    var selectedCourse by remember { mutableStateOf("M.Sc. Computer Science") }
+    var selectedIntake by remember { mutableStateOf("Winter Semester 2025") }
     
     // Load universities dynamically
     val allUnis = remember {
@@ -130,7 +132,7 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
             }
 
             if (financeDetailMode && selectedTab == 0 && selectedUni != null) {
-                FinanceDetailView(uni = selectedUni!!, onBack = { financeDetailMode = false })
+                FinanceDetailView(uni = selectedUni!!, course = selectedCourse, intake = selectedIntake, onBack = { financeDetailMode = false })
                 return@Column
             }
 
@@ -165,6 +167,10 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
                     onSearchQueryChange = { searchQuery = it },
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
+                    selectedCourse = selectedCourse,
+                    onCourseChange = { selectedCourse = it },
+                    selectedIntake = selectedIntake,
+                    onIntakeChange = { selectedIntake = it },
                     filteredUnis = filteredUnis,
                     popularUnis = popularUnis,
                     selectedUni = selectedUni,
@@ -528,6 +534,8 @@ fun VisaDetailCard(title: String, subtitle: String, status: String, icon: ImageV
 fun FinanceContent(
     searchQuery: String, onSearchQueryChange: (String) -> Unit,
     expanded: Boolean, onExpandedChange: (Boolean) -> Unit,
+    selectedCourse: String, onCourseChange: (String) -> Unit,
+    selectedIntake: String, onIntakeChange: (String) -> Unit,
     filteredUnis: List<SimpleUni>, popularUnis: List<SimpleUni>,
     selectedUni: SimpleUni?, onUniSelected: (SimpleUni) -> Unit,
     onClearSearch: () -> Unit,
@@ -631,11 +639,9 @@ fun FinanceContent(
     } else {
         // Selected University State
         var expandedCourse by remember { mutableStateOf(false) }
-        var selectedCourse by remember { mutableStateOf("M.Sc. Computer Science") }
         val courseOptions = listOf("M.Sc. Computer Science", "M.Sc. Data Science", "MBA", "M.Sc. Mechanical Engineering")
 
         var expandedIntake by remember { mutableStateOf(false) }
-        var selectedIntake by remember { mutableStateOf("Winter Semester 2025") }
         val intakeOptions = listOf("Winter Semester 2025", "Summer Semester 2025", "Winter Semester 2026")
 
         Text("Course & Intake", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B))
@@ -667,7 +673,7 @@ fun FinanceContent(
                     DropdownMenuItem(
                         text = { Text(option) },
                         onClick = {
-                            selectedCourse = option
+                            onCourseChange(option)
                             expandedCourse = false
                         }
                     )
@@ -704,7 +710,7 @@ fun FinanceContent(
                     DropdownMenuItem(
                         text = { Text(option) },
                         onClick = {
-                            selectedIntake = option
+                            onIntakeChange(option)
                             expandedIntake = false
                         }
                     )
@@ -741,7 +747,7 @@ fun FinanceContent(
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("M.Sc. Computer Science • Winter 2025", style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
+                        Text("$selectedCourse • $selectedIntake", style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
                     }
                 }
 
@@ -753,20 +759,22 @@ fun FinanceContent(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(modifier = Modifier.weight(1f).alpha(if (selectedCurrency == "EUR") 1f else 0.5f).background(Color(0xFFF0F9FF), RoundedCornerShape(8.dp)).border(if(selectedCurrency == "EUR") 2.dp else 1.dp, Color(0xFFBAE6FD), RoundedCornerShape(8.dp)).clip(RoundedCornerShape(8.dp)).clickable { selectedCurrency = "EUR" }.padding(12.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("€ 14,750", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF0369A1))
+                            val isPrivate = selectedUni.type.contains("Private", ignoreCase = true)
+                            Text(if(isPrivate) "€ 26,750" else "€ 14,750", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF0369A1))
                             Text("in Germany", style = MaterialTheme.typography.labelSmall, color = Color(0xFF0284C7))
                         }
                     }
                     Box(modifier = Modifier.weight(1f).alpha(if (selectedCurrency == "INR") 1f else 0.5f).background(Color(0xFFECFDF5), RoundedCornerShape(8.dp)).border(if(selectedCurrency == "INR") 2.dp else 1.dp, Color(0xFFA7F3D0), RoundedCornerShape(8.dp)).clip(RoundedCornerShape(8.dp)).clickable { selectedCurrency = "INR" }.padding(12.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("₹ 13,21,000", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF059669))
+                            val isPrivate = selectedUni.type.contains("Private", ignoreCase = true)
+                            Text(if(isPrivate) "₹ 23,95,000" else "₹ 13,21,000", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF059669))
                             Text("(approx.) in India", style = MaterialTheme.typography.labelSmall, color = Color(0xFF047857))
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                CostBreakdownList(selectedCurrency = selectedCurrency)
+                CostBreakdownList(uni = selectedUni, selectedCurrency = selectedCurrency)
             }
         }
         
@@ -785,7 +793,11 @@ fun FinanceContent(
 }
 
 @Composable
-fun CostBreakdownList(selectedCurrency: String) {
+fun CostBreakdownList(uni: SimpleUni, selectedCurrency: String) {
+    val isPrivate = uni.type.contains("Private", ignoreCase = true)
+    val tuitionEur = if (isPrivate) "€ 12,000" else "€ 0"
+    val tuitionInr = if (isPrivate) "₹ 10,74,000" else "₹ 0"
+    val tuitionLabel = if (isPrivate) "(Private University)" else "(Public University)"
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -794,7 +806,7 @@ fun CostBreakdownList(selectedCurrency: String) {
         }
         Spacer(modifier = Modifier.height(12.dp))
         
-        CostItem(Icons.Default.School, "Tuition Fees", "(Public University)", if (selectedCurrency == "EUR") "€ 0" else "₹ 0")
+        CostItem(Icons.Default.School, "Tuition Fees", tuitionLabel, if (selectedCurrency == "EUR") tuitionEur else tuitionInr)
         CostItem(Icons.Default.CalendarToday, "Semester Contribution", "", if (selectedCurrency == "EUR") "€ 150" else "₹ 13,400")
         CostItem(Icons.Default.Home, "Living Expenses", "(Room, Food, Transport)", if (selectedCurrency == "EUR") "€ 11,400" else "₹ 10,19,000")
         CostItem(Icons.Default.LocalHospital, "Health Insurance", "", if (selectedCurrency == "EUR") "€ 1,200" else "₹ 1,07,400")
@@ -922,7 +934,8 @@ fun ToolCard(modifier: Modifier = Modifier, title: String, subtitle: String, ico
     }
 }
 @Composable
-fun FinanceDetailView(uni: SimpleUni, onBack: () -> Unit) {
+fun FinanceDetailView(uni: SimpleUni, course: String, intake: String, onBack: () -> Unit) {
+    val isPrivate = uni.type.contains("Private", ignoreCase = true)
     val context = LocalContext.current
     var selectedCurrency by remember { mutableStateOf("EUR") }
 
@@ -990,11 +1003,12 @@ fun FinanceDetailView(uni: SimpleUni, onBack: () -> Unit) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Program Details", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
                 Spacer(modifier = Modifier.height(12.dp))
-                DetailRow("Course", "M.Sc. Computer Science")
+                DetailRow("Course", course)
                 DetailRow("Duration", "2 years")
-                DetailRow("Tuition Fee", "€ 0 (Public University)")
+                val tuitionTxt = if (isPrivate) "€ 12,000 (Private University)" else "€ 0 (Public University)"
+                DetailRow("Tuition Fee", tuitionTxt)
                 DetailRow("Semester Contribution", "€ 150 / semester")
-                DetailRow("Intake", "Winter Semester (Oct)")
+                DetailRow("Intake", intake)
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -1074,14 +1088,14 @@ fun FinanceDetailView(uni: SimpleUni, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
                 // Cost rows
                 val items = if (selectedCurrency == "EUR") listOf(
-                    Triple(Icons.Default.School, "Tuition Fees", "€ 0"),
+                    Triple(Icons.Default.School, "Tuition Fees", if (isPrivate) "€ 12,000" else "€ 0"),
                     Triple(Icons.Default.CalendarToday, "Semester Contribution", "€ 150"),
                     Triple(Icons.Default.Home, "Living Expenses", "€ 11,400"),
                     Triple(Icons.Default.HealthAndSafety, "Health Insurance", "€ 1,200"),
                     Triple(Icons.Default.Flight, "Visa & Travel", "€ 800"),
                     Triple(Icons.Default.Settings, "Initial Setup", "€ 1,200")
                 ) else listOf(
-                    Triple(Icons.Default.School, "Tuition Fees", "₹ 0"),
+                    Triple(Icons.Default.School, "Tuition Fees", if (isPrivate) "₹ 10,74,000" else "₹ 0"),
                     Triple(Icons.Default.CalendarToday, "Semester Contribution", "₹ 13,400"),
                     Triple(Icons.Default.Home, "Living Expenses", "₹ 10,19,000"),
                     Triple(Icons.Default.HealthAndSafety, "Health Insurance", "₹ 1,07,400"),
@@ -1108,7 +1122,7 @@ fun FinanceDetailView(uni: SimpleUni, onBack: () -> Unit) {
                 ) {
                     Text("Total", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
                     Text(
-                        if (selectedCurrency == "EUR") "€ 14,750" else "₹ 13,21,000",
+                        if (selectedCurrency == "EUR") { if (isPrivate) "€ 26,750" else "€ 14,750" } else { if (isPrivate) "₹ 23,95,000" else "₹ 13,21,000" },
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
