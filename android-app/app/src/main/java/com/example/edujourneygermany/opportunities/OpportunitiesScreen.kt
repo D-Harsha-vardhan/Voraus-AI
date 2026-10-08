@@ -20,8 +20,11 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpportunitiesScreen() {
+fun OpportunitiesScreen(
+    sharedViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     var selectedTab by remember { mutableStateOf(0) }
+    val universities by sharedViewModel.recommendedUniversities.collectAsState()
 
     Scaffold(
         topBar = {
@@ -59,29 +62,29 @@ fun OpportunitiesScreen() {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                item {
-                    OpportunityCard(
-                        institution = "Technical University of Munich",
-                        program = "M.Sc. Computer Science",
-                        location = "Munich, Germany",
-                        match = "92% Match",
-                        matchBreakdown = "Degree: 100% • English: 100% • GPA: 80%",
-                        reasons = listOf("Computer Science background", "Required degree", "English met"),
-                        missing = listOf("German B1", "APS Certificate"),
-                        iconLetter = "TU"
-                    )
-                }
-                item {
-                    OpportunityCard(
-                        institution = "RWTH Aachen University",
-                        program = "M.Sc. Artificial Intelligence",
-                        location = "Aachen, Germany",
-                        match = "85% Match",
-                        matchBreakdown = "Degree: 90% • English: 100% • GPA: 70%",
-                        reasons = listOf("Required degree completed", "IELTS requirement met"),
-                        missing = listOf("APS Certificate", "German B1"),
-                        iconLetter = "RW"
-                    )
+                if (universities.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No recommendations yet. Go to Chat to get your personalized list!",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+                    }
+                } else {
+                    items(universities.size) { index ->
+                        val uni = universities[index]
+                        OpportunityCard(
+                            institution = uni.name,
+                            program = uni.program,
+                            location = "Germany", 
+                            match = "${uni.matchScore}% Match",
+                            matchBreakdown = "${uni.type} • ${uni.language}",
+                            reasons = listOf("Matched based on your profile"),
+                            missing = listOf("Check university portal for specifics"),
+                            iconLetter = uni.name.take(2).uppercase()
+                        )
+                    }
                 }
             }
         }

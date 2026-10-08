@@ -8,7 +8,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class ChatMessage(val text: String, val isUser: Boolean, val isLoading: Boolean = false, val quotedQuestion: String? = null)
+data class ParsedUniversity(
+    val name: String,
+    val program: String,
+    val matchScore: String,
+    val type: String,
+    val language: String
+)
+
+data class ChatMessage(
+    val text: String, 
+    val isUser: Boolean, 
+    val isLoading: Boolean = false, 
+    val quotedQuestion: String? = null,
+    val universities: List<ParsedUniversity>? = null
+)
 
 data class FlowQuestion(
     val key: String,
@@ -114,17 +128,24 @@ class AiAdvisorViewModel : ViewModel() {
 
                 val systemPrompt = """
                     You are Educaro AI, an expert study abroad advisor for Germany. 
-                    Use the context provided about the user to give personalized advice.
+                    Use the context provided about the user to give accurate, personalized university and program recommendations based on real universities in Germany.
                     
-                    CRITICAL: When recommending universities, you MUST format EACH university exactly like this on a new line:
-                    [UNIVERSITY] University Name | Program Name | City, Germany
+                    CRITICAL: Do NOT just repeat the examples below. You MUST search your knowledge base to find the actual best-matching universities and programs for the user's specific profile (course, GPA, level, language).
                     
-                    For example:
-                    Based on your profile, here are some recommendations:
-                    [UNIVERSITY] TU Munich (TUM) | MSc Informatics | Munich, Germany
-                    [UNIVERSITY] RWTH Aachen | MSc Computer Science | Aachen, Germany
+                    When recommending universities, you MUST output a special block formatted exactly like this:
                     
-                    Keep your responses encouraging, concise, and helpful.
+                    [UNIVERSITY_RECOMMENDATIONS]
+                    University Abbreviation or Name | Program Name | MatchPercentage | University Type | Language
+                    [/UNIVERSITY_RECOMMENDATIONS]
+                    
+                    (Format Example - DO NOT COPY THESE SPECIFIC UNIVERSITIES UNLESS THEY TRULY MATCH):
+                    [UNIVERSITY_RECOMMENDATIONS]
+                    TUM | M.Sc. Computer Science | 92 | Public | English-taught
+                    KIT | M.Sc. Artificial Intelligence | 88 | Public | English-taught
+                    RWTH | M.Sc. Computer Science | 84 | Public | English-taught
+                    [/UNIVERSITY_RECOMMENDATIONS]
+                    
+                    Keep your text outside this block encouraging, concise, and helpful.
                 """.trimIndent()
                 
                 val chatMessages = mutableListOf<NvidiaMessage>()
@@ -151,27 +172,55 @@ class AiAdvisorViewModel : ViewModel() {
                 )
 
                 // Parse Nvidia response (OpenAI format)
-                val aiResponseText = if (response.isJsonObject) {
+                var aiResponseText = ""
+                if (response.isJsonObject) {
                     val obj = response.asJsonObject
                     if (obj.has("choices") && obj.getAsJsonArray("choices").size() > 0) {
                         val choice = obj.getAsJsonArray("choices").get(0).asJsonObject
                         if (choice.has("message") && choice.getAsJsonObject("message").has("content")) {
-                            choice.getAsJsonObject("message").get("content").asString
-                        } else {
-                            response.toString()
+                            aiResponseText = choice.getAsJsonObject("message").get("content").asString
                         }
-                    } else {
-                        response.toString()
                     }
-                } else {
-                    response.toString()
+                }
+                if (aiResponseText.isEmpty()) {
+                    aiResponseText = response.toString()
+                }
+
+                // Extract [UNIVERSITY_RECOMMENDATIONS] block
+                val uniList = mutableListOf<ParsedUniversity>()
+                val startTag = "[UNIVERSITY_RECOMMENDATIONS]"
+                val endTag = "[/UNIVERSITY_RECOMMENDATIONS]"
+                
+                var finalText = aiResponseText
+                if (aiResponseText.contains(startTag) && aiResponseText.contains(endTag)) {
+                    val startIndex = aiResponseText.indexOf(startTag)
+                    val endIndex = aiResponseText.indexOf(endTag)
+                    if (startIndex < endIndex) {
+                        val block = aiResponseText.substring(startIndex + startTag.length, endIndex).trim()
+                        finalText = (aiResponseText.substring(0, startIndex).trim() + "\n\n" + aiResponseText.substring(endIndex + endTag.length).trim()).trim()
+                        
+                        block.split("\n").forEach { line ->
+                            if (line.isNotBlank() && !line.startsWith("[")) {
+                                val parts = line.split("|").map { it.trim() }
+                                if (parts.size >= 5) {
+                                    uniList.add(ParsedUniversity(parts[0], parts[1], parts[2], parts[3], parts[4]))
+                                } else if (parts.size >= 3) {
+                                    uniList.add(ParsedUniversity(parts[0], parts[1], parts[2], "Public", "English-taught"))
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Replace loading message with actual response
                 _messages.update { list ->
                     list.mapIndexed { index, chatMessage ->
                         if (index == loadingIndex) {
-                            ChatMessage(aiResponseText, isUser = false)
+                            ChatMessage(
+                                text = finalText, 
+                                isUser = false, 
+                                universities = if (uniList.isNotEmpty()) uniList else null
+                            )
                         } else chatMessage
                     }
                 }

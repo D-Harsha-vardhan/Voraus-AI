@@ -44,6 +44,7 @@ import com.example.edujourneygermany.notifications.NotificationsScreen
 fun AppNavigation() {
     val navController = rememberNavController()
     val journeyViewModel: JourneyViewModel = viewModel()
+    val sharedUniversityViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = viewModel()
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -195,7 +196,11 @@ fun AppNavigation() {
                 )
             }
             composable("advisor") {
-                AiAdvisorScreen(onBookConsultant = { navController.navigate("consultant_dashboard") })
+                AiAdvisorScreen(
+                    onBookConsultant = { navController.navigate("consultant_dashboard") },
+                    onViewDetails = { navController.navigate("opportunities") },
+                    sharedViewModel = sharedUniversityViewModel
+                )
             }
             composable("consultant_dashboard") {
                 ConsultantDashboardScreen(
@@ -203,7 +208,9 @@ fun AppNavigation() {
                 )
             }
             composable("opportunities") {
-                OpportunitiesScreen()
+                OpportunitiesScreen(
+                    sharedViewModel = sharedUniversityViewModel
+                )
             }
             composable("notifications") {
                 NotificationsScreen(
