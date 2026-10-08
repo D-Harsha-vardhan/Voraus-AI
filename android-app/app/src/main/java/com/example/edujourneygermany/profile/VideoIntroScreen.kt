@@ -1,12 +1,16 @@
 package com.example.edujourneygermany.profile
 
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -22,11 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +40,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
+import java.io.DataOutputStream
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -69,6 +77,11 @@ fun VideoIntroScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var selectedVideoUri by remember { mutableStateOf<Uri?>(null) }
+    var videoThumbnail by remember { mutableStateOf<Bitmap?>(null) }
+    var videoFileName by remember { mutableStateOf<String?>(null) }
+    var videoDurationSec by remember { mutableStateOf<Int?>(null) }
+    var videoFileSizeMB by remember { mutableStateOf<String?>(null) }
+
     var isAnalyzing by remember { mutableStateOf(false) }
     var analysisProgressStage by remember { mutableStateOf("Ready") }
     var analysisResult by remember { mutableStateOf<VideoVssAnalysis?>(null) }
@@ -84,8 +97,49 @@ fun VideoIntroScreen(
         }
     }
 
+    // Load thumbnail & metadata when a video is selected
+    LaunchedEffect(selectedVideoUri) {
+        val uri = selectedVideoUri
+        if (uri != null) {
+            withContext(Dispatchers.IO) {
+                try {
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(context, uri)
+                    val frame = retriever.getFrameAtTime(1000000) // Frame at 1s
+                    val durStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    videoDurationSec = durStr?.toLongOrNull()?.let { (it / 1000).toInt() }
+                    retriever.release()
+                    videoThumbnail = frame
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+                try {
+                    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                        if (cursor.moveToFirst()) {
+                            if (nameIndex >= 0) videoFileName = cursor.getString(nameIndex)
+                            if (sizeIndex >= 0) {
+                                val bytes = cursor.getLong(sizeIndex)
+                                videoFileSizeMB = String.format("%.1f", bytes / (1024.0 * 1024.0))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    videoFileName = uri.lastPathSegment
+                }
+            }
+        } else {
+            videoThumbnail = null
+            videoFileName = null
+            videoDurationSec = null
+            videoFileSizeMB = null
+        }
+    }
+
     // Function to run backend analysis
-    fun executeAnalysis(useSample: Boolean) {
+    fun executeAnalysis(uri: Uri?) {
         coroutineScope.launch {
             isAnalyzing = true
             errorMessage = null
@@ -93,52 +147,87 @@ fun VideoIntroScreen(
 
             try {
                 val result = withContext(Dispatchers.IO) {
-                    analysisProgressStage = "Extracting temporal frames & audio track..."
-                    
-                    // Candidate host URLs (10.0.2.2 for emulator, localhost for adb reverse on physical device)
-                    val candidateUrls = listOf(
-                        "http://10.0.2.2:8000/video/analyze-sample",
-                        "http://127.0.0.1:8000/video/analyze-sample",
-                        "http://localhost:8000/video/analyze-sample"
-                    )
+                    if (uri != null) {
+                        // User attached their own video: upload to /video/analyze
+                        analysisProgressStage = "Reading attached video..."
+                        val candidateBaseUrls = listOf(
+                            "http://10.0.2.2:8000",
+                            "http://127.0.0.1:8000",
+                            "http://localhost:8000"
+                        )
 
-                    var responseData: JSONObject? = null
-                    for (endpointUrl in candidateUrls) {
-                        var connection: HttpURLConnection? = null
-                        try {
-                            val url = URL(endpointUrl)
-                            connection = (url.openConnection() as HttpURLConnection).apply {
-                                requestMethod = "GET"
-                                connectTimeout = 5000
-                                readTimeout = 45000
-                                setRequestProperty("Accept", "application/json")
-                            }
-                            analysisProgressStage = "Whisper transcribing speech & NVIDIA VSS scoring..."
-                            val code = connection.responseCode
-                            if (code == HttpURLConnection.HTTP_OK) {
-                                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                                val responseText = reader.readText()
-                                reader.close()
-                                val rootJson = JSONObject(responseText)
-                                responseData = rootJson.optJSONObject("data") ?: rootJson
+                        var responseJson: JSONObject? = null
+                        var lastError: Exception? = null
+
+                        for (baseUrl in candidateBaseUrls) {
+                            try {
+                                analysisProgressStage = "Uploading video to NVIDIA VSS agent..."
+                                val inputStream = context.contentResolver.openInputStream(uri)
+                                    ?: throw IllegalArgumentException("Cannot open video stream")
+
+                                val fname = videoFileName ?: "user_intro.mp4"
+                                val targetUrl = "$baseUrl/video/analyze"
+
+                                val responseStr = uploadVideoMultipart(targetUrl, inputStream, fname)
+                                analysisProgressStage = "Whisper STT & NVIDIA VSS scoring..."
+                                val rootJson = JSONObject(responseStr)
+                                responseJson = rootJson.optJSONObject("data") ?: rootJson
                                 break
+                            } catch (e: Exception) {
+                                lastError = e
                             }
-                        } catch (ignored: Exception) {
-                            // Try next candidate URL
-                        } finally {
-                            connection?.disconnect()
                         }
-                    }
 
-                    if (responseData != null) {
-                        parseAnalysisJson(responseData)
+                        if (responseJson != null) {
+                            parseAnalysisJson(responseJson)
+                        } else {
+                            throw RuntimeException(lastError?.message ?: "Failed to upload video to VSS agent")
+                        }
                     } else {
-                        createFallbackAnalysis()
+                        // Use sample video: call /video/analyze-sample
+                        analysisProgressStage = "Analyzing sample video with NVIDIA VSS..."
+                        val candidateUrls = listOf(
+                            "http://10.0.2.2:8000/video/analyze-sample",
+                            "http://127.0.0.1:8000/video/analyze-sample",
+                            "http://localhost:8000/video/analyze-sample"
+                        )
+
+                        var responseData: JSONObject? = null
+                        for (endpointUrl in candidateUrls) {
+                            var connection: HttpURLConnection? = null
+                            try {
+                                val url = URL(endpointUrl)
+                                connection = (url.openConnection() as HttpURLConnection).apply {
+                                    requestMethod = "GET"
+                                    connectTimeout = 6000
+                                    readTimeout = 45000
+                                    setRequestProperty("Accept", "application/json")
+                                }
+                                val code = connection.responseCode
+                                if (code == HttpURLConnection.HTTP_OK) {
+                                    val reader = BufferedReader(InputStreamReader(connection.inputStream))
+                                    val responseText = reader.readText()
+                                    reader.close()
+                                    val rootJson = JSONObject(responseText)
+                                    responseData = rootJson.optJSONObject("data") ?: rootJson
+                                    break
+                                }
+                            } catch (ignored: Exception) {
+                            } finally {
+                                connection?.disconnect()
+                            }
+                        }
+
+                        if (responseData != null) {
+                            parseAnalysisJson(responseData)
+                        } else {
+                            createFallbackAnalysis()
+                        }
                     }
                 }
 
                 analysisProgressStage = "Scoring confidence & generating interview report..."
-                kotlinx.coroutines.delay(600)
+                kotlinx.coroutines.delay(400)
                 analysisResult = result
             } catch (e: Exception) {
                 errorMessage = "Analysis error: ${e.message}"
@@ -192,40 +281,44 @@ fun VideoIntroScreen(
 
             // Subtitle Description
             Text(
-                "Record or analyze your 1-minute self-introduction. Our NVIDIA Video Search & Summarization (VSS) agent analyzes your speech, evaluates body language, and calculates an interview confidence score for German university & visa applications.",
+                "Record or attach your 1-minute self-introduction. Our NVIDIA Video Search & Summarization (VSS) agent transcribes your speech, assesses eye contact & posture, and outputs an interview confidence score for German university & visa applications.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Video Preview / Action Card
+            // Video Preview / Display Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(230.dp),
+                    .height(250.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable(enabled = !isAnalyzing) {
+                        videoPickerLauncher.launch("video/*")
+                    },
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                ) {
+                Box(modifier = Modifier.fillMaxSize()) {
                     if (isAnalyzing) {
+                        // Loading State Overlay
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.85f))
+                                .padding(16.dp)
                         ) {
                             CircularProgressIndicator(
                                 color = nvidiaGreen,
-                                strokeWidth = 3.dp,
-                                modifier = Modifier.size(48.dp)
+                                strokeWidth = 3.5.dp,
+                                modifier = Modifier.size(52.dp)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "NVIDIA VSS Processing...",
+                                "NVIDIA VSS Agent Active",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleMedium
@@ -233,40 +326,155 @@ fun VideoIntroScreen(
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 analysisProgressStage,
-                                color = Color.White.copy(alpha = 0.7f),
+                                color = Color.White.copy(alpha = 0.8f),
                                 style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.Center
                             )
                         }
-                    } else if (analysisResult != null) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                Icons.Default.CheckCircle,
-                                contentDescription = "Analyzed",
-                                tint = nvidiaGreen,
-                                modifier = Modifier.size(48.dp)
+                    } else if (selectedVideoUri != null) {
+                        // Real Video Thumbnail / Preview
+                        if (videoThumbnail != null) {
+                            Image(
+                                bitmap = videoThumbnail!!.asImageBitmap(),
+                                contentDescription = "Attached Video Preview",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFF1E293B)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = nvidiaGreen, modifier = Modifier.size(32.dp))
+                            }
+                        }
+
+                        // Gradient shadow overlays
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Black.copy(alpha = 0.6f),
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.85f)
+                                        )
+                                    )
+                                )
+                        )
+
+                        // Top Row: Attached Badge & Change Button
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                color = nvidiaGreen,
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        "VIDEO ATTACHED",
+                                        color = Color.Black,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                color = Color.Black.copy(alpha = 0.65f),
+                                shape = CircleShape,
+                                modifier = Modifier.clickable {
+                                    videoPickerLauncher.launch("video/*")
+                                }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Change", color = Color.White, fontSize = 11.sp)
+                                }
+                            }
+                        }
+
+                        // Center Play Button Icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.align(Alignment.Center)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .background(Color.Black.copy(alpha = 0.65f), CircleShape)
+                                    .border(2.dp, nvidiaGreen, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.PlayArrow,
+                                    contentDescription = "Video Attached",
+                                    tint = nvidiaGreen,
+                                    modifier = Modifier.size(34.dp)
+                                )
+                            }
+                        }
+
+                        // Bottom Overlay: File Name & Duration
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .fillMaxWidth()
+                                .padding(14.dp)
+                        ) {
                             Text(
-                                "Video Evaluated Successfully",
+                                videoFileName ?: "Attached Candidate Video",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "Duration: ${analysisResult?.durationSeconds}s • Model: Llama-3.2-Vision",
-                                color = Color.White.copy(alpha = 0.7f),
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (videoDurationSec != null) {
+                                    Text(
+                                        "Duration: ${videoDurationSec}s",
+                                        color = Color.White.copy(alpha = 0.75f),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                if (videoFileSizeMB != null) {
+                                    Text(
+                                        "• ${videoFileSizeMB} MB",
+                                        color = Color.White.copy(alpha = 0.75f),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
                         }
                     } else {
+                        // Empty / Placeholder state
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
                         ) {
                             Box(
                                 modifier = Modifier
@@ -283,16 +491,17 @@ fun VideoIntroScreen(
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                if (selectedVideoUri != null) "Video Ready for Assessment" else "No Video Selected",
+                                "Tap Here to Attach Video",
                                 color = Color.White,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Choose a file or run the sample candidate intro",
-                                color = Color.White.copy(alpha = 0.6f),
-                                style = MaterialTheme.typography.bodySmall
+                                "Pick your self-introduction from gallery or record one",
+                                color = Color.White.copy(alpha = 0.65f),
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
@@ -303,29 +512,84 @@ fun VideoIntroScreen(
 
             // Action Buttons
             if (!isAnalyzing && analysisResult == null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { videoPickerLauncher.launch("video/*") },
-                        modifier = Modifier.weight(1f).height(50.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.FileUpload, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Pick Video", fontSize = 13.sp)
-                    }
-
+                if (selectedVideoUri != null) {
+                    // Prominent button to analyze the attached user video!
                     Button(
-                        onClick = { executeAnalysis(useSample = true) },
-                        modifier = Modifier.weight(1.3f).height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        onClick = { executeAnalysis(selectedVideoUri) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = nvidiaGreen)
                     ) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.Black)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Analyze Sample", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.Black)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Analyze Attached Video",
+                            color = Color.Black,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 15.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { videoPickerLauncher.launch("video/*") },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Pick Another", fontSize = 12.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = { executeAnalysis(null) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Test Sample Video", fontSize = 12.sp)
+                        }
+                    }
+                } else {
+                    // When no video is attached yet
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = { videoPickerLauncher.launch("video/*") },
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(52.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(Icons.Default.FileUpload, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Attach Video", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = { executeAnalysis(null) },
+                            modifier = Modifier
+                                .weight(1.1f)
+                                .height(52.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp), tint = nvidiaGreen)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Test Sample", fontSize = 13.sp)
+                        }
                     }
                 }
             }
@@ -334,15 +598,22 @@ fun VideoIntroScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        errorMessage ?: "",
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Analysis Error", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            errorMessage ?: "",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
 
@@ -563,7 +834,9 @@ fun VideoIntroScreen(
                             analysisResult = null
                             selectedVideoUri = null
                         },
-                        modifier = Modifier.weight(1f).height(52.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Retake Video")
@@ -571,7 +844,9 @@ fun VideoIntroScreen(
 
                     Button(
                         onClick = onSaveSuccess,
-                        modifier = Modifier.weight(1.2f).height(52.dp),
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .height(52.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
@@ -604,6 +879,53 @@ private fun AnalysisRow(label: String, value: String) {
     }
 }
 
+// Streaming multipart upload to backend /video/analyze
+private fun uploadVideoMultipart(targetUrl: String, inputStream: InputStream, fileName: String): String {
+    val boundary = "===boundary===" + System.currentTimeMillis() + "==="
+    val lineEnd = "\r\n"
+    val twoHyphens = "--"
+
+    val url = URL(targetUrl)
+    val conn = (url.openConnection() as HttpURLConnection).apply {
+        requestMethod = "POST"
+        doOutput = true
+        doInput = true
+        useCaches = false
+        connectTimeout = 30000
+        readTimeout = 120000
+        setRequestProperty("Connection", "Keep-Alive")
+        setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+    }
+
+    val outputStream = DataOutputStream(conn.outputStream)
+    outputStream.writeBytes(twoHyphens + boundary + lineEnd)
+    outputStream.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"$fileName\"$lineEnd")
+    outputStream.writeBytes("Content-Type: video/mp4$lineEnd")
+    outputStream.writeBytes(lineEnd)
+
+    val buffer = ByteArray(16384)
+    var bytesRead: Int
+    inputStream.use { input ->
+        while (input.read(buffer).also { bytesRead = it } != -1) {
+            outputStream.write(buffer, 0, bytesRead)
+        }
+    }
+
+    outputStream.writeBytes(lineEnd)
+    outputStream.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd)
+    outputStream.flush()
+    outputStream.close()
+
+    val responseCode = conn.responseCode
+    val stream = if (responseCode in 200..299) conn.inputStream else conn.errorStream
+    val response = stream?.bufferedReader()?.use { it.readText() } ?: ""
+    conn.disconnect()
+    if (responseCode !in 200..299) {
+        throw RuntimeException("Backend HTTP $responseCode: $response")
+    }
+    return response
+}
+
 private fun parseAnalysisJson(json: JSONObject): VideoVssAnalysis {
     val conf = json.optInt("confidence_score", 70)
     val flue = json.optInt("fluency_score", 65)
@@ -619,7 +941,7 @@ private fun parseAnalysisJson(json: JSONObject): VideoVssAnalysis {
         ?: "Master of Science in Germany"
     val motivation = profile?.optString("extracted_motivation")
         ?: profile?.optString("core_motivation")
-        ?: "Strong interest in Germany's advanced engineering & tuition-free education"
+        ?: "Strong interest in Germany's advanced engineering & research"
 
     val visual = json.optJSONObject("visual_analysis")
     val eye = visual?.optString("eye_contact", "Direct eye contact maintained") ?: "Direct eye contact maintained"
@@ -675,7 +997,7 @@ private fun createFallbackAnalysis(): VideoVssAnalysis {
         eyeContact = "Steady camera lens focus; engaged gaze.",
         bodyLanguage = "Upright posture with welcoming demeanor.",
         attireAndSetting = "Clean neutral background with balanced front lighting.",
-        speechDelivery = "Natural pacing (130 wpm) with distinct pronunciation.",
+        speechDelivery = "Natural pacing with distinct pronunciation.",
         strengths = listOf("Clear career motivation", "Good camera presence", "Articulate pronunciation"),
         improvements = listOf(
             "Mention specific German universities (e.g. TU Munich, RWTH Aachen)",
