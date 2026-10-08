@@ -49,9 +49,11 @@ fun DocumentsScreen(onNavigateToExtraction: (String, String) -> Unit) {
     LaunchedEffect(Unit) {
         try {
             val bucket = Supabase.client.storage["user_documents"]
-            val email = Supabase.client.auth.currentUserOrNull()?.email ?: ""
-            val files = bucket.list()
-            val allNames = files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) }
+            val email = Supabase.client.auth.currentUserOrNull()?.email ?: com.example.edujourneygermany.auth.UserSession.userEmail
+            val allNames = if (email.isNotBlank()) {
+                val files = bucket.list()
+                files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) }
+            } else emptyList()
             
             docStatuses.keys.toList().forEach { docType ->
                 val searchKeys = when(docType) {
@@ -91,7 +93,7 @@ fun DocumentsScreen(onNavigateToExtraction: (String, String) -> Unit) {
                 isLoadingImage = true
                 try {
                     val bucket = Supabase.client.storage["user_documents"]
-                    val email = Supabase.client.auth.currentUserOrNull()?.email ?: ""
+                    val email = Supabase.client.auth.currentUserOrNull()?.email ?: com.example.edujourneygermany.auth.UserSession.userEmail
                     
                     val searchKeys = when(docType) {
                         "CV / Resume" -> listOf("_cv", "_resume")

@@ -59,13 +59,13 @@ fun QualificationScreen(onBackClick: () -> Unit = {}, onNavigateToDocuments: () 
     LaunchedEffect(Unit) {
         try {
             val bucket = io.github.jan.supabase.SupabaseClient.let { com.example.edujourneygermany.data.Supabase.client.storage["user_documents"] }
-            val email = com.example.edujourneygermany.data.Supabase.client.auth.currentUserOrNull()?.email ?: ""
+            val email = com.example.edujourneygermany.data.Supabase.client.auth.currentUserOrNull()?.email ?: com.example.edujourneygermany.auth.UserSession.userEmail
             val files = bucket.list()
-            val allNames = files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) }
-            isBlockedAccountVerified = allNames.any { it.contains("_blocked") }
-            isPassportVerified = allNames.any { it.contains("_passport") }
+            val allNames = if (email.isNotBlank()) files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) } else emptyList()
+            isBlockedAccountVerified = allNames.any { it.contains("_blocked account") }
+            isPassportVerified = allNames.any { it.contains("_valid passport") || it.contains("_passport") }
             isAdmissionVerified = allNames.any { it.contains("_admission") }
-            isHealthVerified = allNames.any { it.contains("_health") }
+            isHealthVerified = allNames.any { it.contains("_health insurance") }
             isApsVerified = allNames.any { it.contains("_aps") }
             isCvVerified = allNames.any { it.contains("_cv") || it.contains("_resume") }
             isTranscriptsVerified = allNames.any { it.contains("_transcripts") || it.contains("_degree") }
