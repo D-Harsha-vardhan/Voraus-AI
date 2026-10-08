@@ -19,6 +19,11 @@ import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.ui.unit.sp
+
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,8 +61,19 @@ fun AiAdvisorScreen(
     
     Scaffold(
         topBar = {
+            val context = LocalContext.current
             TopAppBar(
                 title = { Text("AI Advisor", fontWeight = FontWeight.Bold) },
+                actions = {
+                    TextButton(onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://elevenlabs.io/app/talk-to?agent_id=agent_0301m4ebw1qee439epz1b3fh56k9&branch_id=agtbrch_3301m4ebw2v0emmvgjpj3dv68pse"))
+                        context.startActivity(intent)
+                    }) {
+                        Icon(Icons.Default.Mic, contentDescription = "Voice Agent", modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Voice Agent")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
