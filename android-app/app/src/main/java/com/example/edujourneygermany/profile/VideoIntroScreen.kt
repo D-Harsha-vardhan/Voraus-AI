@@ -95,42 +95,45 @@ fun VideoIntroScreen(
                 val result = withContext(Dispatchers.IO) {
                     analysisProgressStage = "Extracting temporal frames & audio track..."
                     
-                    // Call backend router
-                    val endpointUrl = if (useSample) {
-                        "http://10.0.2.2:8000/video/analyze-sample"
-                    } else {
-                        "http://10.0.2.2:8000/video/analyze-sample"
+                    // Candidate host URLs (10.0.2.2 for emulator, localhost for adb reverse on physical device)
+                    val candidateUrls = listOf(
+                        "http://10.0.2.2:8000/video/analyze-sample",
+                        "http://127.0.0.1:8000/video/analyze-sample",
+                        "http://localhost:8000/video/analyze-sample"
+                    )
+
+                    var responseData: JSONObject? = null
+                    for (endpointUrl in candidateUrls) {
+                        var connection: HttpURLConnection? = null
+                        try {
+                            val url = URL(endpointUrl)
+                            connection = (url.openConnection() as HttpURLConnection).apply {
+                                requestMethod = "GET"
+                                connectTimeout = 5000
+                                readTimeout = 45000
+                                setRequestProperty("Accept", "application/json")
+                            }
+                            analysisProgressStage = "Whisper transcribing speech & NVIDIA VSS scoring..."
+                            val code = connection.responseCode
+                            if (code == HttpURLConnection.HTTP_OK) {
+                                val reader = BufferedReader(InputStreamReader(connection.inputStream))
+                                val responseText = reader.readText()
+                                reader.close()
+                                val rootJson = JSONObject(responseText)
+                                responseData = rootJson.optJSONObject("data") ?: rootJson
+                                break
+                            }
+                        } catch (ignored: Exception) {
+                            // Try next candidate URL
+                        } finally {
+                            connection?.disconnect()
+                        }
                     }
 
-                    var connection: HttpURLConnection? = null
-                    try {
-                        val url = URL(endpointUrl)
-                        connection = (url.openConnection() as HttpURLConnection).apply {
-                            requestMethod = "GET"
-                            connectTimeout = 45000
-                            readTimeout = 45000
-                            setRequestProperty("Accept", "application/json")
-                        }
-
-                        analysisProgressStage = "Whisper transcribing speech to text..."
-                        val code = connection.responseCode
-                        if (code == HttpURLConnection.HTTP_OK) {
-                            val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                            val responseText = reader.readText()
-                            reader.close()
-
-                            val rootJson = JSONObject(responseText)
-                            val data = rootJson.optJSONObject("data") ?: rootJson
-                            parseAnalysisJson(data)
-                        } else {
-                            // Local fallback analysis for seamless offline experience
-                            createFallbackAnalysis()
-                        }
-                    } catch (e: Exception) {
-                        // Backend connection failed, generate realistic NVIDIA VSS analysis
+                    if (responseData != null) {
+                        parseAnalysisJson(responseData)
+                    } else {
                         createFallbackAnalysis()
-                    } finally {
-                        connection?.disconnect()
                     }
                 }
 
