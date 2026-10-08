@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import com.example.edujourneygermany.data.UserProfileStore
+import com.example.edujourneygermany.accessibility.AppSpeaker
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
@@ -27,6 +29,11 @@ import androidx.navigation.NavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, onBack: () -> Unit) {
+    LaunchedEffect(Unit) {
+        if (UserProfileStore.isBlindModeEnabled) {
+            AppSpeaker.speak("Let's review your documents. Please upload your passport, degree, or CV. Then tap Finish Setup.")
+        }
+    }
     var passportUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var degreeUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var englishUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }

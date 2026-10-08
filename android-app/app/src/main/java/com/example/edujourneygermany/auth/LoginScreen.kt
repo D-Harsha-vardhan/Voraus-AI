@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import com.example.edujourneygermany.data.UserProfileStore
+import com.example.edujourneygermany.accessibility.AppSpeaker
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,6 +40,11 @@ import com.example.edujourneygermany.theme.PrimaryBlue
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
+    LaunchedEffect(Unit) {
+        if (UserProfileStore.isBlindModeEnabled) {
+            AppSpeaker.speak("Welcome Back to EduJourney Germany. Please enter your email and password, then tap Log In. You can also sign in with Google or Apple.")
+        }
+    }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -148,7 +155,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             Spacer(modifier = Modifier.height(24.dp))
 
             // Inputs
-            OutlinedTextField(
+            com.example.edujourneygermany.accessibility.AccessibleOutlinedTextField(
+                label = "Email Address",
                 value = email,
                 onValueChange = { email = it },
                 modifier = Modifier.fillMaxWidth(),
@@ -168,7 +176,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
+            com.example.edujourneygermany.accessibility.AccessibleOutlinedTextField(
+                label = "Password",
                 value = password,
                 onValueChange = { password = it },
                 modifier = Modifier.fillMaxWidth(),

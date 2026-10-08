@@ -11,6 +11,9 @@ object UserProfileStore {
     var gender by mutableStateOf("")
     var nationality by mutableStateOf("")
     
+    var isBlindModeEnabled by mutableStateOf(false)
+    var hasSeenAccessibilityScreen by mutableStateOf(false)
+    
     var passportNumber by mutableStateOf("")
     var phone by mutableStateOf("")
     var location by mutableStateOf("")

@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Work
+import com.example.edujourneygermany.data.UserProfileStore
+import com.example.edujourneygermany.accessibility.AppSpeaker
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +36,11 @@ data class GoalData(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoalSelectionScreen(onNext: () -> Unit, onBack: () -> Unit) {
+    LaunchedEffect(Unit) {
+        if (UserProfileStore.isBlindModeEnabled) {
+            AppSpeaker.speak("What is your primary goal in Germany? Options are Study, Work, or language learning.")
+        }
+    }
     var selectedGoal by remember { mutableStateOf<Int?>(0) }
 
     val goals = listOf(

@@ -45,6 +45,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val journeyViewModel: JourneyViewModel = viewModel()
     val sharedUniversityViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = viewModel()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -52,8 +53,18 @@ fun AppNavigation() {
     // Screens where the floating nav bar should be visible
     val bottomBarRoutes = listOf("home", "documents", "qualification", "advisor", "opportunities", "profile")
 
+    val startDest = if (com.example.edujourneygermany.data.UserProfileStore.hasSeenAccessibilityScreen) "splash" else "accessibility_selection"
     Box(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "splash") {
+        NavHost(navController = navController, startDestination = startDest) {
+            composable("accessibility_selection") {
+                com.example.edujourneygermany.accessibility.AccessibilitySelectionScreen(
+                    onNavigateNext = {
+                        navController.navigate("splash") {
+                            popUpTo("accessibility_selection") { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable("splash") {
                 SplashScreen(
                     onGetStarted = { navController.navigate("register") },
@@ -118,7 +129,11 @@ fun AppNavigation() {
                     onNavigateToQualification = { navController.navigate("qualification") },
                     onNavigateToEditProfile = { navController.navigate("edit_profile") },
                     onLogout = {
-                        navController.navigate("splash") {
+                        com.example.edujourneygermany.data.UserProfileStore.hasSeenAccessibilityScreen = false
+                        com.example.edujourneygermany.data.UserProfileStore.isBlindModeEnabled = false
+                        context.getSharedPreferences("edu_journey_prefs", android.content.Context.MODE_PRIVATE).edit().clear().apply()
+                        
+                        navController.navigate("accessibility_selection") {
                             popUpTo(0)
                         }
                     }
@@ -234,7 +249,13 @@ fun AppNavigation() {
             }
             composable("consultant_dashboard") {
                 ConsultantDashboardScreen(
-                    onLogout = { navController.navigate("register") { popUpTo(0) } }
+                    onLogout = {
+                        com.example.edujourneygermany.data.UserProfileStore.hasSeenAccessibilityScreen = false
+                        com.example.edujourneygermany.data.UserProfileStore.isBlindModeEnabled = false
+                        context.getSharedPreferences("edu_journey_prefs", android.content.Context.MODE_PRIVATE).edit().clear().apply()
+                        
+                        navController.navigate("accessibility_selection") { popUpTo(0) } 
+                    }
                 )
             }
             composable("opportunities") {

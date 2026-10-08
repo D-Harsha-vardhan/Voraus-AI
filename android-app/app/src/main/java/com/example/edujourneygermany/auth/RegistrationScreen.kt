@@ -21,9 +21,17 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.example.edujourneygermany.data.UserProfileStore
+import com.example.edujourneygermany.accessibility.AppSpeaker
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) {
+    LaunchedEffect(Unit) {
+        if (UserProfileStore.isBlindModeEnabled) {
+            AppSpeaker.speak("Create Account screen. Please enter your email address, password, and confirm password. Then check the agree to terms box, and tap Register.")
+        }
+    }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -83,7 +91,8 @@ fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) 
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text("Email address", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f))
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                com.example.edujourneygermany.accessibility.AccessibleOutlinedTextField(
+                    label = "Email Address",
                     value = email,
                     onValueChange = { email = it },
                     modifier = Modifier.fillMaxWidth(),
@@ -100,7 +109,8 @@ fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) 
                 
                 Text("Password", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f))
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                com.example.edujourneygermany.accessibility.AccessibleOutlinedTextField(
+                    label = "Password",
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
@@ -120,7 +130,8 @@ fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) 
                 
                 Text("Confirm password", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f))
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                com.example.edujourneygermany.accessibility.AccessibleOutlinedTextField(
+                    label = "Confirm Password",
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
                     modifier = Modifier.fillMaxWidth(),

@@ -22,12 +22,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 import com.example.edujourneygermany.data.UserProfileStore
+import com.example.edujourneygermany.accessibility.accessibleClickable
+
+import com.example.edujourneygermany.accessibility.AppSpeaker
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeDashboardScreen(
     onNavigate: (String) -> Unit
 ) {
+    val fields = listOf(
+        UserProfileStore.email, UserProfileStore.fullName, UserProfileStore.dob, UserProfileStore.gender,
+        UserProfileStore.nationality, UserProfileStore.passportNumber, UserProfileStore.phone, UserProfileStore.location,
+        UserProfileStore.degree, UserProfileStore.university, UserProfileStore.graduationYear, UserProfileStore.role,
+        UserProfileStore.company, UserProfileStore.experienceDuration, UserProfileStore.englishLevel, UserProfileStore.germanLevel,
+        UserProfileStore.linkedIn, UserProfileStore.github
+    )
+    val completedFields = fields.count { it.isNotEmpty() }
+    val progressRatio = if (fields.isNotEmpty()) completedFields.toFloat() / fields.size else 0f
+    val progressPercentage = (progressRatio * 100).toInt()
+
+    LaunchedEffect(Unit) {
+        if (UserProfileStore.isBlindModeEnabled) {
+            AppSpeaker.speak("You are on the Home Dashboard. There are Quick Actions for Profile, Documents, Visa Advisor, and AI Advisor in the middle of the screen.")
+        }
+    }
     Scaffold(
     ) { paddingValues ->
         Column(
@@ -104,13 +124,13 @@ fun HomeDashboardScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Profile 40% Completed",
+                                "Profile $progressPercentage% Completed",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
                         Text(
-                            "40%",
+                            "${progressPercentage}%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -118,7 +138,7 @@ fun HomeDashboardScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     LinearProgressIndicator(
-                        progress = 0.4f,
+                        progress = progressRatio,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)
@@ -175,35 +195,7 @@ fun HomeDashboardScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Next Step Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)), // Light orange warning background
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Warning, contentDescription = "Alert", tint = Color(0xFFF57C00))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Next Step", style = MaterialTheme.typography.titleMedium, color = Color(0xFFF57C00), fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Upload APS Certificate", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE65100))
-                    Text("Required for university applications", style = MaterialTheme.typography.bodyMedium, color = Color(0xFFE65100).copy(alpha = 0.8f))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { onNavigate("documents") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
-                    ) {
-                        Text("Upload Now", color = Color.White)
-                    }
-                }
-            }
+
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -379,8 +371,7 @@ fun QuickActionCard(
     onClick: () -> Unit
 ) {
     Card(
-        onClick = onClick,
-        modifier = modifier.aspectRatio(1f),
+        modifier = modifier.aspectRatio(1f).accessibleClickable("Navigate to $title", onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

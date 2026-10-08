@@ -13,6 +13,11 @@ import com.example.edujourneygermany.theme.EduJourneyGermanyTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        val prefs = getSharedPreferences("edu_journey_prefs", android.content.Context.MODE_PRIVATE)
+        com.example.edujourneygermany.data.UserProfileStore.hasSeenAccessibilityScreen = prefs.getBoolean("has_seen_accessibility", false)
+        com.example.edujourneygermany.data.UserProfileStore.isBlindModeEnabled = prefs.getBoolean("blind_mode_enabled", false)
+        
         setContent {
             EduJourneyGermanyTheme {
                 Surface(

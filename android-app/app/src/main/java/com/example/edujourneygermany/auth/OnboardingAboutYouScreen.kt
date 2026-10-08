@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import com.example.edujourneygermany.accessibility.AppSpeaker
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +26,11 @@ import kotlinx.serialization.json.put
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingAboutYouScreen(onNext: () -> Unit, onBack: () -> Unit) {
+    LaunchedEffect(Unit) {
+        if (UserProfileStore.isBlindModeEnabled) {
+            AppSpeaker.speak("Tell us about yourself. Please enter your full name, date of birth, gender, and nationality. Then tap Next.")
+        }
+    }
     // Bind to the global store instead of local state
     var fullName by remember { mutableStateOf(UserProfileStore.fullName) }
     var dob by remember { mutableStateOf(UserProfileStore.dob) }
@@ -95,10 +101,10 @@ fun OnboardingAboutYouScreen(onNext: () -> Unit, onBack: () -> Unit) {
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            OutlinedTextField(
+            com.example.edujourneygermany.accessibility.AccessibleOutlinedTextField(
+                label = "Full Name",
                 value = fullName,
                 onValueChange = { fullName = it },
-                label = { Text("Full Name") },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -111,10 +117,10 @@ fun OnboardingAboutYouScreen(onNext: () -> Unit, onBack: () -> Unit) {
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            OutlinedTextField(
+            com.example.edujourneygermany.accessibility.AccessibleOutlinedTextField(
+                label = "Date of Birth",
                 value = dob,
                 onValueChange = { dob = it },
-                label = { Text("Date of Birth (DD/MM/YYYY)") },
                 leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
