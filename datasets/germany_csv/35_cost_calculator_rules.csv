@@ -1,0 +1,11 @@
+﻿component,formula,data_source,notes
+Tuition,tuition_per_semester x 2 semesters,"From 34_university_fee_details; blank = unknown, ask student or show 'verify'","Public universities usually 0; BW 1,500; TUM 4,000-6,000 (Masters)"
+Semester contribution,semester_contribution x 2,From 34; default 150-400 if blank,Often includes public transport ticket in some cities
+Living expenses,monthly_total x 12,From 33_city_cost_components by city,"Rent, food, transport, phone, personal. The blocked account (EUR 11,904) is proof of funds and pays this; do NOT add it again"
+Health insurance,130 to 150 EUR x 12,Public student insurance; verify,Mandatory; see 40_health_insurance_details
+Visa and travel,"visa 75 EUR + VFS service 1,800-2,500 INR + flight 40,000-80,000 INR + APS 18,000 INR",Converted with the exchange rate,Fees change; verify
+Initial setup,"800 to 1,500 EUR","Rent deposit, bedding, SIM, bank, registration",Deposit is often 2-3 months rent
+Blocked account provider fees,100 to 250 EUR,Setup plus monthly fees (see 39),Providers' prices vary; verify
+Total,"Sum of all rows, low and high",Show EUR and INR,"Always show as an estimate range, never a promise"
+INR conversion,EUR x rate,Rate from 37_exchange_rates; always show the 'as of' date,Never hard-code the rate; add a note that bank rates and fees differ
+Unknown values,If tuition or any item is blank,Say 'not verified' and exclude it from the total with a warning,Never guess a fee

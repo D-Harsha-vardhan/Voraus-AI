@@ -132,6 +132,10 @@ class AiAdvisorViewModel : ViewModel() {
                     
                     CRITICAL: Do NOT just repeat the examples below. You MUST search your knowledge base to find the actual best-matching universities and programs for the user's specific profile (course, GPA, level, language).
                     
+                    ONLY output the [UNIVERSITY_RECOMMENDATIONS] block if the user EXPLICITLY asks for university recommendations or a list of universities. If the user asks a general question (like about tuition fees, visas, or cities), DO NOT output the block.
+                    
+                    If the user asks a question entirely unrelated to studying in Germany, or if you do not know the answer based on your context, you MUST respond EXACTLY with the single word: UNKNOWN_QUERY
+                    
                     When recommending universities, you MUST output a special block formatted exactly like this (use exactly these tags, no markdown, no bullet points, no headers):
                     
                     [UNIVERSITY_RECOMMENDATIONS]
@@ -201,7 +205,10 @@ class AiAdvisorViewModel : ViewModel() {
                                 uniList.add(ParsedUniversity(parts[0], parts[1], parts[2].replace("%", ""), "Public", "English-taught"))
                             }
                         }
-                    }
+                }
+
+                if (finalText.trim() == "UNKNOWN_QUERY") {
+                    throw Exception("NVIDIA_UNKNOWN_QUERY")
                 }
 
                 // Replace loading message with actual response
@@ -216,27 +223,55 @@ class AiAdvisorViewModel : ViewModel() {
                         } else chatMessage
                     }
                 }
-            } catch (e: retrofit2.HttpException) {
-                // Replace loading message with specific HTTP error
-                val errorMsg = if (e.code() == 401) {
-                    "I'm sorry, but my API key appears to be invalid or expired. Please update it in the dashboard."
-                } else {
-                    "Sorry, I couldn't reach the server right now. Error: HTTP ${e.code()}"
-                }
-                _messages.update { list ->
-                    list.mapIndexed { index, chatMessage ->
-                        if (index == loadingIndex) {
-                            ChatMessage(errorMsg, isUser = false)
-                        } else chatMessage
-                    }
-                }
             } catch (e: Exception) {
-                // Replace loading message with general error
-                _messages.update { list ->
-                    list.mapIndexed { index, chatMessage ->
-                        if (index == loadingIndex) {
-                            ChatMessage("Sorry, I couldn't reach the server right now. Error: ${e.localizedMessage}", isUser = false)
-                        } else chatMessage
+                // Nvidia failed (timeout or error) -> fallback to DronaHQ
+                try {
+                    val dronaHqUrl = com.example.edujourneygermany.BuildConfig.DRONAHQ_AGENT_URL
+                    val dronaHqKey = com.example.edujourneygermany.BuildConfig.DRONAHQ_API_KEY
+                    if (dronaHqUrl.isNotBlank()) {
+                        val request = DronaHqRequest(
+                            query = userText,
+                            profile = userAnswers
+                        )
+                        val response = DronaHqClient.api.sendMessage(
+                            url = dronaHqUrl,
+                            authHeader = if (dronaHqKey.isNotBlank()) "Bearer $dronaHqKey" else "",
+                            request = request
+                        )
+                        
+                        var aiResponseText = ""
+                        if (response.isJsonObject) {
+                            val obj = response.asJsonObject
+                            aiResponseText = obj.get("reply")?.asString ?: obj.get("answer")?.asString ?: obj.get("output")?.asString ?: obj.get("response")?.asString ?: ""
+                        }
+                        if (aiResponseText.isEmpty()) {
+                            aiResponseText = response.toString()
+                        }
+                        
+                        _messages.update { list ->
+                            list.mapIndexed { index, chatMessage ->
+                                if (index == loadingIndex) {
+                                    ChatMessage(aiResponseText, isUser = false)
+                                } else chatMessage
+                            }
+                        }
+                    } else {
+                        throw e
+                    }
+                } catch (dronaHqException: Exception) {
+                    val errorMsg = if (e is retrofit2.HttpException && e.code() == 401) {
+                        "I'm sorry, but my API key appears to be invalid or expired. Please update it in the dashboard."
+                    } else if (e.message == "NVIDIA_UNKNOWN_QUERY") {
+                        "I'm sorry, I couldn't find an answer to your question in my knowledge base."
+                    } else {
+                        "I'm sorry, I couldn't find an answer to your question."
+                    }
+                    _messages.update { list ->
+                        list.mapIndexed { index, chatMessage ->
+                            if (index == loadingIndex) {
+                                ChatMessage(errorMsg, isUser = false)
+                            } else chatMessage
+                        }
                     }
                 }
             }

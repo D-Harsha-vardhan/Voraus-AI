@@ -1,0 +1,5 @@
+﻿program_id,university,program,total_eur_low,total_eur_high,total_inr_low,total_inr_high,rate_used,tuition_eur_low,tuition_eur_high,living_eur_low,living_eur_high,note
+1,TU Munich (TUM),MSc Informatics,24185,33375,2660350,3671250,110.0,8000,12000,12936,16536,Worked example from finance_calc.py; estimate only; rate is a placeholder
+2,RWTH Aachen,MSc Computer Science,12415,16875,1365650,1856250,110.0,0,0,8736,11736,Worked example from finance_calc.py; estimate only; rate is a placeholder
+3,KIT,MSc Computer Science,16915,21995,1860650,2419450,110.0,3000,3000,10536,13656,Worked example from finance_calc.py; estimate only; rate is a placeholder
+11,TU Chemnitz,MSc Computer Science,10915,15875,1200650,1746250,110.0,0,0,7536,10536,Worked example from finance_calc.py; estimate only; rate is a placeholder

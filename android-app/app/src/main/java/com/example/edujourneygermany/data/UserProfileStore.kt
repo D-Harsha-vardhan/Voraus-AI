@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 object UserProfileStore {
+    var email by mutableStateOf("")
     var fullName by mutableStateOf("")
     var dob by mutableStateOf("")
     var gender by mutableStateOf("")

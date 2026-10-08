@@ -1,0 +1,3 @@
+﻿currency_pair,rate,as_of,source,note
+EUR/INR,110.0,2026-08 (approx),Public market data around 109-111 in July-Aug 2026,"Placeholder only: refresh daily from a rates API. Your mockup showed 89.5 (Apr 2025), which is out of date."
+Bank buffer,2-3 percent,n/a,General guidance,Banks and forex dealers add a margin and fees; tell students to budget extra

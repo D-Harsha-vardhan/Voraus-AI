@@ -39,6 +39,7 @@ fun UniversityDetailsScreen(
     uniName: String,
     programName: String,
     matchScore: String,
+    initialTab: Int = 0,
     onBack: () -> Unit,
     viewModel: UniversityDetailsViewModel = viewModel()
 ) {
@@ -54,7 +55,7 @@ fun UniversityDetailsScreen(
     val uniProfile by viewModel.universityProfile.collectAsState()
     val programDetails by viewModel.programDetails.collectAsState()
 
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableStateOf(initialTab) }
 
     Scaffold(
         topBar = {
@@ -74,6 +75,11 @@ fun UniversityDetailsScreen(
             )
         }
     ) { paddingValues ->
+        // Application Tracker State
+        val sharedPref = context.getSharedPreferences("app_tracker", android.content.Context.MODE_PRIVATE)
+        val trackerKey = "applied_${decodedUni}_$decodedProgram"
+        var isApplicationStarted by remember { mutableStateOf(sharedPref.getBoolean(trackerKey, false)) }
+        
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -218,8 +224,22 @@ fun UniversityDetailsScreen(
 
             // Apply Button
             item {
+                val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
                 Button(
-                    onClick = { /* TODO Apply */ },
+                    onClick = { 
+                        // Update state to Started and save to SharedPreferences
+                        isApplicationStarted = true
+                        sharedPref.edit().putBoolean(trackerKey, true).apply()
+                        
+                        val link = uniProfile?.applyLink?.takeIf { it.isNotBlank() } 
+                            ?: uniProfile?.website?.takeIf { it.isNotBlank() } 
+                            ?: "https://www.uni-assist.de/en/"
+                        try {
+                            uriHandler.openUri(link)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -270,9 +290,9 @@ fun UniversityDetailsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Surface(shape = CircleShape, color = Color(0xFF90CAF9), modifier = Modifier.size(12.dp)) {}
+                                Surface(shape = CircleShape, color = if (isApplicationStarted) Color(0xFF4CAF50) else Color(0xFF90CAF9), modifier = Modifier.size(12.dp)) {}
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Application Not Started", style = MaterialTheme.typography.labelMedium, color = Color(0xFF1976D2))
+                                Text(if (isApplicationStarted) "Application Started" else "Application Not Started", style = MaterialTheme.typography.labelMedium, color = if (isApplicationStarted) Color(0xFF2E7D32) else Color(0xFF1976D2))
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text("Deadline", style = MaterialTheme.typography.labelSmall, color = Color.Gray)

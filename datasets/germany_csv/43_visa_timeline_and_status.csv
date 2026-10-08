@@ -1,0 +1,8 @@
+﻿status,meaning,next_action,typical_timing
+Not Started,Visa process not begun,Start APS and gather documents,Before everything
+Documents Ready,"APS, funds, insurance and documents collected",Book VFS appointment,3-4 months before intake
+Appointment Booked,VFS slot confirmed,Prepare interview answers,Peak season June-September
+Documents Submitted,Submitted at VFS with fee paid,Track status,Same day as appointment
+Processing,German mission is deciding,Wait; answer extra document requests quickly,Often 4-12 weeks
+Decision,Visa approved or refused,If approved plan travel; if refused read reasons and re-apply or object,After processing
+Arrived in Germany,Registered address and enrolled,"Apply for residence permit, activate blocked account",Within weeks of arrival
