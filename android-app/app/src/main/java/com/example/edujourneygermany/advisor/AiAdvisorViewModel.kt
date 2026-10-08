@@ -132,20 +132,15 @@ class AiAdvisorViewModel : ViewModel() {
                     
                     CRITICAL: Do NOT just repeat the examples below. You MUST search your knowledge base to find the actual best-matching universities and programs for the user's specific profile (course, GPA, level, language).
                     
-                    When recommending universities, you MUST output a special block formatted exactly like this:
+                    When recommending universities, you MUST output a special block formatted exactly like this (use exactly these tags, no markdown, no bullet points, no headers):
                     
-                    [UNIVERSITY_RECOMMENDATIONS]
-                    University Abbreviation or Name | Program Name | MatchPercentage | University Type | Language
-                    [/UNIVERSITY_RECOMMENDATIONS]
-                    
-                    (Format Example - DO NOT COPY THESE SPECIFIC UNIVERSITIES UNLESS THEY TRULY MATCH):
                     [UNIVERSITY_RECOMMENDATIONS]
                     TUM | M.Sc. Computer Science | 92 | Public | English-taught
                     KIT | M.Sc. Artificial Intelligence | 88 | Public | English-taught
-                    RWTH | M.Sc. Computer Science | 84 | Public | English-taught
+                    RWTH Aachen | M.Sc. Data Science | 84 | Public | English-taught
                     [/UNIVERSITY_RECOMMENDATIONS]
                     
-                    Keep your text outside this block encouraging, concise, and helpful.
+                    Keep your text outside this block encouraging, concise, and helpful. Do not add any table headers inside the block.
                 """.trimIndent()
                 
                 val chatMessages = mutableListOf<NvidiaMessage>()
@@ -188,25 +183,22 @@ class AiAdvisorViewModel : ViewModel() {
 
                 // Extract [UNIVERSITY_RECOMMENDATIONS] block
                 val uniList = mutableListOf<ParsedUniversity>()
-                val startTag = "[UNIVERSITY_RECOMMENDATIONS]"
-                val endTag = "[/UNIVERSITY_RECOMMENDATIONS]"
-                
+                val regex = Regex("\\[UNIVERSITY_RECOMMENDATIONS\\](.*?)\\[/UNIVERSITY_RECOMMENDATIONS\\]", RegexOption.DOT_MATCHES_ALL)
+                val match = regex.find(aiResponseText)
                 var finalText = aiResponseText
-                if (aiResponseText.contains(startTag) && aiResponseText.contains(endTag)) {
-                    val startIndex = aiResponseText.indexOf(startTag)
-                    val endIndex = aiResponseText.indexOf(endTag)
-                    if (startIndex < endIndex) {
-                        val block = aiResponseText.substring(startIndex + startTag.length, endIndex).trim()
-                        finalText = (aiResponseText.substring(0, startIndex).trim() + "\n\n" + aiResponseText.substring(endIndex + endTag.length).trim()).trim()
-                        
-                        block.split("\n").forEach { line ->
-                            if (line.isNotBlank() && !line.startsWith("[")) {
-                                val parts = line.split("|").map { it.trim() }
-                                if (parts.size >= 5) {
-                                    uniList.add(ParsedUniversity(parts[0], parts[1], parts[2], parts[3], parts[4]))
-                                } else if (parts.size >= 3) {
-                                    uniList.add(ParsedUniversity(parts[0], parts[1], parts[2], "Public", "English-taught"))
-                                }
+                
+                if (match != null) {
+                    val block = match.groupValues[1].trim()
+                    finalText = aiResponseText.replace(match.value, "").trim()
+                    
+                    block.split("\n").forEach { line ->
+                        val cleanLine = line.trim().removePrefix("*").removePrefix("-").trim()
+                        if (cleanLine.isNotBlank() && !cleanLine.lowercase().contains("university abbreviation")) {
+                            val parts = cleanLine.split("|").map { it.trim() }
+                            if (parts.size >= 5) {
+                                uniList.add(ParsedUniversity(parts[0], parts[1], parts[2].replace("%", ""), parts[3], parts[4]))
+                            } else if (parts.size >= 3) {
+                                uniList.add(ParsedUniversity(parts[0], parts[1], parts[2].replace("%", ""), "Public", "English-taught"))
                             }
                         }
                     }
