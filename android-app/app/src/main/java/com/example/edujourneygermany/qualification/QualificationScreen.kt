@@ -27,6 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.jan.supabase.storage.storage
+import io.github.jan.supabase.auth.auth
 import android.content.Intent
 import android.net.Uri
 import java.io.BufferedReader
@@ -46,6 +48,19 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
     var financeDetailMode by remember { mutableStateOf(false) } // Toggle for Finance details view
     var selectedCourse by remember { mutableStateOf("") }
     var selectedIntake by remember { mutableStateOf("") }
+    var isBlockedAccountVerified by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val bucket = io.github.jan.supabase.SupabaseClient.let { com.example.edujourneygermany.data.Supabase.client.storage["user_documents"] }
+            val email = com.example.edujourneygermany.data.Supabase.client.auth.currentUserOrNull()?.email ?: ""
+            val files = bucket.list()
+            val allNames = files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) }
+            isBlockedAccountVerified = allNames.any { it.contains("_blocked_account") }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
     
     // Load universities dynamically
     val allUnis = remember {
@@ -127,7 +142,7 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
         ) {
             
             if (visaDetailMode && selectedTab == 1) {
-                VisaDetailView(onBack = { visaDetailMode = false })
+                VisaDetailView(isBlockedAccountVerified = isBlockedAccountVerified, onBack = { visaDetailMode = false })
                 return@Column
             }
 
@@ -206,14 +221,14 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
                     }
                 )
             } else {
-                VisaPlannerContent(onViewDetailsClick = { visaDetailMode = true })
+                VisaPlannerContent(isBlockedAccountVerified = isBlockedAccountVerified, onViewDetailsClick = { visaDetailMode = true })
             }
         }
     }
 }
 
 @Composable
-fun VisaPlannerContent(onViewDetailsClick: () -> Unit) {
+fun VisaPlannerContent(isBlockedAccountVerified: Boolean = false, onViewDetailsClick: () -> Unit) {
     // Visa Hero Banner
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Box(
@@ -403,7 +418,7 @@ fun PlannerItem(
 }
 
 @Composable
-fun VisaDetailView(onBack: () -> Unit) {
+fun VisaDetailView(isBlockedAccountVerified: Boolean = false, onBack: () -> Unit) {
     // Top Bar handled by scaffold, but we have our own nested view here.
     // Assuming this is inside the Visa Details screen
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -436,9 +451,9 @@ fun VisaDetailView(onBack: () -> Unit) {
         VisaDetailCard(
             title = "Blocked Account",
             subtitle = "Amount: € 11,208 (≈ ₹ 9,48,000)\nDuration: 12 months",
-            status = "Required",
+            status = if (isBlockedAccountVerified) "Verified" else "Required",
             icon = Icons.Default.AccountBalance,
-            buttonText = "Find Providers",
+            buttonText = if (isBlockedAccountVerified) "View Document" else "Find Providers",
             iconBg = Color(0xFFE0F2FE),
             iconTint = Color(0xFF0284C7)
         )
@@ -467,7 +482,7 @@ fun VisaDetailView(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
                 ChecklistItem("Valid Passport", isChecked = true)
                 ChecklistItem("Admission Letter", isChecked = true)
-                ChecklistItem("Proof of Funds (Blocked Account)", isChecked = true)
+                ChecklistItem("Proof of Funds (Blocked Account)", isChecked = isBlockedAccountVerified)
                 ChecklistItem("Health Insurance", isChecked = true)
                 ChecklistItem("APS Certificate (if required)", isChecked = false)
                 ChecklistItem("CV & Motivation Letter", isChecked = false)
