@@ -1,0 +1,26 @@
+﻿city,tier,rent_low_eur,rent_high_eur,food_low_eur,food_high_eur,transport_low_eur,transport_high_eur,phone_internet_eur_low,phone_internet_eur_high,personal_misc_low_eur,personal_misc_high_eur,monthly_total_low_eur,monthly_total_high_eur,status,basis
+Aachen,3,350,500,200,250,58,58,20,20,100,150,728,978,estimate - verify,rent from city dataset; other items estimated
+Berlin,2,500,700,230,280,58,58,20,20,120,180,928,1238,estimate - verify,rent from city dataset; other items estimated
+Bonn,2,450,650,230,280,58,58,20,20,120,180,878,1188,estimate - verify,all items estimated from tier defaults
+Chemnitz,3,250,400,200,250,58,58,20,20,100,150,628,878,estimate - verify,rent from city dataset; other items estimated
+Cologne,2,450,650,230,280,58,58,20,20,120,180,878,1188,estimate - verify,rent from city dataset; other items estimated
+Darmstadt,2,450,600,230,280,58,58,20,20,120,180,878,1138,estimate - verify,rent from city dataset; other items estimated
+Dresden,3,300,450,200,250,58,58,20,20,100,150,678,928,estimate - verify,rent from city dataset; other items estimated
+Frankfurt,1,550,750,250,300,58,58,20,20,150,200,1028,1328,estimate - verify,rent from city dataset; other items estimated
+Freiburg,2,450,650,230,280,58,58,20,20,120,180,878,1188,estimate - verify,all items estimated from tier defaults
+Goettingen,3,300,480,200,250,58,58,20,20,100,150,678,958,estimate - verify,all items estimated from tier defaults
+Hamburg,1,500,700,250,300,58,58,20,20,150,200,978,1278,estimate - verify,rent from city dataset; other items estimated
+Heidelberg,2,450,650,230,280,58,58,20,20,120,180,878,1188,estimate - verify,all items estimated from tier defaults
+Karlsruhe,2,450,600,230,280,58,58,20,20,120,180,878,1138,estimate - verify,rent from city dataset; other items estimated
+Leipzig,3,300,480,200,250,58,58,20,20,100,150,678,958,estimate - verify,all items estimated from tier defaults
+Luebeck,3,300,480,200,250,58,58,20,20,100,150,678,958,estimate - verify,all items estimated from tier defaults
+Magdeburg,3,250,400,200,250,58,58,20,20,100,150,628,878,estimate - verify,rent from city dataset; other items estimated
+Mannheim,2,450,650,230,280,58,58,20,20,120,180,878,1188,estimate - verify,all items estimated from tier defaults
+Munich,1,600,800,250,300,58,58,20,20,150,200,1078,1378,estimate - verify,rent from city dataset; other items estimated
+Oldenburg,3,300,480,200,250,58,58,20,20,100,150,678,958,estimate - verify,all items estimated from tier defaults
+Passau,3,300,480,200,250,58,58,20,20,100,150,678,958,estimate - verify,all items estimated from tier defaults
+Saarbrucken,3,300,450,200,250,58,58,20,20,100,150,678,928,estimate - verify,rent from city dataset; other items estimated
+Stuttgart,2,500,700,230,280,58,58,20,20,120,180,928,1238,estimate - verify,rent from city dataset; other items estimated
+Tubingen,2,450,650,230,280,58,58,20,20,120,180,878,1188,estimate - verify,all items estimated from tier defaults
+Tuebingen,2,450,650,230,280,58,58,20,20,120,180,878,1188,estimate - verify,all items estimated from tier defaults
+Vallendar,3,300,480,200,250,58,58,20,20,100,150,678,958,estimate - verify,all items estimated from tier defaults

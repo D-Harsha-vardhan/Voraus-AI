@@ -1,5 +1,9 @@
 package com.example.edujourneygermany.auth
 
+import com.example.edujourneygermany.data.Supabase
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +28,9 @@ fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) 
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var agreeToTerms by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     val passwordsMatch = password == confirmPassword && password.isNotEmpty()
     val isValidPassword = password.length >= 6
@@ -170,16 +177,41 @@ fun RegistrationScreen(onRegisterSuccess: () -> Unit, onLoginClick: () -> Unit) 
             // Register Button
             Button(
                 onClick = { 
-                    com.example.edujourneygermany.auth.UserSession.userEmail = email
-                    com.example.edujourneygermany.auth.UserSession.userName = com.example.edujourneygermany.auth.UserSession.extractNameFromEmail(email)
-                    onRegisterSuccess() 
+                    val currentEmail = email
+                    val currentPassword = password
+                    scope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        try {
+                            Supabase.client.auth.signUpWith(Email) {
+                                this.email = currentEmail
+                                this.password = currentPassword
+                            }
+                            com.example.edujourneygermany.auth.UserSession.userEmail = currentEmail
+                            com.example.edujourneygermany.auth.UserSession.userName = com.example.edujourneygermany.auth.UserSession.extractNameFromEmail(currentEmail)
+                            onRegisterSuccess() 
+                        } catch (e: Exception) {
+                            errorMessage = e.message ?: "Registration failed"
+                        } finally {
+                            isLoading = false
+                        }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 enabled = isFormValid,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Register", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(if (isLoading) "Registering..." else "Register", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+            
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             
             Spacer(modifier = Modifier.weight(1f))

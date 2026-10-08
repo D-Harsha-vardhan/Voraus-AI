@@ -1,0 +1,11 @@
+﻿intent,reply_template,notes
+recommend_universities,Here are your top matches for {course} with CGPA {cgpa}: {list_of_matches}. Match % is an estimate based on your profile. Want details or the apply link for any of them?,"{rank}. {university} - {program} ({match}% match, tuition {tuition}, intake {intake})"
+university_details,{university}: {about} Program: {program}. Duration: {duration}. Tuition: {tuition}. Intake: {intake}. Next deadline: {deadline_date} ({days_left} days left). Apply here: {apply_link},Always add: verify details on the official page.
+apply_link,You can apply here: {apply_link}. The next deadline is {deadline_date}. Please get your documents and APS ready first.,If deadline unknown use no_verified_deadline.
+track_application,Here's the latest update on your {university} application. Status: {status}. Next deadline: {deadline_date} ({days_left} days left). Next steps: {next_steps},Pull status from the applications table in Supabase.
+next_steps,Your next steps for {university}: {next_steps}. Deadline: {deadline_date} ({days_left} days left).,List up to 3 unchecked checklist items.
+deadline_overview,Your upcoming deadlines: {deadline_list}. The closest is {closest}. Want reminders for these?,"{university} {program}: {deadline_date} ({days_left} days left, {priority})"
+no_verified_deadline,I don't have a verified date for {program} yet. The typical window is {typical_window}. Please confirm on the official page: {apply_link},Never invent a date.
+deadline_passed,The deadline for {intake} at {university} has passed. The next intake is {next_intake}. Want me to show the requirements?,Use the next row in 26_application_deadlines.
+no_application_found,I can't see an application for {program} yet. Do you want me to start tracking it for you?,Offer to create a row in applications.
+tum_example,"Here's the latest update on your TUM application. Status: Application Not Started. Application Deadline: 30 Nov 2026 (53 days left). Next steps: Prepare required documents, Write motivation letter, Get APS certificate, Submit application on university portal.","Example based on the verified TUM summer 2027 deadline, calculated from 8 Oct 2026."

@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EducaroFinanceVisaResponse",
+  "type": "object",
+  "required": [
+    "reply",
+    "cards",
+    "suggested_replies",
+    "handoff_to_counselor"
+  ],
+  "properties": {
+    "reply": {
+      "type": "string",
+      "description": "Plain English, max 100 words, no markdown"
+    },
+    "cards": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "cost_estimate",
+              "visa_planner",
+              "blocked_account",
+              "insurance",
+              "visa_checklist",
+              "reminders"
+            ]
+          },
+          "university": {
+            "type": "string"
+          },
+          "program": {
+            "type": "string"
+          },
+          "intake": {
+            "type": "string"
+          },
+          "exchange_rate": {
+            "type": "number"
+          },
+          "rate_as_of": {
+            "type": "string"
+          },
+          "total_eur_low": {
+            "type": "number"
+          },
+          "total_eur_high": {
+            "type": "number"
+          },
+          "total_inr_low": {
+            "type": "number"
+          },
+          "total_inr_high": {
+            "type": "number"
+          },
+          "breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "eur_low": {
+                  "type": "number"
+                },
+                "eur_high": {
+                  "type": "number"
+                },
+                "inr_low": {
+                  "type": "number"
+                },
+                "inr_high": {
+                  "type": "number"
+                },
+                "verified": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "visa_category": {
+            "type": "string"
+          },
+          "visa_status": {
+            "type": "string"
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item": {
+                  "type": "string"
+                },
+                "done": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "days_left": {
+                  "type": "integer"
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": [
+                    "High",
+                    "Medium",
+                    "Low",
+                    "Overdue"
+                  ]
+                }
+              }
+            }
+          },
+          "source_link": {
+            "type": "string"
+          },
+          "last_verified": {
+            "type": "string"
+          },
+          "needs_verification": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "suggested_replies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3
+    },
+    "handoff_to_counselor": {
+      "type": "boolean"
+    }
+  }
+}

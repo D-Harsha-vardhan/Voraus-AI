@@ -1,0 +1,8 @@
+﻿filter,item,trigger,message_template,priority_note
+Applications,University application deadline,"days_before=[90,60,45,30,14,7,3]","Your {university} application deadline is on {date}, {days_left} days left.",Priority High at 45 days or less
+Documents,APS certificate,start 90 days before the earliest deadline,Start your APS now; it can take several weeks.,Medium
+Documents,Health insurance confirmation,before the visa appointment,Get your insurance confirmation before your visa appointment.,Medium
+Visa,Book visa appointment,3-4 months before intake,Book your VFS appointment; slots fill fast from June to September.,High near season
+Visa,Blocked account setup,4-6 weeks before the appointment,Open and fund your blocked account so the certificate is ready.,Medium
+Visa,Blocked account validity,60 days before the 12 months end,Check your residence permit extension and funds.,Low
+Visa,Visa pending tasks,weekly,You have {n} pending tasks: {task_list}.,Medium
