@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,23 +42,23 @@ fun FloatingNavigationBar(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Modern, Spacious & Professional Floating Navigation Bar
+        // Big, High-End & Professional Navigation Bar
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp),
-            shape = RoundedCornerShape(26.dp),
+                .height(82.dp),
+            shape = RoundedCornerShape(28.dp),
             color = Color.White,
-            shadowElevation = 14.dp,
-            border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+            shadowElevation = 16.dp,
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                    .padding(horizontal = 4.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -68,7 +69,7 @@ fun FloatingNavigationBar(
                     label = "Home",
                     isSelected = currentRoute == "home",
                     onClick = { onNavigate("home") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.0f)
                 )
 
                 // 2. Universities
@@ -78,7 +79,7 @@ fun FloatingNavigationBar(
                     label = "Universities",
                     isSelected = currentRoute == "opportunities",
                     onClick = { onNavigate("opportunities") },
-                    modifier = Modifier.weight(1.22f)
+                    modifier = Modifier.weight(1.28f)
                 )
 
                 // 3. Applications / Deadlines
@@ -88,7 +89,7 @@ fun FloatingNavigationBar(
                     label = "Applications",
                     isSelected = currentRoute == "deadlines",
                     onClick = { onNavigate("deadlines") },
-                    modifier = Modifier.weight(1.22f)
+                    modifier = Modifier.weight(1.28f)
                 )
 
                 // 4. Chat
@@ -98,7 +99,7 @@ fun FloatingNavigationBar(
                     label = "Chat",
                     isSelected = currentRoute == "advisor",
                     onClick = { onNavigate("advisor") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.0f)
                 )
 
                 // 5. Profile
@@ -108,7 +109,7 @@ fun FloatingNavigationBar(
                     label = "Profile",
                     isSelected = currentRoute == "profile",
                     onClick = { onNavigate("profile") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.0f)
                 )
             }
         }
@@ -124,48 +125,49 @@ fun NavBarItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val activeColor = Color(0xFF1D4ED8)    // Premium Royal Blue
-    val inactiveColor = Color(0xFF64748B)  // Slate Gray
-    val activeBg = Color(0xFFEFF6FF)       // Soft Blue Highlight Pill
+    val activeColor = Color(0xFF1565C0)    // Brand Primary Blue
+    val inactiveColor = Color(0xFF64748B)  // Slate
+    val activePillBg = Color(0xFFE3F2FD)   // Soft Light Blue Container
 
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(20.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
-            )
-            .padding(vertical = 4.dp),
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Icon with soft pill container on active
+        // Material 3 style active indicator pill
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(14.dp))
-                .background(if (isSelected) activeBg else Color.Transparent)
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+                .width(56.dp)
+                .height(34.dp)
+                .clip(RoundedCornerShape(17.dp))
+                .background(if (isSelected) activePillBg else Color.Transparent),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = if (isSelected) selectedIcon else unselectedIcon,
                 contentDescription = label,
                 tint = if (isSelected) activeColor else inactiveColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(25.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
             text = label,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            fontSize = 11.5.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
             color = if (isSelected) activeColor else inactiveColor,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
         )
     }
 }
