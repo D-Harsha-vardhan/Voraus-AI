@@ -218,8 +218,18 @@ fun UniversityDetailsScreen(
 
             // Apply Button
             item {
+                val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
                 Button(
-                    onClick = { /* TODO Apply */ },
+                    onClick = { 
+                        val link = uniProfile?.applyLink?.takeIf { it.isNotBlank() } 
+                            ?: uniProfile?.website?.takeIf { it.isNotBlank() } 
+                            ?: "https://www.uni-assist.de/en/"
+                        try {
+                            uriHandler.openUri(link)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
