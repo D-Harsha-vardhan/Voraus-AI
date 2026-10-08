@@ -45,7 +45,7 @@ fun HomeDashboardScreen(
                 .padding(paddingValues)
                 .background(Color(0xFFF8FAFC))
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 110.dp) // Ample padding so floating nav bar never overlaps content
+                .padding(bottom = 124.dp) // Generous scroll padding for the larger floating nav bar
         ) {
             // Header Section
             Row(
