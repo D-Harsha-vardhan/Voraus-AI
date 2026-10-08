@@ -5,13 +5,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PersonOutline
@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -36,22 +37,23 @@ fun FloatingNavigationBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .navigationBarsPadding()
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Modern White Navigation Bar
+        // Modern Floating Navigation Bar
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp),
-            shape = RoundedCornerShape(24.dp),
+                .height(64.dp),
+            shape = RoundedCornerShape(22.dp),
             color = Color.White,
-            shadowElevation = 10.dp
+            shadowElevation = 12.dp
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 6.dp),
+                    .padding(horizontal = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -72,17 +74,17 @@ fun FloatingNavigationBar(
                     label = "Universities",
                     isSelected = currentRoute == "opportunities",
                     onClick = { onNavigate("opportunities") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.15f)
                 )
 
-                // 3. Applications (Deadlines & Reminders)
+                // 3. Applications / Deadlines
                 NavBarItem(
-                    selectedIcon = Icons.Default.Assignment,
-                    unselectedIcon = Icons.Outlined.Assignment,
+                    selectedIcon = Icons.AutoMirrored.Filled.Assignment,
+                    unselectedIcon = Icons.AutoMirrored.Outlined.Assignment,
                     label = "Applications",
                     isSelected = currentRoute == "deadlines",
                     onClick = { onNavigate("deadlines") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.15f)
                 )
 
                 // 4. Chat
@@ -138,14 +140,16 @@ fun NavBarItem(
             imageVector = icon,
             contentDescription = label,
             tint = color,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(22.dp)
         )
-        Spacer(modifier = Modifier.height(3.dp))
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            fontSize = 11.5.sp,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-            color = color
+            fontSize = 10.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
