@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EducaroAdvisorResponse",
+  "type": "object",
+  "required": [
+    "reply",
+    "cards"
+  ],
+  "properties": {
+    "reply": {
+      "type": "string",
+      "description": "Plain English message, max 100 words"
+    },
+    "cards": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "university_recommendation",
+              "university_detail",
+              "application_tracker",
+              "deadline_tracker",
+              "next_steps"
+            ]
+          },
+          "university": {
+            "type": "string"
+          },
+          "program": {
+            "type": "string"
+          },
+          "match_percent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 98
+          },
+          "tuition": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "string"
+          },
+          "intake": {
+            "type": "string"
+          },
+          "deadline_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO date, null if not verified"
+          },
+          "days_left": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "priority": {
+            "enum": [
+              "High",
+              "Medium",
+              "Low",
+              "Overdue",
+              null
+            ]
+          },
+          "status": {
+            "enum": [
+              "Not Started",
+              "Started",
+              "Documents Uploaded",
+              "Submitted",
+              "Under Review",
+              "Decision"
+            ]
+          },
+          "tasks_completed": {
+            "type": "integer"
+          },
+          "tasks_total": {
+            "type": "integer"
+          },
+          "next_steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4
+          },
+          "apply_link": {
+            "type": "string"
+          },
+          "needs_verification": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "suggested_replies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3
+    },
+    "handoff_to_counselor": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

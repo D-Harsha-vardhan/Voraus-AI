@@ -1,0 +1,8 @@
+﻿factor,weight_percent,how_to_measure,scoring
+CGPA fit,35,Compare student CGPA (10-pt) with min_cgpa_numeric in 25_program_admission_details,100 if CGPA >= min+0.5; 75 if CGPA >= min; 45 if CGPA >= min-0.5; 20 if CGPA >= min-1; else 5
+Course fit,25,Student's chosen course vs program field,100 same field; 60 related field; 20 otherwise
+Language fit,10,English-taught and student language mode,100 if English-taught=Yes and mode=English; 50 if Partly; 20 if German mainly and mode=English
+Eligibility readiness,15,"GRE/GATE, APS, uni-assist needs vs what the student has","100 if nothing extra needed; subtract 25 for each missing item (GRE/GATE, IELTS, APS)"
+Budget fit,10,tuition_per_semester_non_eu_eur and student budget,100 if 0; 60 if 1500; 20 if private or high
+Timing fit,5,Days to next verified deadline,100 if > 60 days; 60 if 30-60; 20 if < 30; 50 if deadline unknown
+Final score,0,"Match % = sum(score x weight)/100, rounded; cap at 98","Show as 'XX% Match'; always say it is an estimate, not an admission chance"

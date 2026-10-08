@@ -198,8 +198,24 @@ fun AppNavigation() {
             composable("advisor") {
                 AiAdvisorScreen(
                     onBookConsultant = { navController.navigate("consultant_dashboard") },
-                    onViewDetails = { navController.navigate("opportunities") },
+                    onViewDetails = { uniName, programName, matchScore ->
+                        val encodedUni = android.net.Uri.encode(uniName)
+                        val encodedProg = android.net.Uri.encode(programName)
+                        val encodedScore = android.net.Uri.encode(matchScore)
+                        navController.navigate("university_details/$encodedUni/$encodedProg/$encodedScore")
+                    },
                     sharedViewModel = sharedUniversityViewModel
+                )
+            }
+            composable("university_details/{uniName}/{programName}/{matchScore}") { backStackEntry ->
+                val uniName = backStackEntry.arguments?.getString("uniName") ?: ""
+                val programName = backStackEntry.arguments?.getString("programName") ?: ""
+                val matchScore = backStackEntry.arguments?.getString("matchScore") ?: ""
+                com.example.edujourneygermany.presentation.UniversityDetailsScreen(
+                    uniName = uniName,
+                    programName = programName,
+                    matchScore = matchScore,
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable("consultant_dashboard") {

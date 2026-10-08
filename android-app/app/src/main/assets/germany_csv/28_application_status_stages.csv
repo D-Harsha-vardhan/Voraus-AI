@@ -1,0 +1,15 @@
+﻿type,name,status_or_rule,meaning,student_next_action
+tracker_stage,Shortlisted,Program saved to your list,You saved this program but have not started.,Review requirements and start your checklist.
+tracker_stage,Applied,Application submitted,You submitted the application on the university portal.,Track status and watch for document requests.
+tracker_stage,Review,Under review,The university is evaluating applications.,Keep checking email and portal; prepare for a possible test or interview.
+tracker_stage,Decision,Decision received,"Admission, rejection or waitlist result is available.","If admitted: accept, then blocked account and visa."
+timeline_item,Application Started,Completed,You created your application.,Upload documents next.
+timeline_item,Documents Uploaded,Completed,Required documents are uploaded.,Review and submit.
+timeline_item,Application Submitted,Submitted,Application sent to the university.,Track status.
+timeline_item,Under Review,In Progress,University is reviewing.,Wait and respond to requests.
+timeline_item,Admission Decision,Pending,Result expected after the review period.,Prepare visa documents in parallel.
+status_label,Not Started,Not Started,You have not started this application yet.,Prepare required documents.
+priority_rule,High Priority,days_left <= 45,Deadline is close.,"Show in red; send reminders at 45, 30, 14, 7 and 3 days."
+priority_rule,Medium Priority,46 <= days_left <= 120,Deadline is approaching.,Show in amber; remind at 90 and 60 days.
+priority_rule,Low Priority,days_left > 120,Plenty of time.,Show in green; remind at 120 days.
+priority_rule,Overdue,days_left < 0,Deadline passed.,Tell the student clearly and suggest the next intake.

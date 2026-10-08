@@ -161,7 +161,7 @@ class AiAdvisorViewModel : ViewModel() {
                 }
 
                 val request = NvidiaRequest(
-                    model = "meta/llama-3.1-70b-instruct",
+                    model = "meta/llama-3.2-11b-vision-instruct",
                     messages = chatMessages
                 )
 

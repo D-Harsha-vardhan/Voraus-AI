@@ -37,7 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun AiAdvisorScreen(
     onBookConsultant: () -> Unit = {},
-    onViewDetails: () -> Unit = {},
+    onViewDetails: (String, String, String) -> Unit = { _, _, _ -> },
     sharedViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = viewModel(),
     viewModel: AiAdvisorViewModel = viewModel()
 ) {
@@ -459,7 +459,7 @@ fun AiComplexMessage(onBookConsultant: () -> Unit = {}) {
 @Composable
 fun TopUniversityRecommendationsCard(
     universities: List<ParsedUniversity>,
-    onViewDetails: () -> Unit = {}
+    onViewDetails: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -540,7 +540,7 @@ fun TopUniversityRecommendationsCard(
                         Text("Match", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2E7D32))
                         Spacer(modifier = Modifier.height(12.dp))
                         OutlinedButton(
-                            onClick = onViewDetails,
+                            onClick = { onViewDetails(uni.name, uni.program, uni.matchScore) },
                             shape = RoundedCornerShape(16.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                             modifier = Modifier.height(32.dp),

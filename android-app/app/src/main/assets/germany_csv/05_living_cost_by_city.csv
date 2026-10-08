@@ -1,0 +1,14 @@
+﻿city,state,tier,rent_shared_room_eur_month,total_monthly_eur,it_job_market,indian_community,notes,last_updated
+Munich,Bavaria,Tier 1,600-800,1100-1400,Excellent,Large,Most expensive; very hard to find rooms,2026-10
+Frankfurt,Hesse,Tier 1,550-750,1050-1300,Excellent (finance/IT),Large,Major airport and job hub,2026-10
+Hamburg,Hamburg,Tier 1,500-700,1000-1300,Very good,Medium,Port city,2026-10
+Berlin,Berlin,Tier 2,500-700,950-1250,Excellent (startups),Large,Accommodation competitive,2026-10
+Stuttgart,Baden-Wurttemberg,Tier 2,500-700,1000-1250,Very good (auto/engineering),Medium,High living cost,2026-10
+Cologne,NRW,Tier 2,450-650,950-1200,Good,Medium,,2026-10
+Darmstadt,Hesse,Tier 2,450-600,950-1150,Good,Medium,Close to Frankfurt,2026-10
+Karlsruhe,Baden-Wurttemberg,Tier 2,450-600,950-1150,Good (IT),Medium,,2026-10
+Aachen,NRW,Tier 3,350-500,850-1050,Good (engineering),Medium,Popular for engineering,2026-10
+Dresden,Saxony,Tier 3,300-450,800-1000,Good (microelectronics),Medium,Affordable,2026-10
+Chemnitz,Saxony,Tier 3,250-400,750-950,Moderate,Medium,Very affordable,2026-10
+Saarbrucken,Saarland,Tier 3,300-450,800-1000,Moderate (CS research),Small,Near France/Luxembourg,2026-10
+Magdeburg,Saxony-Anhalt,Tier 3,250-400,750-950,Moderate,Small,Very affordable,2026-10
