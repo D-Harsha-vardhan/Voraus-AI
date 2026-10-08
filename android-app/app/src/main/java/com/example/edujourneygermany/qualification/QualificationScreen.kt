@@ -62,10 +62,10 @@ fun QualificationScreen(onBackClick: () -> Unit = {}, onNavigateToDocuments: () 
             val email = com.example.edujourneygermany.data.Supabase.client.auth.currentUserOrNull()?.email ?: ""
             val files = bucket.list()
             val allNames = files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) }
-            isBlockedAccountVerified = allNames.any { it.contains("_blocked_account") }
+            isBlockedAccountVerified = allNames.any { it.contains("_blocked") }
             isPassportVerified = allNames.any { it.contains("_passport") }
             isAdmissionVerified = allNames.any { it.contains("_admission") }
-            isHealthVerified = allNames.any { it.contains("_health_insurance") }
+            isHealthVerified = allNames.any { it.contains("_health") }
             isApsVerified = allNames.any { it.contains("_aps") }
             isCvVerified = allNames.any { it.contains("_cv") || it.contains("_resume") }
             isTranscriptsVerified = allNames.any { it.contains("_transcripts") || it.contains("_degree") }
@@ -330,8 +330,8 @@ fun VisaPlannerContent(isBlockedAccountVerified: Boolean = false, onViewDetailsC
         iconBg = Color(0xFFF0F9FF),
         title = "Blocked Account", 
         subtitle = "€11,208 (1 year) • Deutsche Bank/ Fintiba",
-        statusText = "Verified",
-        statusColor = Color(0xFF059669),
+        statusText = if (isBlockedAccountVerified) "Verified" else "Required",
+        statusColor = if (isBlockedAccountVerified) Color(0xFF059669) else Color(0xFF059669),
         statusBg = Color(0xFFD1FAE5),
         onClick = onViewDetailsClick
     )
@@ -1238,3 +1238,4 @@ fun DetailRow(label: String, value: String) {
         Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B), textAlign = TextAlign.End, modifier = Modifier.weight(1.2f))
     }
 }
+
