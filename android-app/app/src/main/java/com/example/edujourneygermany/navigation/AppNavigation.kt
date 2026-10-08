@@ -51,7 +51,7 @@ fun AppNavigation() {
     val currentRoute = navBackStackEntry?.destination?.route
     
     // Screens where the floating nav bar should be visible
-    val bottomBarRoutes = listOf("home", "documents", "qualification", "advisor", "opportunities", "profile")
+    val bottomBarRoutes = listOf("home", "documents", "qualification", "advisor", "opportunities", "profile", "deadlines")
 
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(navController = navController, startDestination = "splash") {
@@ -257,6 +257,12 @@ fun AppNavigation() {
             composable("heatmap") {
                 HeatMapScreen(
                     onBack = { navController.popBackStack() }
+                )
+            }
+            composable("deadlines") {
+                com.example.edujourneygermany.presentation.DeadlinesRemindersScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToRoute = { route -> navController.navigate(route) }
                 )
             }
         }

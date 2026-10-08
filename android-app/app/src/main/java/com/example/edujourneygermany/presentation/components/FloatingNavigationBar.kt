@@ -1,17 +1,20 @@
 package com.example.edujourneygermany.presentation.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PersonOutline
-import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,8 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -35,52 +36,69 @@ fun FloatingNavigationBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // White Navigation Bar
+        // Modern White Navigation Bar
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp),
+                .height(68.dp),
             shape = RoundedCornerShape(24.dp),
             color = Color.White,
-            shadowElevation = 8.dp
+            shadowElevation = 10.dp
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(horizontal = 6.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // 1. Home
                 NavBarItem(
-                    icon = Icons.Default.Home,
+                    selectedIcon = Icons.Default.Home,
+                    unselectedIcon = Icons.Outlined.Home,
                     label = "Home",
                     isSelected = currentRoute == "home",
                     onClick = { onNavigate("home") },
                     modifier = Modifier.weight(1f)
                 )
+
+                // 2. Universities
                 NavBarItem(
-                    icon = Icons.Outlined.Timeline,
-                    label = "Journey",
+                    selectedIcon = Icons.Default.AccountBalance,
+                    unselectedIcon = Icons.Outlined.AccountBalance,
+                    label = "Universities",
                     isSelected = currentRoute == "opportunities",
                     onClick = { onNavigate("opportunities") },
                     modifier = Modifier.weight(1f)
                 )
-                
-                // Spacer for the center button
-                Spacer(modifier = Modifier.weight(0.8f))
-                
+
+                // 3. Applications (Deadlines & Reminders)
                 NavBarItem(
-                    icon = Icons.Outlined.ChatBubbleOutline,
-                    label = "Messages",
+                    selectedIcon = Icons.Default.Assignment,
+                    unselectedIcon = Icons.Outlined.Assignment,
+                    label = "Applications",
+                    isSelected = currentRoute == "deadlines",
+                    onClick = { onNavigate("deadlines") },
+                    modifier = Modifier.weight(1f)
+                )
+
+                // 4. Chat
+                NavBarItem(
+                    selectedIcon = Icons.Default.ChatBubble,
+                    unselectedIcon = Icons.Outlined.ChatBubbleOutline,
+                    label = "Chat",
                     isSelected = currentRoute == "advisor",
                     onClick = { onNavigate("advisor") },
                     modifier = Modifier.weight(1f)
                 )
+
+                // 5. Profile
                 NavBarItem(
-                    icon = Icons.Outlined.PersonOutline,
+                    selectedIcon = Icons.Default.Person,
+                    unselectedIcon = Icons.Outlined.PersonOutline,
                     label = "Profile",
                     isSelected = currentRoute == "profile",
                     onClick = { onNavigate("profile") },
@@ -88,37 +106,23 @@ fun FloatingNavigationBar(
                 )
             }
         }
-        
-        // Floating Action Button in the center overlapping the white bar
-        Box(
-            modifier = Modifier
-                .padding(bottom = 16.dp) // Lift it up to overlap slightly
-                .size(64.dp)
-                .shadow(8.dp, CircleShape)
-                .clip(CircleShape)
-                .background(Color(0xFF1C64F2)) // The blue color from image
-                .clickable { /* Action to add */ },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
-        }
     }
 }
 
 @Composable
 fun NavBarItem(
-    icon: ImageVector,
+    selectedIcon: ImageVector,
+    unselectedIcon: ImageVector,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val color = if (isSelected) Color(0xFF1C64F2) else Color(0xFF8A93A6)
+    val activeColor = Color(0xFF1C64F2)
+    val inactiveColor = Color(0xFF8A93A6)
+    val color = if (isSelected) activeColor else inactiveColor
+    val icon = if (isSelected) selectedIcon else unselectedIcon
+
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -136,10 +140,10 @@ fun NavBarItem(
             tint = color,
             modifier = Modifier.size(24.dp)
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = label,
-            fontSize = 12.sp,
+            fontSize = 11.5.sp,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             color = color
         )
