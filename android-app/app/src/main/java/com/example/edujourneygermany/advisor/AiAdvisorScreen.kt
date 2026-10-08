@@ -231,9 +231,9 @@ fun AiAdvisorScreen(
         if (showVoiceAgent) {
             Dialog(
                 onDismissRequest = { showVoiceAgent = false },
-                properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)
+                properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = true)
             ) {
-                Box(modifier = Modifier.fillMaxSize().background(Color(0xFF121212))) {
+                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
                     IconButton(
                         onClick = { showVoiceAgent = false },
                         modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).padding(top = 24.dp)
@@ -244,6 +244,7 @@ fun AiAdvisorScreen(
                     AndroidView(
                         factory = { ctx ->
                             WebView(ctx).apply {
+                                setBackgroundColor(android.graphics.Color.TRANSPARENT)
                                 settings.javaScriptEnabled = true
                                 settings.domStorageEnabled = true
                                 settings.mediaPlaybackRequiresUserGesture = false
@@ -260,7 +261,7 @@ fun AiAdvisorScreen(
                                     <head>
                                     <meta name="viewport" content="width=device-width, initial-scale=1">
                                     <style>
-                                      body { margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #121212; }
+                                      body { margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: transparent; }
                                     </style>
                                     </head>
                                     <body>
