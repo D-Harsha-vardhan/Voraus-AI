@@ -39,6 +39,7 @@ import com.example.edujourneygermany.qualification.QualificationScreen
 import com.example.edujourneygermany.advisor.AiAdvisorScreen
 import com.example.edujourneygermany.opportunities.OpportunitiesScreen
 import com.example.edujourneygermany.notifications.NotificationsScreen
+import com.example.edujourneygermany.heatmap.HeatMapScreen
 
 @Composable
 fun AppNavigation() {
@@ -230,6 +231,11 @@ fun AppNavigation() {
             }
             composable("notifications") {
                 NotificationsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("heatmap") {
+                HeatMapScreen(
                     onBack = { navController.popBackStack() }
                 )
             }

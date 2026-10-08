@@ -9,10 +9,11 @@ import { AiModule } from './ai/ai.module.js';
 import { QualificationModule } from './qualification/qualification.module.js';
 import { OpportunitiesModule } from './opportunities/opportunities.module.js';
 import { WebhooksModule } from './webhooks/webhooks.module.js';
+import { MapController } from './map/map.controller';
 
 @Module({
   imports: [AuthModule, ApplicantModule, PrismaModule, DocumentsModule, AiModule, QualificationModule, OpportunitiesModule, WebhooksModule],
-  controllers: [AppController],
+  controllers: [AppController, MapController],
   providers: [AppService],
 })
 export class AppModule {}
