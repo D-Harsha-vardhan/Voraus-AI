@@ -148,8 +148,9 @@ fun AppNavigation() {
             composable("documents") {
                 DocumentsScreen(
                     onNavigateToExtraction = { docType, uri ->
+                        val encodedDocType = java.net.URLEncoder.encode(docType, "UTF-8")
                         val encodedUri = java.net.URLEncoder.encode(uri, "UTF-8")
-                        navController.navigate("extraction_review/$docType?uri=$encodedUri")
+                        navController.navigate("extraction_review/$encodedDocType?uri=$encodedUri")
                     }
                 )
             }

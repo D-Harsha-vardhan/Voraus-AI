@@ -37,7 +37,7 @@ object OcrHelper {
             "EnglishLanguage", "IELTS Certificate" -> listOf("english_level", "candidate_name", "test_date", "certificate_number")
             "GermanLanguage", "German Certificate" -> listOf("german_level", "candidate_name", "test_date", "certificate_number")
             "Resume", "CV", "Experience Letter" -> listOf("phone_number", "role", "company", "location", "employee_name", "employment_start_date", "employment_end_date")
-            else -> listOf("full_name", "passport_number", "phone_number", "location", "degree", "university", "graduation_year", "role", "company", "english_level", "german_level", "date_of_expiry", "candidate_name", "test_date", "student_name")
+            else -> listOf("full_name", "passport_number", "phone_number", "location", "degree", "university", "graduation_year", "role", "company", "date_of_expiry", "candidate_name", "test_date", "student_name")
         }
         
         // Pre-fill updates with empty strings so fields ALWAYS appear in the UI, even if image load fails
@@ -112,7 +112,7 @@ object OcrHelper {
             val url = java.net.URL("https://integrate.api.nvidia.com/v1/chat/completions")
             val connection = url.openConnection() as java.net.HttpURLConnection
             connection.requestMethod = "POST"
-            connection.setRequestProperty("Authorization", "Bearer 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")
+            connection.setRequestProperty("Authorization", "Bearer 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")
             connection.setRequestProperty("Content-Type", "application/json")
             connection.connectTimeout = 30000 // 30 seconds
             connection.readTimeout = 60000 // 60 seconds
