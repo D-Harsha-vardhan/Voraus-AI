@@ -2,37 +2,27 @@ package com.example.edujourneygermany.advisor
 
 import com.google.gson.JsonElement
 import retrofit2.Retrofit
-import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Url
 
-data class WebhookRequest(val message: String)
+data class DronaHqRequest(val query: String, val profile: Map<String, String>)
 
 interface DronaHqApi {
-    @POST("webhook/1f6ac931-615a-4d7a-aa58-c714de559b06")
+    @POST
     suspend fun sendMessage(
-        @Header("Authorization") authHeader: String,
+        @Url url: String,
         @Header("api-key") apiKeyHeader: String,
-        @Body request: WebhookRequest
+        @Body request: DronaHqRequest
     ): JsonElement
 }
 
-object RetrofitClient {
-    private const val BASE_URL = "https://agents-backend.dronahq.com/"
-
-    private val okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(120, TimeUnit.SECONDS)
-        .readTimeout(120, TimeUnit.SECONDS)
-        .writeTimeout(120, TimeUnit.SECONDS)
-        .build()
-
-    val dronaHqApi: DronaHqApi by lazy {
+object DronaHqClient {
+    val api: DronaHqApi by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(okHttpClient)
+            .baseUrl("https://dummy.com/") // Base URL is overridden by @Url
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(DronaHqApi::class.java)
