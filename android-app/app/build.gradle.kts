@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kotlin.serialization)
 }
+
+val properties = Properties()
+val localPropertiesFile = project.rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    properties.load(localPropertiesFile.inputStream())
+}
+val supabaseUrl = properties.getProperty("SUPABASE_URL") ?: ""
+val supabaseAnonKey = properties.getProperty("SUPABASE_ANON_KEY") ?: ""
 
 android {
     namespace = "com.example.edujourneygermany"
@@ -13,6 +23,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
     }
 
     buildTypes {
@@ -28,7 +41,7 @@ android {
     buildFeatures {
       compose = true
       aidl = false
-      buildConfig = false
+      buildConfig = true
       shaders = false
     }
 
@@ -84,4 +97,18 @@ dependencies {
   // Network
   implementation(libs.retrofit)
   implementation(libs.retrofit.gson)
+
+  // Supabase
+  implementation(platform("io.github.jan-tennert.supabase:bom:3.8.0"))
+  implementation("io.github.jan-tennert.supabase:auth-kt")
+  implementation("io.github.jan-tennert.supabase:postgrest-kt")
+  implementation("io.github.jan-tennert.supabase:storage-kt")
+  implementation("io.ktor:ktor-client-android:3.0.0")
+
+  // ML Kit OCR
+  implementation("com.google.mlkit:text-recognition:16.0.1")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+  // Image Loading
+  implementation("io.coil-kt:coil-compose:2.4.0")
 }

@@ -17,8 +17,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
 import com.example.edujourneygermany.data.UserProfileStore
+import com.example.edujourneygermany.data.Supabase
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +37,35 @@ fun ProfileScreen(
     onNavigateToQualification: () -> Unit,
     onNavigateToEditProfile: () -> Unit
 ) {
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val uid = Supabase.client.auth.currentUserOrNull()?.id
+            if (uid != null) {
+                val profileResult = Supabase.client.postgrest["profiles"]
+                    .select { filter { eq("id", uid) } }
+                    .decodeSingle<JsonObject>()
+                
+                profileResult["full_name"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.fullName = it }
+                profileResult["passport_number"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.passportNumber = it }
+                profileResult["phone_number"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.phone = it }
+                profileResult["location"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.location = it }
+                profileResult["degree"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.degree = it }
+                profileResult["university"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.university = it }
+                profileResult["graduation_year"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.graduationYear = it }
+                profileResult["role"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.role = it }
+                profileResult["company"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.company = it }
+                profileResult["english_level"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.englishLevel = it }
+                profileResult["german_level"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.germanLevel = it }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            isLoading = false
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

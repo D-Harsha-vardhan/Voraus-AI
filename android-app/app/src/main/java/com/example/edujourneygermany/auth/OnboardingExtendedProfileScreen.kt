@@ -15,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.edujourneygermany.data.UserProfileStore
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.postgrest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +38,29 @@ fun OnboardingExtendedProfileScreen(onNext: () -> Unit, onBack: () -> Unit) {
     
     var linkedIn by remember { mutableStateOf(UserProfileStore.linkedIn) }
     var github by remember { mutableStateOf(UserProfileStore.github) }
+
+    LaunchedEffect(Unit) {
+        val userId = com.example.edujourneygermany.data.Supabase.client.auth.currentUserOrNull()?.id
+        if (userId != null) {
+            try {
+                val result = com.example.edujourneygermany.data.Supabase.client.postgrest["profiles"]
+                    .select { filter { eq("id", userId) } }
+                    
+                val jsonString = result.data
+                val jsonArray = kotlinx.serialization.json.Json.parseToJsonElement(jsonString) as? kotlinx.serialization.json.JsonArray
+                val firstObj = jsonArray?.firstOrNull() as? kotlinx.serialization.json.JsonObject
+                
+                if (firstObj != null) {
+                    firstObj["passport_number"]?.let { if (it !is kotlinx.serialization.json.JsonNull) passportNumber = it.toString().removeSurrounding("\"") }
+                    firstObj["degree"]?.let { if (it !is kotlinx.serialization.json.JsonNull) degree = it.toString().removeSurrounding("\"") }
+                    firstObj["university"]?.let { if (it !is kotlinx.serialization.json.JsonNull) university = it.toString().removeSurrounding("\"") }
+                    firstObj["graduation_year"]?.let { if (it !is kotlinx.serialization.json.JsonNull) graduationYear = it.toString().removeSurrounding("\"") }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {

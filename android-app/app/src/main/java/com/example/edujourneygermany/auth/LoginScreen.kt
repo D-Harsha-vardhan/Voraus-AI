@@ -1,5 +1,8 @@
 package com.example.edujourneygermany.auth
 
+import com.example.edujourneygermany.data.Supabase
+import io.github.jan.supabase.auth.auth
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,6 +42,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isStudentSelected by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = Color.White
@@ -207,14 +213,47 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 
             // Login Button
             Button(
-                onClick = onLoginSuccess,
+                onClick = { 
+                    val currentEmail = email
+                    val currentPassword = password
+                    scope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        try {
+                            Supabase.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                                this.email = currentEmail
+                                this.password = currentPassword
+                            }
+                            com.example.edujourneygermany.auth.UserSession.userEmail = currentEmail
+                            com.example.edujourneygermany.auth.UserSession.userName = com.example.edujourneygermany.auth.UserSession.extractNameFromEmail(currentEmail)
+                            onLoginSuccess()
+                        } catch (e: Exception) {
+                            errorMessage = e.message ?: "Login failed"
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
             ) {
-                Text(stringResource(R.string.sign_in_button), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                } else {
+                    Text(stringResource(R.string.sign_in_button), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                }
+            }
+            
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             
             Spacer(modifier = Modifier.height(24.dp))
