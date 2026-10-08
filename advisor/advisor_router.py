@@ -5,9 +5,12 @@
     with a daily cap. DRONAHQ_MODE=small sends every small question to DronaHQ; off disables it.
  3. Still nothing -> counselor handoff (no AI call)
 Run: uvicorn advisor_router:app --port 8000"""
-import os, re, json, time
+import os, re, json, time, tempfile
 import httpx
-from fastapi import FastAPI, Request
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+load_dotenv(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env")))
+from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from supabase import create_client
@@ -508,4 +511,79 @@ async def map_webhook(request: Request):
     elif isinstance(body, list):
         scraped_map_data = body
     return {"status": "success", "message": "Webhook received"}
+
+
+# ============================================================================
+# NVIDIA VSS Video-to-Text & Confidence Scoring Agent Endpoints
+# ============================================================================
+
+class VideoAnalyzePathRequest(BaseModel):
+    video_path: str
+    user_context: dict = None
+
+
+@app.post("/video/analyze")
+async def video_analyze_upload(file: UploadFile = File(...)):
+    """
+    Video-to-Text & Confidence Scoring Agent endpoint.
+    Accepts video upload, runs NVIDIA VSS frame sampling + Whisper STT,
+    and returns comprehensive confidence evaluation.
+    """
+    from video_vss_agent import analyze_video_introduction
+
+    suffix = os.path.splitext(file.filename or "")[1] or ".mp4"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp_path = tmp.name
+        content = await file.read()
+        tmp.write(content)
+
+    try:
+        result = analyze_video_introduction(tmp_path)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+
+@app.get("/video/analyze-sample")
+async def video_analyze_sample():
+    """
+    Runs Video VSS Agent on the bundled candidate introduction sample video.
+    """
+    from video_vss_agent import analyze_video_introduction
+
+    sample_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "VID-20261008-WA0009.mp4"))
+    if not os.path.exists(sample_path):
+        sample_path = r"D:\EduGerman\VID-20261008-WA0009.mp4"
+
+    if not os.path.exists(sample_path):
+        return {"status": "error", "message": f"Sample video not found at {sample_path}"}
+
+    try:
+        result = analyze_video_introduction(sample_path)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/video/analyze-path")
+async def video_analyze_local_path(req: VideoAnalyzePathRequest):
+    """
+    Analyzes video by local file path using the NVIDIA VSS agent.
+    """
+    from video_vss_agent import analyze_video_introduction
+
+    if not os.path.exists(req.video_path):
+        return {"status": "error", "message": f"File does not exist: {req.video_path}"}
+    try:
+        result = analyze_video_introduction(req.video_path, req.user_context)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 
