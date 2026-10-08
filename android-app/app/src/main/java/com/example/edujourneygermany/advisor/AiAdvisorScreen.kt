@@ -16,12 +16,25 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.ui.unit.sp
 
 import android.content.Intent
 import android.net.Uri
+
+import android.Manifest
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.*
@@ -59,15 +72,25 @@ fun AiAdvisorScreen(
         }
     }
     
+
+    var showVoiceAgent by remember { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                showVoiceAgent = true
+            }
+        }
+    )
+
     Scaffold(
         topBar = {
             val context = LocalContext.current
             TopAppBar(
                 title = { Text("AI Advisor", fontWeight = FontWeight.Bold) },
                 actions = {
-                    TextButton(onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://elevenlabs.io/app/talk-to?agent_id=agent_0301m4ebw1qee439epz1b3fh56k9&branch_id=agtbrch_3301m4ebw2v0emmvgjpj3dv68pse"))
-                        context.startActivity(intent)
+                                        TextButton(onClick = {
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     }) {
                         Icon(Icons.Default.Mic, contentDescription = "Voice Agent", modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
@@ -204,8 +227,60 @@ fun AiAdvisorScreen(
                 }
             }
         }
+
+        if (showVoiceAgent) {
+            Dialog(
+                onDismissRequest = { showVoiceAgent = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)
+            ) {
+                Box(modifier = Modifier.fillMaxSize().background(Color(0xFF121212))) {
+                    IconButton(
+                        onClick = { showVoiceAgent = false },
+                        modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).padding(top = 24.dp)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                    
+                    AndroidView(
+                        factory = { ctx ->
+                            WebView(ctx).apply {
+                                settings.javaScriptEnabled = true
+                                settings.domStorageEnabled = true
+                                settings.mediaPlaybackRequiresUserGesture = false
+                                webChromeClient = object : WebChromeClient() {
+                                    override fun onPermissionRequest(request: PermissionRequest) {
+                                        request.grant(request.resources)
+                                    }
+                                }
+                                webViewClient = WebViewClient()
+                                
+                                val htmlContent = """
+                                    <!DOCTYPE html>
+                                    <html>
+                                    <head>
+                                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                                    <style>
+                                      body { margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #121212; }
+                                    </style>
+                                    </head>
+                                    <body>
+                                      <elevenlabs-convai agent-id="agent_0301m4ebw1qee439epz1b3fh56k9"></elevenlabs-convai>
+                                      <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+                                    </body>
+                                    </html>
+                                """.trimIndent()
+                                
+                                loadDataWithBaseURL("https://elevenlabs.io", htmlContent, "text/html", "UTF-8", null)
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize().padding(top = 80.dp)
+                    )
+                }
+            }
+        }
     }
 }
+
 
 @Composable
 fun UserMessage(text: String, quotedQuestion: String? = null) {
