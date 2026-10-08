@@ -44,8 +44,8 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
     var selectedUni by remember { mutableStateOf<SimpleUni?>(null) }
     var visaDetailMode by remember { mutableStateOf(false) } // Toggle for Visa details view
     var financeDetailMode by remember { mutableStateOf(false) } // Toggle for Finance details view
-    var selectedCourse by remember { mutableStateOf("M.Sc. Computer Science") }
-    var selectedIntake by remember { mutableStateOf("Winter Semester 2025") }
+    var selectedCourse by remember { mutableStateOf("") }
+    var selectedIntake by remember { mutableStateOf("") }
     
     // Load universities dynamically
     val allUnis = remember {
@@ -644,6 +644,16 @@ fun FinanceContent(
         var expandedIntake by remember { mutableStateOf(false) }
         val intakeOptions = listOf("Winter Semester 2025", "Summer Semester 2025", "Winter Semester 2026")
 
+        var isAnalyzing by remember(selectedUni, selectedCourse, selectedIntake) { mutableStateOf(true) }
+
+        LaunchedEffect(selectedUni, selectedCourse, selectedIntake) {
+            if (selectedCourse.isNotEmpty() && selectedIntake.isNotEmpty()) {
+                isAnalyzing = true
+                kotlinx.coroutines.delay(1500)
+                isAnalyzing = false
+            }
+        }
+
         Text("Course & Intake", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B))
         Spacer(modifier = Modifier.height(12.dp))
         
@@ -655,6 +665,7 @@ fun FinanceContent(
                 value = selectedCourse,
                 onValueChange = {},
                 readOnly = true,
+                placeholder = { Text("Select Course", color = Color(0xFF94A3B8)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCourse) },
                 modifier = Modifier.fillMaxWidth().menuAnchor(),
                 shape = RoundedCornerShape(12.dp),
@@ -691,6 +702,7 @@ fun FinanceContent(
                 value = selectedIntake,
                 onValueChange = {},
                 readOnly = true,
+                placeholder = { Text("Select Intake", color = Color(0xFF94A3B8)) },
                 leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(20.dp)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedIntake) },
                 modifier = Modifier.fillMaxWidth().menuAnchor(),
@@ -720,7 +732,20 @@ fun FinanceContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Card(
+        if (selectedCourse.isEmpty() || selectedIntake.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                Text("Please select a Course and Intake to estimate costs.", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF64748B), textAlign = TextAlign.Center)
+            }
+        } else if (isAnalyzing) {
+            Box(modifier = Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Analyzing tuition & living costs...", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF64748B))
+                }
+            }
+        } else {
+            Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -789,6 +814,7 @@ fun FinanceContent(
             Spacer(modifier = Modifier.width(8.dp))
             Text("Save & View Details", fontWeight = FontWeight.Bold)
         }
+    }
     }
 }
 
