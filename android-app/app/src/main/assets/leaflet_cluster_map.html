@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EduGerman Interactive Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- MarkerCluster CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body { 
+            padding: 0; 
+            margin: 0; 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+        html, body, #map { 
+            height: 100%; 
+            width: 100%; 
+        }
+
+        /* Top Overlay: Search Bar & Filter Chips */
+        .top-overlay {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .search-container {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .search-icon {
+            font-size: 16px;
+            margin-right: 10px;
+            color: #64748b;
+        }
+        .search-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 14px;
+            width: 100%;
+            font-family: inherit;
+            color: #1e293b;
+        }
+        .search-input::placeholder {
+            color: #94a3b8;
+        }
+        .clear-btn {
+            background: #e2e8f0;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            color: #475569;
+            display: none;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Filter Chips Row */
+        .filter-row {
+            pointer-events: auto;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .filter-row::-webkit-scrollbar {
+            display: none;
+        }
+        .filter-chip {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border: 1px solid #e2e8f0;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            white-space: nowrap;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .filter-chip.active {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+            transform: translateY(-1px);
+        }
+        .filter-chip .chip-count {
+            background: rgba(0, 0, 0, 0.08);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .filter-chip.active .chip-count {
+            background: rgba(255, 255, 255, 0.25);
+            color: #fff;
+        }
+
+        /* Marker Styles matching Bangalore Startup Map / Modern Web */
+        .custom-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.22), 0 1px 3px rgba(0,0,0,0.1);
+            border: 2.5px solid #ffffff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .custom-pin:hover {
+            transform: scale(1.15);
+            z-index: 1000 !important;
+        }
+        .pin-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        /* Category Color Schemes */
+        .pin-job .pin-inner { background: linear-gradient(135deg, #10b981, #059669); }
+        .pin-restaurant .pin-inner { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .pin-university .pin-inner { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .pin-community .pin-inner { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+        /* Cluster Styling */
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+            background-color: rgba(15, 23, 42, 0.15) !important;
+        }
+        .marker-cluster div {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-family: inherit !important;
+            font-size: 13px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        /* Popup Card (Like Moxo Card in the second image) */
+        .leaflet-popup-content-wrapper {
+            border-radius: 18px !important;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.16), 0 4px 10px rgba(0,0,0,0.06) !important;
+            padding: 0 !important;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+        }
+        .leaflet-popup-content {
+            margin: 0 !important;
+            width: 280px !important;
+            line-height: 1.4 !important;
+        }
+        .popup-card {
+            padding: 18px 20px 16px 20px;
+            background: #ffffff;
+        }
+        .popup-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .popup-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .popup-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        .badge-job { background: #ecfdf5; color: #059669; }
+        .badge-restaurant { background: #fff7ed; color: #c2410c; }
+        .badge-university { background: #eff6ff; color: #1d4ed8; }
+        .badge-community { background: #f5f3ff; color: #6d28d9; }
+
+        .popup-meta {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .popup-highlight {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 10px;
+        }
+        .popup-desc {
+            font-size: 12.5px;
+            color: #475569;
+            margin: 0 0 14px 0;
+            line-height: 1.45;
+        }
+        .popup-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 12px;
+            margin-top: 4px;
+        }
+        .popup-btn {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #2563eb;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .popup-btn:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+        .popup-dir-btn {
+            background: #f1f5f9;
+            color: #334155;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        /* Bottom Status Counter Badge */
+        .bottom-pill {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(10px);
+            color: #ffffff;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+            pointer-events: auto;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Map Container -->
+<div id="map"></div>
+
+<!-- Top Floating Search & Category Filter UI -->
+<div class="top-overlay">
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input 
+            type="text" 
+            id="searchInput" 
+            class="search-input" 
+            placeholder="Search jobs, restaurants, universities..."
+            oninput="handleSearchInput(this.value)"
+        />
+        <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
+    </div>
+
+    <div class="filter-row">
+        <button class="filter-chip active" id="chip-all" onclick="setCategoryFilter('all')">
+            <span>All</span>
+            <span class="chip-count" id="count-all">40</span>
+        </button>
+        <button class="filter-chip" id="chip-jobs" onclick="setCategoryFilter('jobs')">
+            <span>💼 Jobs</span>
+            <span class="chip-count" id="count-jobs">12</span>
+        </button>
+        <button class="filter-chip" id="chip-restaurants" onclick="setCategoryFilter('restaurants')">
+            <span>🍛 Restaurants</span>
+            <span class="chip-count" id="count-restaurants">10</span>
+        </button>
+        <button class="filter-chip" id="chip-universities" onclick="setCategoryFilter('universities')">
+            <span>🎓 Universities</span>
+            <span class="chip-count" id="count-universities">10</span>
+        </button>
+        <button class="filter-chip" id="chip-communities" onclick="setCategoryFilter('communities')">
+            <span>🤝 Communities</span>
+            <span class="chip-count" id="count-communities">8</span>
+        </button>
+    </div>
+</div>
+
+<!-- Bottom Status Floating Pill -->
+<div class="bottom-pill" id="bottomPill">
+    <div class="status-dot"></div>
+    <span id="bottomText">40 Opportunities Live in Berlin</span>
+</div>
+
+<script>
+    // Authentic real-time data for Berlin students extracted via Anakin
+    const INITIAL_BERLIN_DATA = [
+        // --- 1. INDIAN RESTAURANTS (10) ---
+        {
+            id: "rest_amrit_mitte",
+            lat: 52.5250,
+            lng: 13.3930,
+            title: "AMRIT Restaurant Mitte",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Oranienburger Str. 45, 10117 Berlin",
+            highlight: "⭐ 4.6 (2,400+ reviews) • Student Favorite",
+            desc: "Iconic authentic Indian restaurant in Berlin Mitte. Features rich North & South Indian curries, tandoori grills, and student lunch menus."
+        },
+        {
+            id: "rest_amrit_kreuzberg",
+            lat: 52.4985,
+            lng: 13.4285,
+            title: "AMRIT Kreuzberg",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Wiener Straße 12, 10999 Berlin",
+            highlight: "⭐ 4.5 • Popular student hangout",
+            desc: "Atmospheric Indian dining with summer terrace in lively Kreuzberg. Great thali deals and vegetarian options."
+        },
+        {
+            id: "rest_papadam",
+            lat: 52.5630,
+            lng: 13.3150,
+            title: "Papadam Restaurant",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Scharnweberstraße 6-7, 13405 Berlin",
+            highlight: "⭐ 4.4 • Authentic Dosas & Biryani",
+            desc: "Famous for crisp lentil dosas, traditional South Indian sambar, and Dum Biryani. Highly recommended by Indian expats."
+        },
+        {
+            id: "rest_mela",
+            lat: 52.4880,
+            lng: 13.3600,
+            title: "Mela Indisches Restaurant",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Crellestraße 15, 10827 Berlin",
+            highlight: "⭐ 4.7 • Fresh Tandoor & Curries",
+            desc: "Top 10 rated Indian cuisine on Crellestraße in Schöneberg. Fresh ingredients and clay oven skewers."
+        },
+        {
+            id: "rest_khushi",
+            lat: 52.5360,
+            lng: 13.4180,
+            title: "Khushi Restaurant",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Kollwitzstraße 37, 10405 Berlin",
+            highlight: "⭐ 4.6 • Premium Ambiance in Prenzlauer Berg",
+            desc: "Chic neighborhood restaurant serving butter chicken, lamb korma, fresh garlic naan, and mango lassis."
+        },
+        {
+            id: "rest_chutnify",
+            lat: 52.4912,
+            lng: 13.4280,
+            title: "Chutnify South Indian Street Food",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Pflügerstraße 25, 12047 Berlin",
+            highlight: "⭐ 4.8 • Modern Dosa Bar",
+            desc: "Artisanal South Indian street food with crispy organic dosas, gunpowder potatoes, and craft beverages."
+        },
+        {
+            id: "rest_saravanaa",
+            lat: 52.5020,
+            lng: 13.3280,
+            title: "Saravanaa Bhavan Berlin",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Kurfürstendamm 212, 10719 Berlin",
+            highlight: "⭐ 4.5 • 100% Pure Vegetarian South Indian",
+            desc: "World-renowned vegetarian chain. Steaming idlis, medu vadas, ghee roast dosas, and filter coffee."
+        },
+        {
+            id: "rest_shivani",
+            lat: 52.5115,
+            lng: 13.4560,
+            title: "Shivani Indisches Restaurant",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Boxhagener Str. 26, 10245 Berlin",
+            highlight: "⭐ 4.6 • Budget Friendly & Fast",
+            desc: "Affordable authentic curries and samosas near Boxhagener Platz. Huge student discounts during weekdays."
+        },
+        {
+            id: "rest_agra",
+            lat: 52.5225,
+            lng: 13.3855,
+            title: "Agra Indisches Restaurant",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Albrechtstraße 13, 10117 Berlin",
+            highlight: "⭐ 4.5 • Next to Charité & HU Campus",
+            desc: "Classic Mughlai dishes and aromatic basmati biryanis right next to central student hubs in Mitte."
+        },
+        {
+            id: "rest_vedis",
+            lat: 52.5410,
+            lng: 13.4120,
+            title: "Vedis Indian Fine Dining",
+            type: "Indian Restaurant",
+            category: "restaurants",
+            address: "Schönhauser Allee 142, 10437 Berlin",
+            highlight: "⭐ 4.7 • Gourmet Indian & Cocktails",
+            desc: "Upscale culinary experience with modern twist on traditional Indian cuisine in Prenzlauer Berg."
+        },
+
+        // --- 2. UNIVERSITIES & COLLEGES (10) ---
+        {
+            id: "uni_tu_berlin",
+            lat: 52.5125,
+            lng: 13.3269,
+            title: "Technische Universität Berlin (TU Berlin)",
+            type: "University",
+            category: "universities",
+            address: "Straße des 17. Juni 135, 10623 Berlin",
+            highlight: "🏛️ TU9 Member • 34,000+ Students",
+            desc: "Leading technical university in Germany. Huge community of Indian master's and PhD students in Computer Science and Engineering."
+        },
+        {
+            id: "uni_hu_berlin",
+            lat: 52.5180,
+            lng: 13.3933,
+            title: "Humboldt-Universität zu Berlin (HU Berlin)",
+            type: "University",
+            category: "universities",
+            address: "Unter den Linden 6, 10117 Berlin",
+            highlight: "🏛️ Excellence University • Founded 1810",
+            desc: "One of Europe's most prestigious academic institutions with 29 Nobel Prize laureates. Historic campus in Mitte."
+        },
+        {
+            id: "uni_fu_berlin",
+            lat: 52.4537,
+            lng: 13.2908,
+            title: "Freie Universität Berlin (FU Berlin)",
+            type: "University",
+            category: "universities",
+            address: "Kaiserswerther Str. 16-18, 14195 Berlin-Dahlem",
+            highlight: "🏛️ Excellence University • Dahlem Campus",
+            desc: "Renowned for international relations, life sciences, and humanities with modern English-taught degree courses."
+        },
+        {
+            id: "uni_htw_berlin",
+            lat: 52.4578,
+            lng: 13.5268,
+            title: "HTW Berlin (Campus Wilhelminenhof)",
+            type: "University",
+            category: "universities",
+            address: "Wilhelminenhofstraße 75A, 12459 Berlin",
+            highlight: "🏛️ Applied Sciences • Top for Tech & AI",
+            desc: "Largest university of applied sciences in eastern Germany with strong industrial partnerships and practical research."
+        },
+        {
+            id: "uni_hwr_berlin",
+            lat: 52.4856,
+            lng: 13.3364,
+            title: "HWR Berlin (Schöneberg Campus)",
+            type: "University",
+            category: "universities",
+            address: "Badensche Str. 52, 10825 Berlin",
+            highlight: "🏛️ Business & Law • Dual Studies",
+            desc: "Berlin School of Economics and Law. Offers recognized international business administration and management degrees."
+        },
+        {
+            id: "uni_charite",
+            lat: 52.5256,
+            lng: 13.3789,
+            title: "Charité – Universitätsmedizin Berlin",
+            type: "University",
+            category: "universities",
+            address: "Charitéplatz 1, 10117 Berlin",
+            highlight: "🏥 Medical Faculty • Ranked #1 in Europe",
+            desc: "Joint medical faculty of HU and FU Berlin. One of the largest university hospitals in Europe."
+        },
+        {
+            id: "uni_esmt",
+            lat: 52.5162,
+            lng: 13.4018,
+            title: "ESMT Berlin (European School of Management)",
+            type: "University",
+            category: "universities",
+            address: "Schlossplatz 1, 10178 Berlin",
+            highlight: "🏛️ Triple Crown Accredited • Top MBA",
+            desc: "Top-ranked international business school in central Berlin right across from the Berlin Cathedral."
+        },
+        {
+            id: "uni_srh",
+            lat: 52.5128,
+            lng: 13.3219,
+            title: "SRH Berlin University of Applied Sciences",
+            type: "University",
+            category: "universities",
+            address: "Ernst-Reuter-Platz 10, 10587 Berlin",
+            highlight: "🏛️ International Degrees • English Taught",
+            desc: "Private university attracting global students with modern courses in Creative Arts, Management, and Technology."
+        },
+        {
+            id: "uni_iu",
+            lat: 52.5332,
+            lng: 13.3920,
+            title: "IU International University Berlin",
+            type: "University",
+            category: "universities",
+            address: "Bergstraße 38, 10115 Berlin",
+            highlight: "🏛️ Flexible Learning Campus Mitte",
+            desc: "Accredited international degree programs with flexible in-person and digital study models."
+        },
+        {
+            id: "uni_bht",
+            lat: 52.5450,
+            lng: 13.3520,
+            title: "Berliner Hochschule für Technik (BHT)",
+            type: "University",
+            category: "universities",
+            address: "Luxemburger Str. 10, 13353 Berlin",
+            highlight: "🏛️ Tech & Engineering in Wedding",
+            desc: "Offers broad engineering and technical programs with hands-on laboratory experience."
+        },
+
+        // --- 3. PART-TIME STUDENT JOBS (12) ---
+        {
+            id: "job_zalando",
+            lat: 52.5065,
+            lng: 13.4435,
+            title: "Zalando SE Tech Hub",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Valeska-Gert-Straße 5, 10243 Berlin",
+            highlight: "💶 €16.50 - €19.00 / hr • Werkstudent Tech",
+            desc: "Working student positions in Software Engineering, Data Analysis, and Logistics. 100% English speaking friendly."
+        },
+        {
+            id: "job_delivery_hero",
+            lat: 52.5255,
+            lng: 13.3905,
+            title: "Delivery Hero Global HQ",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Oranienburger Str. 70, 10117 Berlin",
+            highlight: "💶 €16.00 / hr • Operations & Analytics",
+            desc: "Global delivery tech giant hiring student assistants for international operations, customer support, and QA."
+        },
+        {
+            id: "job_n26",
+            lat: 52.5145,
+            lng: 13.4125,
+            title: "N26 The Mobile Bank",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Klosterstraße 62, 10179 Berlin",
+            highlight: "💶 €16.50 / hr • FinTech Working Student",
+            desc: "Fintech unicorn offering part-time roles (up to 20h/week during semesters) in compliance, IT support, and fraud prevention."
+        },
+        {
+            id: "job_hellofresh",
+            lat: 52.5005,
+            lng: 13.4060,
+            title: "HelloFresh SE Global HQ",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Prinzenstraße 89, 10969 Berlin",
+            highlight: "💶 €15.50 - €17.50 / hr • Supply Chain",
+            desc: "Student assistant roles in data analytics, digital marketing, and culinary operations with free company meals."
+        },
+        {
+            id: "job_amazon_berlin",
+            lat: 52.5098,
+            lng: 13.3950,
+            title: "Amazon Development Center Berlin",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Krausenstraße 38, 10117 Berlin",
+            highlight: "💶 €17.50 / hr • Machine Learning & Cloud",
+            desc: "Prestigious working student internships in AWS cloud infrastructure, search algorithms, and software testing."
+        },
+        {
+            id: "job_flink_mitte",
+            lat: 52.5310,
+            lng: 13.3830,
+            title: "Flink Delivery Hub Mitte",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Chausseestraße 22, 10115 Berlin",
+            highlight: "💶 €14.50 / hr • E-Bike Rider & Picker",
+            desc: "Quick commerce part-time positions with flexible scheduling around university lecture hours. E-bike provided."
+        },
+        {
+            id: "job_gorillas_pberg",
+            lat: 52.5400,
+            lng: 13.4210,
+            title: "Getir / Gorillas Hub",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Danziger Str. 50, 10435 Berlin",
+            highlight: "💶 €14.50 / hr • Warehouse & Dispatch",
+            desc: "Immediate hire for international students. Morning and weekend shifts available with reliable weekly payouts."
+        },
+        {
+            id: "job_tier",
+            lat: 52.5070,
+            lng: 13.3740,
+            title: "Tier Mobility HQ",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Eichhornstraße 3, 10785 Berlin",
+            highlight: "💶 €15.00 / hr • Fleet & Operations",
+            desc: "Micro-mobility leader. Flexible working hours for student fleet operations, battery logistics, and support."
+        },
+        {
+            id: "job_soundcloud",
+            lat: 52.5375,
+            lng: 13.3985,
+            title: "SoundCloud Berlin Campus",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Rheinsberger Str. 76/77, 10115 Berlin",
+            highlight: "💶 €16.00 / hr • Community & Content",
+            desc: "Music tech headquarters offering student roles in copyright compliance, community operations, and localization."
+        },
+        {
+            id: "job_babbel",
+            lat: 52.5115,
+            lng: 13.4315,
+            title: "Babbel Learning HQ",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Andreasstraße 72, 10243 Berlin",
+            highlight: "💶 €15.50 / hr • Content Coordinator",
+            desc: "EdTech working student position assisting with linguistic data, user research, and community management."
+        },
+        {
+            id: "job_wayfair",
+            lat: 52.4890,
+            lng: 13.3910,
+            title: "Wayfair Tech Hub Kreuzberg",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Bergmannstraße 102, 10961 Berlin",
+            highlight: "💶 €16.50 / hr • Junior BI & Data",
+            desc: "E-commerce platform hiring student analysts for data pipelines, Tableau reporting, and pricing analysis."
+        },
+        {
+            id: "job_personio",
+            lat: 52.5170,
+            lng: 13.3880,
+            title: "Personio Berlin Office",
+            type: "Part-Time Job",
+            category: "jobs",
+            address: "Unter den Linden 26, 10117 Berlin",
+            highlight: "💶 €16.00 / hr • HR Tech Talent Scout",
+            desc: "Fast-growing HR software unicorn. Offers students valuable exposure to tech recruiting and customer growth."
+        },
+
+        // --- 4. INDIAN COMMUNITIES & ASSOCIATIONS (8) ---
+        {
+            id: "comm_iab",
+            lat: 52.4930,
+            lng: 13.3880,
+            title: "Indian Association Berlin e.V. (IAB)",
+            type: "Indian Community",
+            category: "communities",
+            address: "Mehringdamm 45, 10961 Berlin",
+            highlight: "🤝 50+ Years of Community • 3,000+ Members",
+            desc: "Largest non-profit representing the Indian diaspora in Berlin. Organizes Diwali, Holi festivals, cricket tournaments, and student mentorship."
+        },
+        {
+            id: "comm_isa_tu",
+            lat: 52.5120,
+            lng: 13.3275,
+            title: "Indian Students Association (ISA Berlin)",
+            type: "Indian Community",
+            category: "communities",
+            address: "Straße des 17. Juni 135, 10623 Berlin",
+            highlight: "🤝 Official University Student Wing",
+            desc: "Peer-to-peer support network assisting incoming Indian students with city registration (Anmeldung), blocked accounts, and flat sharing."
+        },
+        {
+            id: "comm_embassy",
+            lat: 52.5090,
+            lng: 13.3590,
+            title: "Embassy of India & Tagore Centre",
+            type: "Indian Community",
+            category: "communities",
+            address: "Tiergartenstraße 17, 10785 Berlin",
+            highlight: "🇮🇳 Consular Support & Cultural Center",
+            desc: "Student welfare division, passport & consular services, and free cultural workshops (classical dance, yoga, Hindi/Sanskrit classes)."
+        },
+        {
+            id: "comm_friends_india",
+            lat: 52.5215,
+            lng: 13.4110,
+            title: "Friends of India Association Berlin",
+            type: "Indian Community",
+            category: "communities",
+            address: "Alexanderplatz 7, 10178 Berlin",
+            highlight: "🤝 Cultural & Professional Network",
+            desc: "Connects students and young professionals across Germany. Organizes monthly meetups and professional networking dinners."
+        },
+        {
+            id: "comm_telugu",
+            lat: 52.4830,
+            lng: 13.3510,
+            title: "Telugu Association Berlin-Brandenburg",
+            type: "Indian Community",
+            category: "communities",
+            address: "Goltzstraße 18, 10823 Berlin",
+            highlight: "🤝 Ugadi & Sankranti Festivities",
+            desc: "Cultural home for Telugu speaking students and families. Offers emergency student aid, community kitchens, and celebration fests."
+        },
+        {
+            id: "comm_tamil",
+            lat: 52.4760,
+            lng: 13.4420,
+            title: "Tamil Sangam Berlin",
+            type: "Indian Community",
+            category: "communities",
+            address: "Karl-Marx-Straße 95, 12043 Berlin",
+            highlight: "🤝 Tamil Diaspora & Cultural Wing",
+            desc: "Vibrant community organizing Pongal celebrations, Tamil school, student orientation sessions, and communal dinners."
+        },
+        {
+            id: "comm_gurudwara",
+            lat: 52.4955,
+            lng: 13.4310,
+            title: "Gurudwara Sri Guru Singh Sabha",
+            type: "Indian Community",
+            category: "communities",
+            address: "Reichenberger Str. 174, 10999 Berlin",
+            highlight: "🙏 Langar (Free Meals) & Emergency Shelter",
+            desc: "Welcomes everyone regardless of background. Provides fresh daily Langar and warm temporary shelter for freshers searching for housing."
+        },
+        {
+            id: "comm_ganesha_temple",
+            lat: 52.4845,
+            lng: 13.4190,
+            title: "Sri Ganesha Hindu Temple Berlin",
+            type: "Indian Community",
+            category: "communities",
+            address: "Hasenheide 106, 10967 Berlin",
+            highlight: "🙏 Spiritual Center & Community Hub",
+            desc: "Traditional Hindu temple and community center in Hasenheide park. Hub for festive gatherings, Navratri garba, and student prayers."
+        }
+    ];
+
+    // Global state
+    var currentData = [...INITIAL_BERLIN_DATA];
+    var activeCategory = "all";
+    var currentSearch = "";
+
+    // 1. Initialize Map with OpenStreetMap Tiles (clean, light, 100% free, no watermarks)
+    var map = L.map('map', {
+        zoomControl: false // custom position
+    }).setView([52.5180, 13.3950], 12);
+
+    L.control.zoom({
+        position: 'bottomright'
+    }).addTo(map);
+
+    // Official OpenStreetMap Tiles (100% free, no API key required, no watermarks)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // MarkerCluster Group
+    var markers = L.markerClusterGroup({
+        chunkedLoading: true,
+        maxClusterRadius: 40,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false
+    });
+    map.addLayer(markers);
+
+    // Call Android Native Interface
+    function handleViewMore(id) {
+        if (window.Android && window.Android.onViewMore) {
+            window.Android.onViewMore(id);
+        } else {
+            console.log("View more clicked for:", id);
+        }
+    }
+
+    // Generate Custom Icon by Category
+    function createCustomPin(item) {
+        var catClass = "pin-job";
+        var iconHtml = "💼";
+        var badgeText = "Part-Time Job";
+        var badgeClass = "badge-job";
+
+        if (item.category === "restaurants" || item.type.includes("Restaurant")) {
+            catClass = "pin-restaurant";
+            iconHtml = "🍛";
+            badgeText = "Indian Restaurant";
+            badgeClass = "badge-restaurant";
+        } else if (item.category === "universities" || item.type.includes("University")) {
+            catClass = "pin-university";
+            iconHtml = "🎓";
+            badgeText = "University";
+            badgeClass = "badge-university";
+        } else if (item.category === "communities" || item.type.includes("Community")) {
+            catClass = "pin-community";
+            iconHtml = "🤝";
+            badgeText = "Indian Community";
+            badgeClass = "badge-community";
+        }
+
+        var customIcon = L.divIcon({
+            className: 'custom-pin ' + catClass,
+            html: '<div class="pin-inner">' + iconHtml + '</div>',
+            iconSize: [34, 34],
+            iconAnchor: [17, 17],
+            popupAnchor: [0, -18]
+        });
+
+        var marker = L.marker([item.lat, item.lng], { icon: customIcon });
+
+        // Build Popup Card (Matches Image 2 Moxo Card)
+        var popupHtml = `
+            <div class="popup-card">
+                <div class="popup-badge ${badgeClass}">${badgeText}</div>
+                <h3 class="popup-title">${item.title}</h3>
+                <div class="popup-meta">📍 ${item.address || 'Berlin, Germany'}</div>
+                ${item.highlight ? `<div class="popup-highlight">${item.highlight}</div>` : ''}
+                <div class="popup-desc">${item.desc}</div>
+                <div class="popup-actions">
+                    <a class="popup-btn" onclick="handleViewMore('${item.id}')">
+                        View more <span>→</span>
+                    </a>
+                    <a class="popup-dir-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title + ' ' + (item.address || 'Berlin'))}" target="_blank">
+                        Directions ↗
+                    </a>
+                </div>
+            </div>
+        `;
+
+        marker.bindPopup(popupHtml, {
+            maxWidth: 300,
+            minWidth: 260
+        });
+
+        return marker;
+    }
+
+    // Render Markers based on active filter & search
+    function renderMarkers() {
+        markers.clearLayers();
+
+        var filtered = currentData.filter(function(item) {
+            // Category check
+            var matchesCategory = true;
+            if (activeCategory === "jobs") matchesCategory = (item.category === "jobs" || item.type.includes("Job"));
+            else if (activeCategory === "restaurants") matchesCategory = (item.category === "restaurants" || item.type.includes("Restaurant"));
+            else if (activeCategory === "universities") matchesCategory = (item.category === "universities" || item.type.includes("University"));
+            else if (activeCategory === "communities") matchesCategory = (item.category === "communities" || item.type.includes("Community"));
+
+            // Search query check
+            var matchesSearch = true;
+            if (currentSearch.trim() !== "") {
+                var q = currentSearch.toLowerCase();
+                matchesSearch = (
+                    item.title.toLowerCase().includes(q) ||
+                    (item.desc && item.desc.toLowerCase().includes(q)) ||
+                    (item.address && item.address.toLowerCase().includes(q)) ||
+                    item.type.toLowerCase().includes(q)
+                );
+            }
+
+            return matchesCategory && matchesSearch;
+        });
+
+        var newMarkers = [];
+        for (var i = 0; i < filtered.length; i++) {
+            newMarkers.push(createCustomPin(filtered[i]));
+        }
+
+        markers.addLayers(newMarkers);
+
+        // Update Bottom Badge
+        var bottomText = document.getElementById("bottomText");
+        if (bottomText) {
+            bottomText.innerText = `${filtered.length} Locations Found in Berlin`;
+        }
+
+        // Update counts in header chips
+        updateChipCounts();
+    }
+
+    function updateChipCounts() {
+        var counts = { all: currentData.length, jobs: 0, restaurants: 0, universities: 0, communities: 0 };
+        currentData.forEach(function(item) {
+            if (item.category === "jobs" || item.type.includes("Job")) counts.jobs++;
+            else if (item.category === "restaurants" || item.type.includes("Restaurant")) counts.restaurants++;
+            else if (item.category === "universities" || item.type.includes("University")) counts.universities++;
+            else if (item.category === "communities" || item.type.includes("Community")) counts.communities++;
+        });
+
+        if (document.getElementById("count-all")) document.getElementById("count-all").innerText = counts.all;
+        if (document.getElementById("count-jobs")) document.getElementById("count-jobs").innerText = counts.jobs;
+        if (document.getElementById("count-restaurants")) document.getElementById("count-restaurants").innerText = counts.restaurants;
+        if (document.getElementById("count-universities")) document.getElementById("count-universities").innerText = counts.universities;
+        if (document.getElementById("count-communities")) document.getElementById("count-communities").innerText = counts.communities;
+    }
+
+    // Category Filter Switch
+    function setCategoryFilter(cat) {
+        activeCategory = cat;
+        var chips = document.querySelectorAll(".filter-chip");
+        chips.forEach(function(chip) { chip.classList.remove("active"); });
+
+        var activeBtn = document.getElementById("chip-" + cat);
+        if (activeBtn) activeBtn.classList.add("active");
+
+        renderMarkers();
+    }
+
+    // Search Box Handlers
+    function handleSearchInput(val) {
+        currentSearch = val;
+        var clearBtn = document.getElementById("clearBtn");
+        if (clearBtn) {
+            clearBtn.style.display = val.length > 0 ? "flex" : "none";
+        }
+        renderMarkers();
+    }
+
+    function clearSearch() {
+        var input = document.getElementById("searchInput");
+        if (input) {
+            input.value = "";
+            handleSearchInput("");
+        }
+    }
+
+    // External Bridge: Called from Android Compose Screen
+    function filterByCategory(categoryName) {
+        var cat = categoryName.toLowerCase();
+        if (cat.includes("job")) setCategoryFilter("jobs");
+        else if (cat.includes("restaurant")) setCategoryFilter("restaurants");
+        else if (cat.includes("universit")) setCategoryFilter("universities");
+        else if (cat.includes("communit")) setCategoryFilter("communities");
+        else setCategoryFilter("all");
+    }
+
+    // External Bridge: Update live data from backend or Anakin
+    function updateMap(newData) {
+        try {
+            var parsed = newData;
+            if (typeof newData === 'string') {
+                parsed = JSON.parse(newData);
+            }
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                currentData = parsed;
+                renderMarkers();
+            }
+        } catch (e) {
+            console.error("Error updating map data:", e);
+        }
+    }
+
+    // Initial Render
+    renderMarkers();
+</script>
+</body>
+</html>

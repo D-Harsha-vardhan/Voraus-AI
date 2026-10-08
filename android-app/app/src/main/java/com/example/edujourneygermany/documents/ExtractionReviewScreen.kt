@@ -42,7 +42,8 @@ fun ExtractionReviewScreen(
 
     LaunchedEffect(imageUri, documentType) {
         if (imageUri != null) {
-            val cachedData = com.example.edujourneygermany.auth.DocumentMemory.extractedDataCache[documentType]
+            val cacheKey = imageUri.toString()
+            val cachedData = com.example.edujourneygermany.auth.DocumentMemory.extractedDataCache[cacheKey]
             if (cachedData != null) {
                 extractedData = cachedData
                 isLoading = false
@@ -209,8 +210,9 @@ fun ExtractionReviewScreen(
                 Button(
                     onClick = {
                         isUploading = true
-                        // Save manual edits to memory so they aren't lost if the user comes back
-                        com.example.edujourneygermany.auth.DocumentMemory.extractedDataCache[documentType] = extractedData
+                        if (imageUri != null) {
+                            com.example.edujourneygermany.auth.DocumentMemory.extractedDataCache[imageUri.toString()] = extractedData
+                        }
                         
                         scope.launch {
                             if (imageUri != null) {

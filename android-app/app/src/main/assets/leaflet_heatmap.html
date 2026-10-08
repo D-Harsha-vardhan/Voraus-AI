@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaflet Heatmap</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <style>
+        body { padding: 0; margin: 0; }
+        html, body, #map { height: 100%; width: 100%; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    // Initialize map centered at Berlin
+    var map = L.map('map').setView([52.5200, 13.4050], 10);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var heatLayer = null;
+
+    // Called from Android
+    function updateHeatmap(pointsJson) {
+        var points = JSON.parse(pointsJson);
+        
+        // Remove existing layer if any
+        if (heatLayer) {
+            map.removeLayer(heatLayer);
+        }
+        
+        // Create new heat layer and add to map
+        heatLayer = L.heatLayer(points, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 10
+        }).addTo(map);
+    }
+</script>
+</body>
+</html>

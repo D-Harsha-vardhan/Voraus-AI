@@ -39,6 +39,7 @@ import com.example.edujourneygermany.qualification.QualificationScreen
 import com.example.edujourneygermany.advisor.AiAdvisorScreen
 import com.example.edujourneygermany.opportunities.OpportunitiesScreen
 import com.example.edujourneygermany.notifications.NotificationsScreen
+import com.example.edujourneygermany.heatmap.HeatMapScreen
 
 @Composable
 fun AppNavigation() {
@@ -57,7 +58,12 @@ fun AppNavigation() {
             composable("splash") {
                 SplashScreen(
                     onGetStarted = { navController.navigate("register") },
-                    onLogin = { navController.navigate("login") }
+                    onLogin = { navController.navigate("login") },
+                    onAlreadyLoggedIn = { 
+                        navController.navigate("home") {
+                            popUpTo("splash") { inclusive = true }
+                        }
+                    }
                 )
             }
             composable("register") {
@@ -111,7 +117,12 @@ fun AppNavigation() {
                 ProfileScreen(
                     onNavigateToDocuments = { navController.navigate("documents") },
                     onNavigateToQualification = { navController.navigate("qualification") },
-                    onNavigateToEditProfile = { navController.navigate("edit_profile") }
+                    onNavigateToEditProfile = { navController.navigate("edit_profile") },
+                    onLogout = {
+                        navController.navigate("splash") {
+                            popUpTo(0)
+                        }
+                    }
                 )
             }
             composable("edit_profile") {
@@ -138,8 +149,9 @@ fun AppNavigation() {
             composable("documents") {
                 DocumentsScreen(
                     onNavigateToExtraction = { docType, uri ->
+                        val encodedDocType = java.net.URLEncoder.encode(docType, "UTF-8")
                         val encodedUri = java.net.URLEncoder.encode(uri, "UTF-8")
-                        navController.navigate("extraction_review/$docType?uri=$encodedUri")
+                        navController.navigate("extraction_review/$encodedDocType?uri=$encodedUri")
                     }
                 )
             }
@@ -241,6 +253,11 @@ fun AppNavigation() {
             }
             composable("notifications") {
                 NotificationsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("heatmap") {
+                HeatMapScreen(
                     onBack = { navController.popBackStack() }
                 )
             }
