@@ -134,6 +134,8 @@ class AiAdvisorViewModel : ViewModel() {
                     
                     ONLY output the [UNIVERSITY_RECOMMENDATIONS] block if the user EXPLICITLY asks for university recommendations or a list of universities. If the user asks a general question (like about tuition fees, visas, or cities), DO NOT output the block.
                     
+                    If the user asks a question entirely unrelated to studying in Germany, or if you do not know the answer based on your context, you MUST respond EXACTLY with the single word: UNKNOWN_QUERY
+                    
                     When recommending universities, you MUST output a special block formatted exactly like this (use exactly these tags, no markdown, no bullet points, no headers):
                     
                     [UNIVERSITY_RECOMMENDATIONS]
@@ -206,6 +208,10 @@ class AiAdvisorViewModel : ViewModel() {
                     }
                 }
 
+                if (finalText.trim() == "UNKNOWN_QUERY") {
+                    throw Exception("NVIDIA_UNKNOWN_QUERY")
+                }
+
                 // Replace loading message with actual response
                 _messages.update { list ->
                     list.mapIndexed { index, chatMessage ->
@@ -256,8 +262,10 @@ class AiAdvisorViewModel : ViewModel() {
                 } catch (dronaHqException: Exception) {
                     val errorMsg = if (e is retrofit2.HttpException && e.code() == 401) {
                         "I'm sorry, but my API key appears to be invalid or expired. Please update it in the dashboard."
+                    } else if (e.message == "NVIDIA_UNKNOWN_QUERY") {
+                        "I'm sorry, I couldn't find an answer to your question in my knowledge base."
                     } else {
-                        "Sorry, I couldn't reach the server right now. Error: ${e.localizedMessage ?: "timeout"}"
+                        "I'm sorry, I couldn't find an answer to your question."
                     }
                     _messages.update { list ->
                         list.mapIndexed { index, chatMessage ->
