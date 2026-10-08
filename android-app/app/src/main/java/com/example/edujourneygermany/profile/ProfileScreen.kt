@@ -29,19 +29,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onNavigateToDocuments: () -> Unit,
     onNavigateToQualification: () -> Unit,
-    onNavigateToEditProfile: () -> Unit
+    onNavigateToEditProfile: () -> Unit,
+    onLogout: () -> Unit
 ) {
     var isLoading by remember { mutableStateOf(true) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         try {
-            val uid = Supabase.client.auth.currentUserOrNull()?.id
+            val user = Supabase.client.auth.currentUserOrNull()
+            val uid = user?.id
+            if (user != null) {
+                user.email?.let { UserProfileStore.email = it }
+            }
             if (uid != null) {
                 val profileResult = Supabase.client.postgrest["profiles"]
                     .select { filter { eq("id", uid) } }
@@ -58,6 +66,8 @@ fun ProfileScreen(
                 profileResult["company"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.company = it }
                 profileResult["english_level"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.englishLevel = it }
                 profileResult["german_level"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.germanLevel = it }
+                profileResult["date_of_birth"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.dob = it }
+                profileResult["nationality"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.nationality = it }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -110,7 +120,7 @@ fun ProfileScreen(
                         style = MaterialTheme.typography.titleLarge, 
                         fontWeight = FontWeight.Bold
                     )
-                    Text("user@example.com", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    Text(if (UserProfileStore.email.isNotEmpty()) UserProfileStore.email else "user@example.com", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedButton(
                         onClick = onNavigateToEditProfile,
@@ -156,6 +166,30 @@ fun ProfileScreen(
                 ProfileInfoRow("LinkedIn", UserProfileStore.linkedIn.ifEmpty { "Not provided" })
                 ProfileInfoRow("GitHub", UserProfileStore.github.ifEmpty { "Not provided" })
             }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Button(
+                onClick = {
+                    scope.launch {
+                        try {
+                            Supabase.client.auth.signOut()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        onLogout()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.Default.ExitToApp, contentDescription = "Logout", tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Log Out", fontWeight = FontWeight.Bold, color = Color.White)
+            }
+            
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
