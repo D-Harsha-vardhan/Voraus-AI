@@ -180,7 +180,8 @@ fun AppNavigation() {
             }
             composable("qualification") {
                 QualificationScreen(
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToDocuments = { navController.navigate("documents") }
                 )
             }
             composable("merge_profile") {

@@ -38,7 +38,7 @@ data class SimpleUni(val name: String, val shortName: String, val type: String =
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QualificationScreen(onBackClick: () -> Unit = {}) {
+fun QualificationScreen(onBackClick: () -> Unit = {}, onNavigateToDocuments: () -> Unit = {}) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) } // 0: Finance, 1: Visa
     var searchQuery by remember { mutableStateOf("") }
@@ -49,6 +49,12 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
     var selectedCourse by remember { mutableStateOf("") }
     var selectedIntake by remember { mutableStateOf("") }
     var isBlockedAccountVerified by remember { mutableStateOf(false) }
+    var isPassportVerified by remember { mutableStateOf(false) }
+    var isAdmissionVerified by remember { mutableStateOf(false) }
+    var isHealthVerified by remember { mutableStateOf(false) }
+    var isApsVerified by remember { mutableStateOf(false) }
+    var isCvVerified by remember { mutableStateOf(false) }
+    var isTranscriptsVerified by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
@@ -57,6 +63,12 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
             val files = bucket.list()
             val allNames = files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) }
             isBlockedAccountVerified = allNames.any { it.contains("_blocked_account") }
+            isPassportVerified = allNames.any { it.contains("_passport") }
+            isAdmissionVerified = allNames.any { it.contains("_admission") }
+            isHealthVerified = allNames.any { it.contains("_health_insurance") }
+            isApsVerified = allNames.any { it.contains("_aps") }
+            isCvVerified = allNames.any { it.contains("_cv") || it.contains("_resume") }
+            isTranscriptsVerified = allNames.any { it.contains("_transcripts") || it.contains("_degree") }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -142,7 +154,17 @@ fun QualificationScreen(onBackClick: () -> Unit = {}) {
         ) {
             
             if (visaDetailMode && selectedTab == 1) {
-                VisaDetailView(isBlockedAccountVerified = isBlockedAccountVerified, onBack = { visaDetailMode = false })
+                VisaDetailView(
+                    isBlockedAccountVerified = isBlockedAccountVerified,
+                    isPassportVerified = isPassportVerified,
+                    isAdmissionVerified = isAdmissionVerified,
+                    isHealthVerified = isHealthVerified,
+                    isApsVerified = isApsVerified,
+                    isCvVerified = isCvVerified,
+                    isTranscriptsVerified = isTranscriptsVerified,
+                    onBack = { visaDetailMode = false },
+                    onNavigateToDocuments = onNavigateToDocuments
+                )
                 return@Column
             }
 
@@ -418,7 +440,17 @@ fun PlannerItem(
 }
 
 @Composable
-fun VisaDetailView(isBlockedAccountVerified: Boolean = false, onBack: () -> Unit) {
+fun VisaDetailView(
+    isBlockedAccountVerified: Boolean = false,
+    isPassportVerified: Boolean = false,
+    isAdmissionVerified: Boolean = false,
+    isHealthVerified: Boolean = false,
+    isApsVerified: Boolean = false,
+    isCvVerified: Boolean = false,
+    isTranscriptsVerified: Boolean = false,
+    onBack: () -> Unit,
+    onNavigateToDocuments: () -> Unit = {}
+) {
     // Top Bar handled by scaffold, but we have our own nested view here.
     // Assuming this is inside the Visa Details screen
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -430,7 +462,7 @@ fun VisaDetailView(isBlockedAccountVerified: Boolean = false, onBack: () -> Unit
             Box(modifier = Modifier.weight(1f).background(Color.White, RoundedCornerShape(20.dp)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
                 Text("Overview", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
-            Box(modifier = Modifier.weight(1f).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.weight(1f).padding(vertical = 8.dp).clickable { onNavigateToDocuments() }, contentAlignment = Alignment.Center) {
                 Text("Documents", color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
             }
             Box(modifier = Modifier.weight(1f).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
@@ -476,17 +508,18 @@ fun VisaDetailView(isBlockedAccountVerified: Boolean = false, onBack: () -> Unit
                         Text("Visa Documents Checklist", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
                     }
                     Box(modifier = Modifier.background(Color(0xFFD1FAE5), RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                        Text("7/10 completed", color = Color(0xFF059669), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        val completedCount = listOf(isPassportVerified, isAdmissionVerified, isBlockedAccountVerified, isHealthVerified, isApsVerified, isCvVerified, isTranscriptsVerified).count { it }
+                        Text("${completedCount}/7 completed", color = Color(0xFF059669), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                ChecklistItem("Valid Passport", isChecked = true)
-                ChecklistItem("Admission Letter", isChecked = true)
+                ChecklistItem("Valid Passport", isChecked = isPassportVerified)
+                ChecklistItem("Admission Letter", isChecked = isAdmissionVerified)
                 ChecklistItem("Proof of Funds (Blocked Account)", isChecked = isBlockedAccountVerified)
-                ChecklistItem("Health Insurance", isChecked = true)
-                ChecklistItem("APS Certificate (if required)", isChecked = false)
-                ChecklistItem("CV & Motivation Letter", isChecked = false)
-                ChecklistItem("Academic Transcripts", isChecked = false)
+                ChecklistItem("Health Insurance", isChecked = isHealthVerified)
+                ChecklistItem("APS Certificate (if required)", isChecked = isApsVerified)
+                ChecklistItem("CV & Motivation Letter", isChecked = isCvVerified)
+                ChecklistItem("Academic Transcripts", isChecked = isTranscriptsVerified)
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 Box(modifier = Modifier.fillMaxWidth().background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp)).padding(vertical = 12.dp).clickable {  }, contentAlignment = Alignment.Center) {
