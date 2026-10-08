@@ -1,0 +1,53 @@
+{
+  "flow": [
+    {
+      "key": "level",
+      "question": "Hello, Start your journey to Study in Germany",
+      "options": [
+        "Bachelors",
+        "Masters"
+      ]
+    },
+    {
+      "key": "mode",
+      "question": "Preferred Mode of Study",
+      "options": [
+        "English",
+        "German"
+      ]
+    },
+    {
+      "key": "course",
+      "question": "Which course are you interested in?",
+      "options": [
+        "IT / Computer Science",
+        "Business / Management",
+        "Medical / Healthcare",
+        "Engineering"
+      ]
+    },
+    {
+      "key": "cgpa",
+      "question": "To provide personalized study plan, please share the CGPA of highest qualification",
+      "options": [
+        "Below 6.5",
+        "6.5-7.5",
+        "7.5-8.5",
+        "8.5+"
+      ]
+    },
+    {
+      "key": "city",
+      "question": "Please select your nearest city",
+      "options": [
+        "Bangalore",
+        "Hyderabad",
+        "Chennai",
+        "Mumbai",
+        "Delhi",
+        "Other"
+      ]
+    }
+  ],
+  "after_flow_message": "Got you! Germany study plan ready for you. Ask FREE UNLIMITED queries."
+}

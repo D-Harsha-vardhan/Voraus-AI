@@ -259,11 +259,32 @@ fun AiSimpleMessage(text: String, isLoading: Boolean = false, onOptionsClick: ((
                 if (isLoading) {
                     TypingIndicator()
                 } else {
-                    Text(
-                        text = text,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    val lines = text.split("\n")
+                    for (line in lines) {
+                        val trimmed = line.trim()
+                        if (trimmed.startsWith("[UNIVERSITY]")) {
+                            val parts = trimmed.removePrefix("[UNIVERSITY]").split("|").map { it.trim() }
+                            if (parts.size >= 3) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                EmbeddedUniversityCard(
+                                    iconInitial = parts[0].take(1),
+                                    university = parts[0],
+                                    program = parts[1],
+                                    location = parts[2]
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        } else {
+                            if (trimmed.isNotBlank()) {
+                                Text(
+                                    text = trimmed,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                        }
+                    }
                     
                     if (onOptionsClick != null) {
                         Spacer(modifier = Modifier.height(12.dp))
@@ -428,39 +449,51 @@ fun EmbeddedUniversityCard(iconInitial: String, university: String, program: Str
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(iconInitial, color = Color.White, fontWeight = FontWeight.Bold)
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(university, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text(program, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                Text(location, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(4.dp))
-                Surface(
-                    color = Color(0xFF4CAF50).copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(4.dp)
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        "High Match", 
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), 
-                        style = MaterialTheme.typography.labelSmall, 
-                        color = Color(0xFF388E3C),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(iconInitial, color = Color.White, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(university, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(program, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    Text(location, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        color = Color(0xFF4CAF50).copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            "High Match", 
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), 
+                            style = MaterialTheme.typography.labelSmall, 
+                            color = Color(0xFF388E3C),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "View", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Button(
+                onClick = { /* TODO: Implement Apply logic */ },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Apply Now", fontWeight = FontWeight.Bold, color = Color.White)
+            }
         }
     }
 }

@@ -41,7 +41,7 @@ class AiAdvisorViewModel : ViewModel() {
     private val userAnswers = mutableMapOf<String, String>()
     private var isFirstDronaHqMessage = true
 
-    private val apiKey = "187e7a22-6051-484d-a4d3-749c41d13c90" // Note: In production, store this securely
+    private val apiKey = "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" // Note: In production, store this securely
 
     init {
         showNextFlowQuestion()
@@ -103,7 +103,7 @@ class AiAdvisorViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // Prepend context to the first message sent to DronaHQ
+                // Prepend context to the first message sent
                 val payloadMessage = if (isFirstDronaHqMessage && userAnswers.isNotEmpty()) {
                     isFirstDronaHqMessage = false
                     val contextStr = userAnswers.entries.joinToString(", ") { "${it.key}: ${it.value}" }
@@ -112,27 +112,57 @@ class AiAdvisorViewModel : ViewModel() {
                     userText
                 }
 
-                // Call DronaHQ webhook
-                val response = RetrofitClient.dronaHqApi.sendMessage(
-                    authHeader = "Bearer $apiKey",
-                    apiKeyHeader = apiKey,
-                    request = WebhookRequest(message = payloadMessage)
+                val systemPrompt = """
+                    You are Educaro AI, an expert study abroad advisor for Germany. 
+                    Use the context provided about the user to give personalized advice.
+                    
+                    CRITICAL: When recommending universities, you MUST format EACH university exactly like this on a new line:
+                    [UNIVERSITY] University Name | Program Name | City, Germany
+                    
+                    For example:
+                    Based on your profile, here are some recommendations:
+                    [UNIVERSITY] TU Munich (TUM) | MSc Informatics | Munich, Germany
+                    [UNIVERSITY] RWTH Aachen | MSc Computer Science | Aachen, Germany
+                    
+                    Keep your responses encouraging, concise, and helpful.
+                """.trimIndent()
+                
+                val chatMessages = mutableListOf<NvidiaMessage>()
+                chatMessages.add(NvidiaMessage("system", systemPrompt))
+                
+                _messages.value.filter { it.text != "Thinking..." }.forEach { msg ->
+                    val role = if (msg.isUser) "user" else "assistant"
+                    chatMessages.add(NvidiaMessage(role, msg.text))
+                }
+                
+                if (payloadMessage != userText) {
+                    chatMessages[chatMessages.lastIndex] = NvidiaMessage("user", payloadMessage)
+                }
+
+                val request = NvidiaRequest(
+                    model = "meta/llama-3.1-70b-instruct",
+                    messages = chatMessages
                 )
 
-                // Parse response
+                // Call Nvidia API
+                val response = RetrofitClient.nvidiaApi.sendMessage(
+                    authHeader = "Bearer $apiKey",
+                    request = request
+                )
+
+                // Parse Nvidia response (OpenAI format)
                 val aiResponseText = if (response.isJsonObject) {
                     val obj = response.asJsonObject
-                    if (obj.has("response") && obj.get("response").isJsonObject && obj.getAsJsonObject("response").has("reply")) {
-                        obj.getAsJsonObject("response").get("reply").asString
-                    } else if (obj.has("message")) {
-                        obj.get("message").asString
-                    } else if (obj.has("text")) {
-                        obj.get("text").asString
+                    if (obj.has("choices") && obj.getAsJsonArray("choices").size() > 0) {
+                        val choice = obj.getAsJsonArray("choices").get(0).asJsonObject
+                        if (choice.has("message") && choice.getAsJsonObject("message").has("content")) {
+                            choice.getAsJsonObject("message").get("content").asString
+                        } else {
+                            response.toString()
+                        }
                     } else {
                         response.toString()
                     }
-                } else if (response.isJsonPrimitive) {
-                    response.asString
                 } else {
                     response.toString()
                 }
