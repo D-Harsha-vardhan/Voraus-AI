@@ -220,7 +220,7 @@ fun HomeDashboardScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Person, title = "Profile") { onNavigate("profile") }
                     QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Folder, title = "Documents") { onNavigate("documents") }
-                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Checklist, title = "Qualification") { onNavigate("qualification") }
+                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Checklist, title = "Finance/Visa Advisor") { onNavigate("qualification") }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
