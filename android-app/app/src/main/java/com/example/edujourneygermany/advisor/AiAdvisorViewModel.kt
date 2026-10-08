@@ -8,7 +8,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class ChatMessage(val text: String, val isUser: Boolean, val isLoading: Boolean = false, val quotedQuestion: String? = null)
+data class ParsedUniversity(
+    val name: String,
+    val program: String,
+    val matchScore: String,
+    val type: String,
+    val language: String
+)
+
+data class ChatMessage(
+    val text: String, 
+    val isUser: Boolean, 
+    val isLoading: Boolean = false, 
+    val quotedQuestion: String? = null,
+    val universities: List<ParsedUniversity>? = null
+)
 
 data class FlowQuestion(
     val key: String,
@@ -41,7 +55,7 @@ class AiAdvisorViewModel : ViewModel() {
     private val userAnswers = mutableMapOf<String, String>()
     private var isFirstDronaHqMessage = true
 
-    private val apiKey = "187e7a22-6051-484d-a4d3-749c41d13c90" // Note: In production, store this securely
+    private val apiKey = com.example.edujourneygermany.BuildConfig.NVIDIA_API_KEY
 
     init {
         showNextFlowQuestion()
@@ -103,7 +117,7 @@ class AiAdvisorViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // Prepend context to the first message sent to DronaHQ
+                // Prepend context to the first message sent
                 val payloadMessage = if (isFirstDronaHqMessage && userAnswers.isNotEmpty()) {
                     isFirstDronaHqMessage = false
                     val contextStr = userAnswers.entries.joinToString(", ") { "${it.key}: ${it.value}" }
@@ -112,60 +126,153 @@ class AiAdvisorViewModel : ViewModel() {
                     userText
                 }
 
-                // Call DronaHQ webhook
-                val response = RetrofitClient.dronaHqApi.sendMessage(
-                    authHeader = "Bearer $apiKey",
-                    apiKeyHeader = apiKey,
-                    request = WebhookRequest(message = payloadMessage)
+                val systemPrompt = """
+                    You are Educaro AI, an expert study abroad advisor for Germany. 
+                    Use the context provided about the user to give accurate, personalized university and program recommendations based on real universities in Germany.
+                    
+                    CRITICAL: Do NOT just repeat the examples below. You MUST search your knowledge base to find the actual best-matching universities and programs for the user's specific profile (course, GPA, level, language).
+                    
+                    ONLY output the [UNIVERSITY_RECOMMENDATIONS] block if the user EXPLICITLY asks for university recommendations or a list of universities. If the user asks a general question (like about tuition fees, visas, or cities), DO NOT output the block.
+                    
+                    If the user asks a question entirely unrelated to studying in Germany, or if you do not know the answer based on your context, you MUST respond EXACTLY with the single word: UNKNOWN_QUERY
+                    
+                    When recommending universities, you MUST output a special block formatted exactly like this (use exactly these tags, no markdown, no bullet points, no headers):
+                    
+                    [UNIVERSITY_RECOMMENDATIONS]
+                    TUM | M.Sc. Computer Science | 92 | Public | English-taught
+                    KIT | M.Sc. Artificial Intelligence | 88 | Public | English-taught
+                    RWTH Aachen | M.Sc. Data Science | 84 | Public | English-taught
+                    [/UNIVERSITY_RECOMMENDATIONS]
+                    
+                    Keep your text outside this block encouraging, concise, and helpful. Do not add any table headers inside the block.
+                """.trimIndent()
+                
+                val chatMessages = mutableListOf<NvidiaMessage>()
+                chatMessages.add(NvidiaMessage("system", systemPrompt))
+                
+                _messages.value.filter { it.text != "Thinking..." }.forEach { msg ->
+                    val role = if (msg.isUser) "user" else "assistant"
+                    chatMessages.add(NvidiaMessage(role, msg.text))
+                }
+                
+                if (payloadMessage != userText) {
+                    chatMessages[chatMessages.lastIndex] = NvidiaMessage("user", payloadMessage)
+                }
+
+                val request = NvidiaRequest(
+                    model = "meta/llama-3.2-11b-vision-instruct",
+                    messages = chatMessages
                 )
 
-                // Parse response
-                val aiResponseText = if (response.isJsonObject) {
+                // Call Nvidia API
+                val response = RetrofitClient.nvidiaApi.sendMessage(
+                    authHeader = "Bearer $apiKey",
+                    request = request
+                )
+
+                // Parse Nvidia response (OpenAI format)
+                var aiResponseText = ""
+                if (response.isJsonObject) {
                     val obj = response.asJsonObject
-                    if (obj.has("response") && obj.get("response").isJsonObject && obj.getAsJsonObject("response").has("reply")) {
-                        obj.getAsJsonObject("response").get("reply").asString
-                    } else if (obj.has("message")) {
-                        obj.get("message").asString
-                    } else if (obj.has("text")) {
-                        obj.get("text").asString
-                    } else {
-                        response.toString()
+                    if (obj.has("choices") && obj.getAsJsonArray("choices").size() > 0) {
+                        val choice = obj.getAsJsonArray("choices").get(0).asJsonObject
+                        if (choice.has("message") && choice.getAsJsonObject("message").has("content")) {
+                            aiResponseText = choice.getAsJsonObject("message").get("content").asString
+                        }
                     }
-                } else if (response.isJsonPrimitive) {
-                    response.asString
-                } else {
-                    response.toString()
+                }
+                if (aiResponseText.isEmpty()) {
+                    aiResponseText = response.toString()
+                }
+
+                // Extract [UNIVERSITY_RECOMMENDATIONS] block
+                val uniList = mutableListOf<ParsedUniversity>()
+                val regex = Regex("\\[UNIVERSITY_RECOMMENDATIONS\\](.*?)\\[/UNIVERSITY_RECOMMENDATIONS\\]", RegexOption.DOT_MATCHES_ALL)
+                val match = regex.find(aiResponseText)
+                var finalText = aiResponseText
+                
+                if (match != null) {
+                    val block = match.groupValues[1].trim()
+                    finalText = aiResponseText.replace(match.value, "").trim()
+                    
+                    block.split("\n").forEach { line ->
+                        val cleanLine = line.trim().removePrefix("*").removePrefix("-").trim()
+                        if (cleanLine.isNotBlank() && !cleanLine.lowercase().contains("university abbreviation")) {
+                            val parts = cleanLine.split("|").map { it.trim() }
+                            if (parts.size >= 5) {
+                                uniList.add(ParsedUniversity(parts[0], parts[1], parts[2].replace("%", ""), parts[3], parts[4]))
+                            } else if (parts.size >= 3) {
+                                uniList.add(ParsedUniversity(parts[0], parts[1], parts[2].replace("%", ""), "Public", "English-taught"))
+                            }
+                        }
+                    }
+                }
+
+                if (finalText.trim() == "UNKNOWN_QUERY") {
+                    throw Exception("NVIDIA_UNKNOWN_QUERY")
                 }
 
                 // Replace loading message with actual response
                 _messages.update { list ->
                     list.mapIndexed { index, chatMessage ->
                         if (index == loadingIndex) {
-                            ChatMessage(aiResponseText, isUser = false)
-                        } else chatMessage
-                    }
-                }
-            } catch (e: retrofit2.HttpException) {
-                // Replace loading message with specific HTTP error
-                val errorMsg = if (e.code() == 401) {
-                    "I'm sorry, but my API key appears to be invalid or expired. Please update it in the dashboard."
-                } else {
-                    "Sorry, I couldn't reach the server right now. Error: HTTP ${e.code()}"
-                }
-                _messages.update { list ->
-                    list.mapIndexed { index, chatMessage ->
-                        if (index == loadingIndex) {
-                            ChatMessage(errorMsg, isUser = false)
+                            ChatMessage(
+                                text = finalText, 
+                                isUser = false, 
+                                universities = if (uniList.isNotEmpty()) uniList else null
+                            )
                         } else chatMessage
                     }
                 }
             } catch (e: Exception) {
-                // Replace loading message with general error
-                _messages.update { list ->
-                    list.mapIndexed { index, chatMessage ->
-                        if (index == loadingIndex) {
-                            ChatMessage("Sorry, I couldn't reach the server right now. Error: ${e.localizedMessage}", isUser = false)
-                        } else chatMessage
+                // Nvidia failed (timeout or error) -> fallback to DronaHQ
+                try {
+                    val dronaHqUrl = com.example.edujourneygermany.BuildConfig.DRONAHQ_AGENT_URL
+                    val dronaHqKey = com.example.edujourneygermany.BuildConfig.DRONAHQ_API_KEY
+                    if (dronaHqUrl.isNotBlank()) {
+                        val request = DronaHqRequest(
+                            query = userText,
+                            profile = userAnswers
+                        )
+                        val response = DronaHqClient.api.sendMessage(
+                            url = dronaHqUrl,
+                            authHeader = if (dronaHqKey.isNotBlank()) "Bearer $dronaHqKey" else "",
+                            request = request
+                        )
+                        
+                        var aiResponseText = ""
+                        if (response.isJsonObject) {
+                            val obj = response.asJsonObject
+                            aiResponseText = obj.get("reply")?.asString ?: obj.get("answer")?.asString ?: obj.get("output")?.asString ?: obj.get("response")?.asString ?: ""
+                        }
+                        if (aiResponseText.isEmpty()) {
+                            aiResponseText = response.toString()
+                        }
+                        
+                        _messages.update { list ->
+                            list.mapIndexed { index, chatMessage ->
+                                if (index == loadingIndex) {
+                                    ChatMessage(aiResponseText, isUser = false)
+                                } else chatMessage
+                            }
+                        }
+                    } else {
+                        throw e
+                    }
+                } catch (dronaHqException: Exception) {
+                    val errorMsg = if (e is retrofit2.HttpException && e.code() == 401) {
+                        "I'm sorry, but my API key appears to be invalid or expired. Please update it in the dashboard."
+                    } else if (e.message == "NVIDIA_UNKNOWN_QUERY") {
+                        "I'm sorry, I couldn't find an answer to your question in my knowledge base."
+                    } else {
+                        "I'm sorry, I couldn't find an answer to your question."
+                    }
+                    _messages.update { list ->
+                        list.mapIndexed { index, chatMessage ->
+                            if (index == loadingIndex) {
+                                ChatMessage(errorMsg, isUser = false)
+                            } else chatMessage
+                        }
                     }
                 }
             }

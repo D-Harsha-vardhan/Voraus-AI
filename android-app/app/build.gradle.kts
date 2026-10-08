@@ -24,8 +24,14 @@ android {
         versionCode = 1
         versionName = "1.0"
         
+        val nvidiaApiKey = properties.getProperty("NVIDIA_API_KEY") ?: ""
+        val dronaHqUrl = properties.getProperty("DRONAHQ_AGENT_URL") ?: ""
+        val dronaHqKey = properties.getProperty("DRONAHQ_API_KEY") ?: ""
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
+        buildConfigField("String", "NVIDIA_API_KEY", "\"$nvidiaApiKey\"")
+        buildConfigField("String", "DRONAHQ_AGENT_URL", "\"$dronaHqUrl\"")
+        buildConfigField("String", "DRONAHQ_API_KEY", "\"$dronaHqKey\"")
     }
 
     buildTypes {

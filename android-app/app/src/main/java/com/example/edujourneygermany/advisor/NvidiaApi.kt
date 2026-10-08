@@ -6,25 +6,26 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
-import retrofit2.http.Url
 
-data class DronaHqRequest(val query: String, val profile: Map<String, String>)
+data class NvidiaMessage(val role: String, val content: String)
+data class NvidiaRequest(val model: String, val messages: List<NvidiaMessage>)
 
-interface DronaHqApi {
-    @POST
+interface NvidiaApi {
+    @POST("v1/chat/completions")
     suspend fun sendMessage(
-        @Url url: String,
         @Header("Authorization") authHeader: String,
-        @Body request: DronaHqRequest
+        @Body request: NvidiaRequest
     ): JsonElement
 }
 
-object DronaHqClient {
-    val api: DronaHqApi by lazy {
+object RetrofitClient {
+    private const val BASE_URL = "https://integrate.api.nvidia.com/"
+
+    val nvidiaApi: NvidiaApi by lazy {
         Retrofit.Builder()
-            .baseUrl("https://dummy.com/") // Base URL is overridden by @Url
+            .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(DronaHqApi::class.java)
+            .create(NvidiaApi::class.java)
     }
 }

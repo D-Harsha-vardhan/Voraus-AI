@@ -44,6 +44,7 @@ import com.example.edujourneygermany.notifications.NotificationsScreen
 fun AppNavigation() {
     val navController = rememberNavController()
     val journeyViewModel: JourneyViewModel = viewModel()
+    val sharedUniversityViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = viewModel()
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -205,7 +206,30 @@ fun AppNavigation() {
                 )
             }
             composable("advisor") {
-                AiAdvisorScreen(onBookConsultant = { navController.navigate("consultant_dashboard") })
+                AiAdvisorScreen(
+                    onBookConsultant = { navController.navigate("consultant_dashboard") },
+                    onViewDetails = { uniName, programName, matchScore ->
+                        val encodedUni = android.net.Uri.encode(uniName)
+                        val encodedProg = android.net.Uri.encode(programName)
+                        val encodedScore = android.net.Uri.encode(matchScore)
+                        navController.navigate("university_details/$encodedUni/$encodedProg/$encodedScore")
+                    },
+                    sharedViewModel = sharedUniversityViewModel
+                )
+            }
+            composable("university_details/{uniName}/{programName}/{matchScore}?tab={tab}") { backStackEntry ->
+                val uniName = backStackEntry.arguments?.getString("uniName") ?: ""
+                val programName = backStackEntry.arguments?.getString("programName") ?: ""
+                val matchScore = backStackEntry.arguments?.getString("matchScore") ?: ""
+                val tabString = backStackEntry.arguments?.getString("tab")
+                val initialTab = tabString?.toIntOrNull() ?: 0
+                com.example.edujourneygermany.presentation.UniversityDetailsScreen(
+                    uniName = uniName,
+                    programName = programName,
+                    matchScore = matchScore,
+                    initialTab = initialTab,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable("consultant_dashboard") {
                 ConsultantDashboardScreen(
@@ -213,7 +237,15 @@ fun AppNavigation() {
                 )
             }
             composable("opportunities") {
-                OpportunitiesScreen()
+                OpportunitiesScreen(
+                    sharedViewModel = sharedUniversityViewModel,
+                    onViewRequirements = { uniName, programName, matchScore ->
+                        val encodedUni = android.net.Uri.encode(uniName)
+                        val encodedProg = android.net.Uri.encode(programName)
+                        val encodedScore = android.net.Uri.encode(matchScore.replace("%", ""))
+                        navController.navigate("university_details/$encodedUni/$encodedProg/$encodedScore?tab=1")
+                    }
+                )
             }
             composable("notifications") {
                 NotificationsScreen(

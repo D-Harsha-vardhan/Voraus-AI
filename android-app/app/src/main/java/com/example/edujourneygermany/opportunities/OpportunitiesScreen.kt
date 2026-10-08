@@ -2,10 +2,12 @@ package com.example.edujourneygermany.opportunities
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -20,8 +22,12 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpportunitiesScreen() {
+fun OpportunitiesScreen(
+    sharedViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onViewRequirements: (String, String, String) -> Unit = { _, _, _ -> }
+) {
     var selectedTab by remember { mutableStateOf(0) }
+    val universities by sharedViewModel.recommendedUniversities.collectAsState()
 
     Scaffold(
         topBar = {
@@ -54,34 +60,66 @@ fun OpportunitiesScreen() {
                 )
             }
 
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val linksMap = remember {
+                val map = mutableMapOf<String, String>()
+                try {
+                    val reader = java.io.BufferedReader(java.io.InputStreamReader(context.assets.open("germany_csv/24_university_profiles.csv")))
+                    reader.readLine()
+                    var line: String?
+                    while (reader.readLine().also { line = it } != null) {
+                        if (line.isNullOrBlank()) continue
+                        val parts = line!!.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)".toRegex()).map { it.trim('\"', ' ') }
+                        if (parts.size >= 9) {
+                            map[parts[1]] = parts[8].ifBlank { parts[7] }
+                        }
+                    }
+                    reader.close()
+                } catch (e: Exception) {}
+                map
+            }
+
             LazyColumn(
                 contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp), // Nav bar padding
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                item {
-                    OpportunityCard(
-                        institution = "Technical University of Munich",
-                        program = "M.Sc. Computer Science",
-                        location = "Munich, Germany",
-                        match = "92% Match",
-                        matchBreakdown = "Degree: 100% • English: 100% • GPA: 80%",
-                        reasons = listOf("Computer Science background", "Required degree", "English met"),
-                        missing = listOf("German B1", "APS Certificate"),
-                        iconLetter = "TU"
-                    )
-                }
-                item {
-                    OpportunityCard(
-                        institution = "RWTH Aachen University",
-                        program = "M.Sc. Artificial Intelligence",
-                        location = "Aachen, Germany",
-                        match = "85% Match",
-                        matchBreakdown = "Degree: 90% • English: 100% • GPA: 70%",
-                        reasons = listOf("Required degree completed", "IELTS requirement met"),
-                        missing = listOf("APS Certificate", "German B1"),
-                        iconLetter = "RW"
-                    )
+                if (universities.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No recommendations yet. Go to Chat to get your personalized list!",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+                    }
+                } else {
+                    items(universities.size) { index ->
+                        val uni = universities[index]
+                        val officialLink = linksMap.entries.firstOrNull { 
+                            it.key.contains(uni.name, ignoreCase = true) || uni.name.contains(it.key, ignoreCase = true) 
+                        }?.value ?: "https://www.uni-assist.de/en/"
+
+                        val dynamicReasons = listOf(
+                            "Taught in ${uni.language}, matching your preferred study mode",
+                            "Strong compatibility with your CGPA and academic background",
+                            "Institution type (${uni.type}) aligns with your profile"
+                        )
+
+                        OpportunityCard(
+                            institution = uni.name,
+                            program = uni.program,
+                            location = "Germany", 
+                            match = "${uni.matchScore}% Match",
+                            matchBreakdown = "${uni.type} • ${uni.language}",
+                            reasons = dynamicReasons,
+                            officialLink = officialLink,
+                            iconLetter = uni.name.take(2).uppercase(),
+                            onViewRequirements = {
+                                onViewRequirements(uni.name, uni.program, uni.matchScore)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -96,9 +134,12 @@ fun OpportunityCard(
     match: String,
     matchBreakdown: String,
     reasons: List<String>,
-    missing: List<String>,
-    iconLetter: String
+    officialLink: String,
+    iconLetter: String,
+    onViewRequirements: () -> Unit = {}
 ) {
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -146,7 +187,7 @@ fun OpportunityCard(
             }
             
             Spacer(modifier = Modifier.height(20.dp))
-            Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
             Spacer(modifier = Modifier.height(16.dp))
             
             Text("Why it matches:", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
@@ -160,20 +201,28 @@ fun OpportunityCard(
             }
             
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Missing:", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFFE53935))
+            Text("Application Portal:", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFF1976D2))
             Spacer(modifier = Modifier.height(8.dp))
-            missing.forEach {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 6.dp)) {
-                    Icon(Icons.Default.Clear, contentDescription = "Missing", tint = Color(0xFFE53935), modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+            
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    try {
+                        uriHandler.openUri(officialLink)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
+                .padding(vertical = 4.dp, horizontal = 4.dp)) {
+                Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Link", tint = Color(0xFF1976D2), modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Official University Link", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF1976D2), textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline)
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 OutlinedButton(
-                    onClick = { /* TODO */ },
+                    onClick = onViewRequirements,
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
                     modifier = Modifier.weight(1f)

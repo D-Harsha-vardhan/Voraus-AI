@@ -19,3 +19,16 @@ local.properties
 
 # Misc
 *.log
+
+# Environment variables
+.env
+.env.*
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/

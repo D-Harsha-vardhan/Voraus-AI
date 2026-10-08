@@ -14,8 +14,11 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +37,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun AiAdvisorScreen(
     onBookConsultant: () -> Unit = {},
+    onViewDetails: (String, String, String) -> Unit = { _, _, _ -> },
+    sharedViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = viewModel(),
     viewModel: AiAdvisorViewModel = viewModel()
 ) {
     var messageText by remember { mutableStateOf("") }
@@ -84,6 +89,16 @@ fun AiAdvisorScreen(
                             isLoading = msg.isLoading,
                             onOptionsClick = if (isLastAndFlowActive) { { showOptionsSheet = true } } else null
                         )
+                        if (!msg.universities.isNullOrEmpty()) {
+                            LaunchedEffect(msg.universities) {
+                                sharedViewModel.updateRecommendations(msg.universities)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TopUniversityRecommendationsCard(
+                                universities = msg.universities,
+                                onViewDetails = onViewDetails
+                            )
+                        }
                     }
                 }
             }
@@ -259,11 +274,32 @@ fun AiSimpleMessage(text: String, isLoading: Boolean = false, onOptionsClick: ((
                 if (isLoading) {
                     TypingIndicator()
                 } else {
-                    Text(
-                        text = text,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    val lines = text.split("\n")
+                    for (line in lines) {
+                        val trimmed = line.trim()
+                        if (trimmed.startsWith("[UNIVERSITY]")) {
+                            val parts = trimmed.removePrefix("[UNIVERSITY]").split("|").map { it.trim() }
+                            if (parts.size >= 3) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                EmbeddedUniversityCard(
+                                    iconInitial = parts[0].take(1),
+                                    university = parts[0],
+                                    program = parts[1],
+                                    location = parts[2]
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        } else {
+                            if (trimmed.isNotBlank()) {
+                                Text(
+                                    text = trimmed,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                        }
+                    }
                     
                     if (onOptionsClick != null) {
                         Spacer(modifier = Modifier.height(12.dp))
@@ -421,46 +457,146 @@ fun AiComplexMessage(onBookConsultant: () -> Unit = {}) {
 }
 
 @Composable
-fun EmbeddedUniversityCard(iconInitial: String, university: String, program: String, location: String) {
+fun TopUniversityRecommendationsCard(
+    universities: List<ParsedUniversity>,
+    onViewDetails: (String, String, String) -> Unit = { _, _, _ -> }
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = 16.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
+        Column(modifier = Modifier.padding(0.dp)) {
+            // Header
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(iconInitial, color = Color.White, fontWeight = FontWeight.Bold)
+                Icon(
+                    Icons.Default.School, 
+                    contentDescription = "Recommendations",
+                    tint = Color(0xFF1976D2),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Top University Recommendations",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0D47A1)
+                )
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(university, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text(program, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                Text(location, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(4.dp))
-                Surface(
-                    color = Color(0xFF4CAF50).copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(4.dp)
+            
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+            
+            // List of universities
+            universities.forEachIndexed { index, uni ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Logo box
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF0D47A1)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(uni.name.take(3).uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                    
+                    Spacer(modifier = Modifier.width(12.dp))
+                    
+                    // Details
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(uni.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF0D47A1))
+                        Text(uni.program, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Surface(color = Color(0xFFE3F2FD), shape = RoundedCornerShape(12.dp)) {
+                                Text(uni.type, modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = Color(0xFF1976D2))
+                            }
+                            Surface(color = Color(0xFFE3F2FD), shape = RoundedCornerShape(12.dp)) {
+                                Text(uni.language, modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = Color(0xFF1976D2))
+                            }
+                        }
+                    }
+                    
+                    // Match score and Button
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(48.dp)) {
+                            androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
+                                drawCircle(color = Color(0xFFE8F5E9))
+                            }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("${uni.matchScore}%", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32), fontSize = 16.sp)
+                            }
+                        }
+                        Text("Match", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2E7D32))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = { onViewDetails(uni.name, uni.program, uni.matchScore) },
+                            shape = RoundedCornerShape(16.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                            modifier = Modifier.height(32.dp),
+                            border = BorderStroke(1.dp, Color(0xFF1976D2).copy(alpha = 0.5f))
+                        ) {
+                            Text("View Details", style = MaterialTheme.typography.labelSmall, color = Color(0xFF1976D2))
+                        }
+                    }
+                }
+                if (index < universities.lastIndex) {
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f), modifier = Modifier.padding(horizontal = 16.dp))
+                }
+            }
+            
+            // Footer
+            Surface(color = Color(0xFFF5F9FF)) {
+                Row(modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Default.Star, contentDescription = "Sparkle", tint = Color(0xFF64B5F6), modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "High Match", 
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), 
-                        style = MaterialTheme.typography.labelSmall, 
-                        color = Color(0xFF388E3C),
-                        fontWeight = FontWeight.Bold
+                        "These recommendations are based on your degree, GPA, target intake and current German level. You can save any program to start the application process.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF1976D2).copy(alpha = 0.8f)
                     )
                 }
             }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "View", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+        }
+    }
+}
+
+@Composable
+fun EmbeddedUniversityCard(iconInitial: String, university: String, program: String, location: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .border(1.dp, Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF0D47A1)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(iconInitial, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(university, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF0D47A1))
+            Text(program, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            Text(location, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
     }
 }
