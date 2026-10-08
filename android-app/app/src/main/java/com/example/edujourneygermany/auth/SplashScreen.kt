@@ -33,11 +33,12 @@ import kotlinx.coroutines.flow.collectLatest
 fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedIn: () -> Unit = {}) {
     var animationState by remember { mutableStateOf(0) }
     var videoCompleted by remember { mutableStateOf(false) }
+    var isAuthenticated by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         Supabase.client.auth.sessionStatus.collectLatest { status ->
             if (status is SessionStatus.Authenticated) {
-                onAlreadyLoggedIn()
+                isAuthenticated = true
             }
         }
     }
@@ -50,10 +51,14 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
         animationState = 2        // Slide logo up
     }
 
-    // Reveal buttons ONLY after video finishes
-    LaunchedEffect(videoCompleted) {
+    // When video finishes, either auto-login or reveal buttons
+    LaunchedEffect(videoCompleted, isAuthenticated) {
         if (videoCompleted) {
-            animationState = 3
+            if (isAuthenticated) {
+                onAlreadyLoggedIn()
+            } else {
+                animationState = 3
+            }
         }
     }
 
