@@ -75,13 +75,13 @@ fun OnboardingAboutYouScreen(onNext: () -> Unit, onBack: () -> Unit) {
             // Progress Bar
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 LinearProgressIndicator(
-                    progress = 2f / 4f,
+                    progress = 2f / 3f,
                     modifier = Modifier.weight(1f).height(6.dp),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("2/4", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text("2/3", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -113,11 +113,18 @@ fun OnboardingAboutYouScreen(onNext: () -> Unit, onBack: () -> Unit) {
             
             OutlinedTextField(
                 value = dob,
-                onValueChange = { dob = it },
+                onValueChange = { newValue -> 
+                    // Filter out alphabets, allow digits and slashes
+                    val filtered = newValue.filter { it.isDigit() || it == '/' }
+                    if (filtered.length <= 10) {
+                        dob = filtered
+                    }
+                },
                 label = { Text("Date of Birth (DD/MM/YYYY)") },
                 leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     unfocusedContainerColor = Color.White,

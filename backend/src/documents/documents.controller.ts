@@ -26,9 +26,9 @@ export class DocumentsController {
     // @UploadedFile() file: Express.Multer.File,
   ) {
     const applicantId = req.headers['x-applicant-id'];
-    const { documentType } = body;
-    // Mocking file upload to Supabase Storage
-    return this.documentsService.uploadDocument(applicantId, documentType, 'mocked-file-metadata');
+    const { documentType, base64Image } = body;
+    // Pass the base64 string directly to the service for OCR extraction
+    return this.documentsService.uploadDocument(applicantId, documentType, base64Image);
   }
 
   @Post(':id/process')

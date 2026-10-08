@@ -14,4 +14,8 @@ object RetrofitClient {
             // Here we'd add an OkHttpClient with an AuthInterceptor
             .build()
     }
+
+    val api: ApiService by lazy {
+        instance.create(ApiService::class.java)
+    }
 }
