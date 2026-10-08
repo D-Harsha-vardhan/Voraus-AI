@@ -79,19 +79,14 @@ fun AppNavigation() {
                 com.example.edujourneygermany.auth.OnboardingAboutYouScreen(
                     onNext = { 
                         journeyViewModel.completeStep("2")
-                        navController.navigate("onboarding_extended_profile") 
+                        navController.navigate("onboarding_documents") 
                     },
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("onboarding_extended_profile") {
-                com.example.edujourneygermany.auth.OnboardingExtendedProfileScreen(
-                    onNext = { navController.navigate("onboarding_documents") },
                     onBack = { navController.popBackStack() }
                 )
             }
             composable("onboarding_documents") {
                 com.example.edujourneygermany.auth.OnboardingDocumentsScreen(
+                    navController = navController,
                     onNext = { 
                         journeyViewModel.completeStep("3")
                         navController.navigate("home") {
@@ -141,15 +136,28 @@ fun AppNavigation() {
             }
             composable("documents") {
                 DocumentsScreen(
-                    onNavigateToExtraction = { docType ->
-                        navController.navigate("extraction_review/$docType")
+                    onNavigateToExtraction = { docType, uri ->
+                        val encodedUri = java.net.URLEncoder.encode(uri, "UTF-8")
+                        navController.navigate("extraction_review/$docType?uri=$encodedUri")
                     }
                 )
             }
-            composable("extraction_review/{docType}") { backStackEntry ->
+            composable(
+                "extraction_review/{docType}?uri={uri}",
+                arguments = listOf(
+                    androidx.navigation.navArgument("uri") { 
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
                 val docType = backStackEntry.arguments?.getString("docType") ?: "Document"
+                val uriStr = backStackEntry.arguments?.getString("uri")
+                val uri = if (!uriStr.isNullOrEmpty()) android.net.Uri.parse(uriStr) else null
                 ExtractionReviewScreen(
                     documentType = docType,
+                    imageUri = uri,
                     onConfirm = { 
                         journeyViewModel.completeStep("3")
                         navController.popBackStack() 

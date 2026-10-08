@@ -14,8 +14,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
 import com.example.edujourneygermany.data.UserProfileStore
+import kotlinx.coroutines.launch
+import com.example.edujourneygermany.data.Supabase
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.put
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,12 +201,34 @@ fun OnboardingAboutYouScreen(onNext: () -> Unit, onBack: () -> Unit) {
             
             Spacer(modifier = Modifier.weight(1f))
             
+            val scope = rememberCoroutineScope()
+
             Button(
                 onClick = {
                     UserProfileStore.fullName = fullName
                     UserProfileStore.dob = dob
                     UserProfileStore.gender = gender
                     UserProfileStore.nationality = nationality
+                    
+                    // Save to Supabase
+                    scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        try {
+                            val uid = Supabase.client.auth.currentUserOrNull()?.id
+                            if (uid != null) {
+                                val updateJson = kotlinx.serialization.json.buildJsonObject {
+                                    put("full_name", fullName)
+                                }
+                                Supabase.client.postgrest["profiles"].update(updateJson) {
+                                    filter {
+                                        eq("id", uid)
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                    
                     onNext()
                 },
                 modifier = Modifier
