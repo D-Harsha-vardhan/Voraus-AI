@@ -8,6 +8,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import com.example.edujourneygermany.data.Supabase
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -23,7 +28,15 @@ import com.example.edujourneygermany.R
 import com.example.edujourneygermany.theme.PrimaryBlue
 
 @Composable
-fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit) {
+fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedIn: () -> Unit = {}) {
+    LaunchedEffect(Unit) {
+        Supabase.client.auth.sessionStatus.collectLatest { status ->
+            if (status is SessionStatus.Authenticated) {
+                onAlreadyLoggedIn()
+            }
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {

@@ -56,7 +56,12 @@ fun AppNavigation() {
             composable("splash") {
                 SplashScreen(
                     onGetStarted = { navController.navigate("register") },
-                    onLogin = { navController.navigate("login") }
+                    onLogin = { navController.navigate("login") },
+                    onAlreadyLoggedIn = { 
+                        navController.navigate("home") {
+                            popUpTo("splash") { inclusive = true }
+                        }
+                    }
                 )
             }
             composable("register") {
@@ -110,7 +115,12 @@ fun AppNavigation() {
                 ProfileScreen(
                     onNavigateToDocuments = { navController.navigate("documents") },
                     onNavigateToQualification = { navController.navigate("qualification") },
-                    onNavigateToEditProfile = { navController.navigate("edit_profile") }
+                    onNavigateToEditProfile = { navController.navigate("edit_profile") },
+                    onLogout = {
+                        navController.navigate("splash") {
+                            popUpTo(0)
+                        }
+                    }
                 )
             }
             composable("edit_profile") {

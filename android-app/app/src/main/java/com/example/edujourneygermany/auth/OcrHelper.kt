@@ -186,7 +186,8 @@ object OcrHelper {
                     val allowedColumns = setOf(
                         "full_name", "passport_number", "phone_number", 
                         "location", "degree", "university", "graduation_year", 
-                        "role", "company", "english_level", "german_level"
+                        "role", "company", "english_level", "german_level",
+                        "date_of_birth", "nationality"
                     )
                     val validUpdates = updates.filterKeys { it in allowedColumns }
                     
