@@ -216,7 +216,30 @@ fun ExtractionReviewScreen(
                         
                         scope.launch {
                             if (imageUri != null) {
+                                com.example.edujourneygermany.data.LocalDocumentManager.saveDocumentLocally(context, documentType, imageUri)
                                 OcrHelper.uploadDocumentAndData(context, imageUri, documentType, extractedData)
+                                // Sync locally
+                                extractedData.forEach { (key, value) ->
+                                    when (key) {
+                                        "full_name", "employee_name", "student_name", "candidate_name" -> if (com.example.edujourneygermany.data.UserProfileStore.fullName.isBlank()) com.example.edujourneygermany.data.UserProfileStore.fullName = value
+                                        "phone_number" -> com.example.edujourneygermany.data.UserProfileStore.phone = value
+                                        "location" -> com.example.edujourneygermany.data.UserProfileStore.location = value
+                                        "degree" -> com.example.edujourneygermany.data.UserProfileStore.degree = value
+                                        "university" -> com.example.edujourneygermany.data.UserProfileStore.university = value
+                                        "graduation_year" -> com.example.edujourneygermany.data.UserProfileStore.graduationYear = value
+                                        "role" -> com.example.edujourneygermany.data.UserProfileStore.role = value
+                                        "company" -> com.example.edujourneygermany.data.UserProfileStore.company = value
+                                        "english_level" -> com.example.edujourneygermany.data.UserProfileStore.englishLevel = value
+                                        "german_level" -> com.example.edujourneygermany.data.UserProfileStore.germanLevel = value
+                                        "date_of_birth" -> com.example.edujourneygermany.data.UserProfileStore.dob = value
+                                        "nationality" -> com.example.edujourneygermany.data.UserProfileStore.nationality = value
+                                        "passport_number" -> com.example.edujourneygermany.data.UserProfileStore.passportNumber = value
+                                        "professional_summary" -> {
+                                            com.example.edujourneygermany.data.UserProfileStore.cvIntro = value
+                                            com.example.edujourneygermany.data.LocalDocumentManager.saveCvIntroLocally(context, value)
+                                        }
+                                    }
+                                }
                             }
                             isUploading = false
                             onConfirm()

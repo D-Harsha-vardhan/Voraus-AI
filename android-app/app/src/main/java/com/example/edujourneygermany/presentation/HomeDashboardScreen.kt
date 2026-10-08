@@ -28,6 +28,18 @@ import com.example.edujourneygermany.data.UserProfileStore
 fun HomeDashboardScreen(
     onNavigate: (String) -> Unit
 ) {
+    val fields = listOf(
+        UserProfileStore.email, UserProfileStore.fullName, UserProfileStore.dob, UserProfileStore.gender, UserProfileStore.nationality,
+        UserProfileStore.passportNumber, UserProfileStore.phone, UserProfileStore.location,
+        UserProfileStore.degree, UserProfileStore.university, UserProfileStore.graduationYear,
+        UserProfileStore.role, UserProfileStore.company, UserProfileStore.experienceDuration,
+        UserProfileStore.englishLevel, UserProfileStore.germanLevel,
+        UserProfileStore.linkedIn, UserProfileStore.github
+    )
+    val filledFieldsCount = fields.count { it.isNotBlank() }
+    val progressFraction = if (fields.isNotEmpty()) filledFieldsCount.toFloat() / fields.size else 0f
+    val progressPercentage = (progressFraction * 100).toInt()
+
     Scaffold(
     ) { paddingValues ->
         Column(
@@ -104,13 +116,13 @@ fun HomeDashboardScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Profile 40% Completed",
+                                "Profile $progressPercentage% Completed",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
                         Text(
-                            "40%",
+                            "$progressPercentage%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -118,7 +130,7 @@ fun HomeDashboardScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     LinearProgressIndicator(
-                        progress = 0.4f,
+                        progress = progressFraction,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)
@@ -173,39 +185,8 @@ fun HomeDashboardScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Removed APS Certificate Card
 
-            // Next Step Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)), // Light orange warning background
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Warning, contentDescription = "Alert", tint = Color(0xFFF57C00))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Next Step", style = MaterialTheme.typography.titleMedium, color = Color(0xFFF57C00), fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Upload APS Certificate", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFFE65100))
-                    Text("Required for university applications", style = MaterialTheme.typography.bodyMedium, color = Color(0xFFE65100).copy(alpha = 0.8f))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { onNavigate("documents") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
-                    ) {
-                        Text("Upload Now", color = Color.White)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
 
             // Quick Actions
             Text(

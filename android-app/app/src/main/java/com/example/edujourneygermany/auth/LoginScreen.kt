@@ -45,6 +45,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         containerColor = Color.White
@@ -226,6 +227,12 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                             }
                             com.example.edujourneygermany.auth.UserSession.userEmail = currentEmail
                             com.example.edujourneygermany.auth.UserSession.userName = com.example.edujourneygermany.auth.UserSession.extractNameFromEmail(currentEmail)
+                            
+                            // Start syncing documents in background
+                            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                com.example.edujourneygermany.data.LocalDocumentManager.syncAllDocumentsFromSupabase(context, currentEmail)
+                            }
+                            
                             onLoginSuccess()
                         } catch (e: Exception) {
                             errorMessage = e.message ?: "Login failed"
