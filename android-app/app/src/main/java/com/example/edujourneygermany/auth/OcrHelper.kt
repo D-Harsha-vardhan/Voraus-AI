@@ -36,7 +36,7 @@ object OcrHelper {
             "Degree", "Degree Certificate", "Marksheet" -> listOf("degree", "university", "graduation_year", "student_name", "date_of_issue")
             "EnglishLanguage", "IELTS Certificate" -> listOf("english_level", "candidate_name", "test_date", "certificate_number")
             "GermanLanguage", "German Certificate" -> listOf("german_level", "candidate_name", "test_date", "certificate_number")
-            "Resume", "CV", "Experience Letter" -> listOf("phone_number", "role", "company", "location", "employee_name", "employment_start_date", "employment_end_date")
+            "Resume", "CV", "Experience Letter" -> listOf("phone_number", "role", "company", "location", "employee_name", "employment_start_date", "employment_end_date", "professional_summary")
             else -> listOf("full_name", "passport_number", "phone_number", "location", "degree", "university", "graduation_year", "role", "company", "date_of_expiry", "candidate_name", "test_date", "student_name")
         }
         
@@ -77,7 +77,7 @@ object OcrHelper {
 
             val systemMessage = org.json.JSONObject()
             systemMessage.put("role", "system")
-            systemMessage.put("content", "You are a data extraction API. You MUST return ONLY a valid JSON object. Do not add any conversational text, preamble, markdown formatting, or bold text. Your output must start exactly with { and end with }.")
+            systemMessage.put("content", "You are a data extraction API. You MUST return ONLY a valid JSON object. Do not add any conversational text, preamble, markdown formatting, or bold text. Your output must start exactly with { and end with }. IMPORTANT: YOU MUST TRANSLATE ALL EXTRACTED TEXT AND VALUES INTO THE GERMAN LANGUAGE BEFORE RETURNING THE JSON.")
             messages.put(systemMessage)
 
             val imageObj = org.json.JSONObject()
@@ -92,11 +92,12 @@ object OcrHelper {
                 documentType == "Passport" -> " Note: For 'full_name', combine the Given Name and Surname in the exact format 'Given Name Surname' (e.g. 'Kartikey Sharma'). Do NOT reverse them. Do NOT duplicate names from the MRZ. Also accurately extract 'date_of_expiry', 'date_of_birth', and 'nationality' for security verification."
                 documentType.contains("Language") || documentType.contains("Certificate") && !documentType.contains("Degree") -> " Note: For language certificates, extract the overall 'CEFR Level' (e.g., B1, B2). Also extract 'candidate_name', 'test_date', and 'certificate_number'. If a field like certificate_number is not visible on the document, return an empty string."
                 documentType.contains("Degree") || documentType == "Marksheet" -> " Note: Extract 'student_name' and 'date_of_issue' for security verification. If a field is not present, return an empty string."
-                documentType == "Resume" || documentType == "CV" || documentType == "Experience Letter" -> " Note: Extract 'employee_name', 'employment_start_date', and 'employment_end_date' if available."
+                documentType == "Resume" || documentType == "CV" || documentType == "Experience Letter" -> " Note: Extract 'employee_name', 'employment_start_date', and 'employment_end_date' if available. You MUST extract the introductory summary or objective statement as 'professional_summary' and translate it to German."
                 else -> ""
             }
             
-            textObj.put("text", "Extract the following specific fields from the image: $targetKeys.$contextHint Return ONLY a valid JSON object containing EXACTLY these keys. If a value cannot be found, set its value to an empty string. Do not add any conversational text or markdown blocks.")
+            textObj.put("text", "Extract the following specific fields from the image: $targetKeys.$contextHint Return ONLY a valid JSON object containing EXACTLY these keys. Translate all extracted values into GERMAN. If a value cannot be found, set its value to an empty string. Do not add any conversational text or markdown blocks.")
+
 
             content.put(imageObj)
             content.put(textObj)
@@ -187,7 +188,7 @@ object OcrHelper {
                         "full_name", "passport_number", "phone_number", 
                         "location", "degree", "university", "graduation_year", 
                         "role", "company", "english_level", "german_level",
-                        "date_of_birth", "nationality"
+                        "date_of_birth", "nationality", "professional_summary"
                     )
                     val validUpdates = updates.filterKeys { it in allowedColumns }
                     

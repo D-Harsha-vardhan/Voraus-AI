@@ -28,4 +28,5 @@ object UserProfileStore {
     
     var linkedIn by mutableStateOf("")
     var github by mutableStateOf("")
+    var cvIntro by mutableStateOf("")
 }
