@@ -272,7 +272,7 @@ fun AiAdvisorScreen(
                                     </style>
                                     </head>
                                     <body>
-                                      <elevenlabs-convai agent-id="agent_0301m4ebw1qee439epz1b3fh56k9"></elevenlabs-convai>
+                                      <elevenlabs-convai agent-id="${com.example.edujourneygermany.BuildConfig.ELEVENLABS_AGENT_ID}"></elevenlabs-convai>
                                       <script>
                                         const el = document.querySelector("elevenlabs-convai");
                                         el.setAttribute("dynamic-variables", JSON.stringify({
@@ -709,3 +709,4 @@ fun EmbeddedUniversityCard(iconInitial: String, university: String, program: Str
         }
     }
 }
+

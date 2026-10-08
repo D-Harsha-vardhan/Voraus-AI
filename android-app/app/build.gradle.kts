@@ -27,11 +27,13 @@ android {
         val nvidiaApiKey = properties.getProperty("NVIDIA_API_KEY") ?: ""
         val dronaHqUrl = properties.getProperty("DRONAHQ_AGENT_URL") ?: ""
         val dronaHqKey = properties.getProperty("DRONAHQ_API_KEY") ?: ""
+        val elevenLabsAgentId = properties.getProperty("ELEVENLABS_AGENT_ID") ?: "agent_0301m4ebw1qee439epz1b3fh56k9"
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
         buildConfigField("String", "NVIDIA_API_KEY", "\"$nvidiaApiKey\"")
         buildConfigField("String", "DRONAHQ_AGENT_URL", "\"$dronaHqUrl\"")
         buildConfigField("String", "DRONAHQ_API_KEY", "\"$dronaHqKey\"")
+        buildConfigField("String", "ELEVENLABS_AGENT_ID", "\"$elevenLabsAgentId\"")
     }
 
     buildTypes {
@@ -118,3 +120,4 @@ dependencies {
   // Image Loading
   implementation("io.coil-kt:coil-compose:2.4.0")
 }
+
