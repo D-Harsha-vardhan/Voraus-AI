@@ -83,7 +83,8 @@ fun AiAdvisorScreen(
         }
     )
 
-    Scaffold(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
         topBar = {
             val context = LocalContext.current
             TopAppBar(
@@ -297,7 +298,7 @@ fun AiAdvisorScreen(
         }
     }
 }
-
+}
 
 @Composable
 fun UserMessage(text: String, quotedQuestion: String? = null) {
