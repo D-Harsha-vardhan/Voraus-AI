@@ -100,13 +100,19 @@ fun OpportunitiesScreen(
                             it.key.contains(uni.name, ignoreCase = true) || uni.name.contains(it.key, ignoreCase = true) 
                         }?.value ?: "https://www.uni-assist.de/en/"
 
+                        val dynamicReasons = listOf(
+                            "Taught in ${uni.language}, matching your preferred study mode",
+                            "Strong compatibility with your CGPA and academic background",
+                            "Institution type (${uni.type}) aligns with your profile"
+                        )
+
                         OpportunityCard(
                             institution = uni.name,
                             program = uni.program,
                             location = "Germany", 
                             match = "${uni.matchScore}% Match",
                             matchBreakdown = "${uni.type} • ${uni.language}",
-                            reasons = listOf("Matched based on your profile"),
+                            reasons = dynamicReasons,
                             officialLink = officialLink,
                             iconLetter = uni.name.take(2).uppercase(),
                             onViewRequirements = {
