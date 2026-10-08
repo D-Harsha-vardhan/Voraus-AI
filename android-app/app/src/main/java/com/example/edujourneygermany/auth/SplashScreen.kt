@@ -43,22 +43,17 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
         }
     }
 
-    // Show logo early then slide it up
+    // Show logo early then slide it up, then reveal buttons
     LaunchedEffect(Unit) {
         delay(800)
         animationState = 1        // Fade in logo centered
-        delay(1500)
+        delay(1200)
         animationState = 2        // Slide logo up
-    }
-
-    // When video finishes, either auto-login or reveal buttons
-    LaunchedEffect(videoCompleted, isAuthenticated) {
-        if (videoCompleted) {
-            if (isAuthenticated) {
-                onAlreadyLoggedIn()
-            } else {
-                animationState = 3
-            }
+        delay(800)
+        if (isAuthenticated) {
+            onAlreadyLoggedIn()
+        } else {
+            animationState = 3
         }
     }
 
@@ -101,7 +96,7 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
                 VideoView(context).apply {
                     setVideoURI(Uri.parse("android.resource://${context.packageName}/${R.raw.splash_bg_video}"))
                     setOnPreparedListener { mp ->
-                        mp.isLooping = false          // Play once — full video
+                        mp.isLooping = true          // Play once — full video
                         mp.setVolume(0f, 0f)          // Silent
 
                         // Center Crop Logic
@@ -226,7 +221,7 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
                 
                 // Get Started Button
                 Button(
-                    onClick = onGetStarted,
+                    onClick = { if (animationState >= 3) onGetStarted() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
