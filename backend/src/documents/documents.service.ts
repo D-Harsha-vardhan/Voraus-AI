@@ -21,7 +21,7 @@ export class DocumentsService {
     return doc;
   }
 
-  async uploadDocument(applicantId: string, documentType: string, fileData: any) {
+  async uploadDocument(applicantId: string, documentType: string, base64Data?: string) {
     // 1. In real scenario, upload file to Supabase Storage
     const storagePath = `documents/${applicantId}/${Date.now()}_${documentType}.pdf`;
 
@@ -37,20 +37,18 @@ export class DocumentsService {
       }
     });
 
-    // 3. Trigger processing (in production this would be background queue)
-    this.processDocument(document.id).catch(console.error);
-
-    return document;
+    // 3. Trigger processing immediately and await result to return to frontend
+    return await this.processDocument(document.id, base64Data);
   }
 
-  async processDocument(id: string) {
+  async processDocument(id: string, base64Data?: string) {
     const document = await this.prisma.document.update({
       where: { id },
       data: { processingStatus: 'processing' }
     });
 
     // Delegate extraction to AI Service (Document Agent)
-    const extractionResult = await this.aiService.processDocument(document);
+    const extractionResult = await this.aiService.processDocument(document, base64Data);
 
     // Update document with extracted data
     return this.prisma.document.update({

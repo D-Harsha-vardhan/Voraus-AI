@@ -20,6 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.edujourneygermany.data.AppViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OpportunitiesScreen(

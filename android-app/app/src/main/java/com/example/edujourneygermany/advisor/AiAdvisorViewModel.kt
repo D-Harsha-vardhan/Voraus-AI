@@ -52,7 +52,7 @@ class AiAdvisorViewModel : ViewModel() {
     val isFlowComplete: StateFlow<Boolean> = _isFlowComplete.asStateFlow()
 
     private var currentFlowIndex = 0
-    private val userAnswers = mutableMapOf<String, String>()
+    val userAnswers = mutableMapOf<String, String>()
     private var isFirstDronaHqMessage = true
 
     private val apiKey = com.example.edujourneygermany.BuildConfig.NVIDIA_API_KEY
@@ -132,11 +132,7 @@ class AiAdvisorViewModel : ViewModel() {
                     
                     CRITICAL: Do NOT just repeat the examples below. You MUST search your knowledge base to find the actual best-matching universities and programs for the user's specific profile (course, GPA, level, language).
                     
-                    ONLY output the [UNIVERSITY_RECOMMENDATIONS] block if the user EXPLICITLY asks for university recommendations or a list of universities. If the user asks a general question (like about tuition fees, visas, or cities), DO NOT output the block.
-                    
-                    If the user asks a question entirely unrelated to studying in Germany, or if you do not know the answer based on your context, you MUST respond EXACTLY with the single word: UNKNOWN_QUERY
-                    
-                    When recommending universities, you MUST output a special block formatted exactly like this (use exactly these tags, no markdown, no bullet points, no headers):
+                    If the user asks for university recommendations or which university is best for their profile, you MUST output a special block formatted exactly like this (use exactly these tags, no markdown, no bullet points, no headers):
                     
                     [UNIVERSITY_RECOMMENDATIONS]
                     TUM | M.Sc. Computer Science | 92 | Public | English-taught
@@ -145,6 +141,8 @@ class AiAdvisorViewModel : ViewModel() {
                     [/UNIVERSITY_RECOMMENDATIONS]
                     
                     Keep your text outside this block encouraging, concise, and helpful. Do not add any table headers inside the block.
+                    
+                    If the user asks a question entirely unrelated to studying in Germany, or if they ask highly specific questions you are unsure about, you MUST respond EXACTLY with the single word: UNKNOWN_QUERY
                 """.trimIndent()
                 
                 val chatMessages = mutableListOf<NvidiaMessage>()
@@ -236,14 +234,19 @@ class AiAdvisorViewModel : ViewModel() {
                         )
                         val response = DronaHqClient.api.sendMessage(
                             url = dronaHqUrl,
-                            authHeader = if (dronaHqKey.isNotBlank()) "Bearer $dronaHqKey" else "",
+                            apiKeyHeader = dronaHqKey,
                             request = request
                         )
                         
                         var aiResponseText = ""
                         if (response.isJsonObject) {
                             val obj = response.asJsonObject
-                            aiResponseText = obj.get("reply")?.asString ?: obj.get("answer")?.asString ?: obj.get("output")?.asString ?: obj.get("response")?.asString ?: ""
+                            if (obj.has("response") && obj.get("response").isJsonObject) {
+                                val nestedResponse = obj.getAsJsonObject("response")
+                                aiResponseText = nestedResponse.get("reply")?.asString ?: nestedResponse.get("answer")?.asString ?: ""
+                            } else {
+                                aiResponseText = obj.get("reply")?.asString ?: obj.get("answer")?.asString ?: obj.get("output")?.asString ?: ""
+                            }
                         }
                         if (aiResponseText.isEmpty()) {
                             aiResponseText = response.toString()
