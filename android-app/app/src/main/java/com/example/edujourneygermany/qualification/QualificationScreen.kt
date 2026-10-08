@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -714,17 +715,19 @@ fun FinanceContent(
                     }
                 }
 
+                var selectedCurrency by remember { mutableStateOf("EUR") }
+
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("Estimated Total Cost (1st Year)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(modifier = Modifier.weight(1f).background(Color(0xFFF0F9FF), RoundedCornerShape(8.dp)).border(1.dp, Color(0xFFBAE6FD), RoundedCornerShape(8.dp)).padding(12.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.weight(1f).alpha(if (selectedCurrency == "EUR") 1f else 0.5f).background(Color(0xFFF0F9FF), RoundedCornerShape(8.dp)).border(if(selectedCurrency == "EUR") 2.dp else 1.dp, Color(0xFFBAE6FD), RoundedCornerShape(8.dp)).clip(RoundedCornerShape(8.dp)).clickable { selectedCurrency = "EUR" }.padding(12.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("€ 14,750", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF0369A1))
                             Text("in Germany", style = MaterialTheme.typography.labelSmall, color = Color(0xFF0284C7))
                         }
                     }
-                    Box(modifier = Modifier.weight(1f).background(Color(0xFFECFDF5), RoundedCornerShape(8.dp)).border(1.dp, Color(0xFFA7F3D0), RoundedCornerShape(8.dp)).padding(12.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.weight(1f).alpha(if (selectedCurrency == "INR") 1f else 0.5f).background(Color(0xFFECFDF5), RoundedCornerShape(8.dp)).border(if(selectedCurrency == "INR") 2.dp else 1.dp, Color(0xFFA7F3D0), RoundedCornerShape(8.dp)).clip(RoundedCornerShape(8.dp)).clickable { selectedCurrency = "INR" }.padding(12.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("₹ 13,21,000", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF059669))
                             Text("(approx.) in India", style = MaterialTheme.typography.labelSmall, color = Color(0xFF047857))
@@ -733,7 +736,7 @@ fun FinanceContent(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                CostBreakdownList()
+                CostBreakdownList(selectedCurrency = selectedCurrency)
             }
         }
         
@@ -752,7 +755,7 @@ fun FinanceContent(
 }
 
 @Composable
-fun CostBreakdownList() {
+fun CostBreakdownList(selectedCurrency: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -761,12 +764,12 @@ fun CostBreakdownList() {
         }
         Spacer(modifier = Modifier.height(12.dp))
         
-        CostItem(Icons.Default.School, "Tuition Fees", "(Public University)", "€ 0", "₹ 0")
-        CostItem(Icons.Default.CalendarToday, "Semester Contribution", "", "€ 150", "₹ 13,400")
-        CostItem(Icons.Default.Home, "Living Expenses", "(Room, Food, Transport)", "€ 11,400", "₹ 10,19,000")
-        CostItem(Icons.Default.LocalHospital, "Health Insurance", "", "€ 1,200", "₹ 1,07,400")
-        CostItem(Icons.Default.Flight, "Visa & Travel Costs", "", "€ 800", "₹ 71,600")
-        CostItem(Icons.Default.Settings, "Initial Setup", "(Phone, Bank, etc.)", "€ 1,200", "₹ 1,07,400")
+        CostItem(Icons.Default.School, "Tuition Fees", "(Public University)", if (selectedCurrency == "EUR") "€ 0" else "₹ 0")
+        CostItem(Icons.Default.CalendarToday, "Semester Contribution", "", if (selectedCurrency == "EUR") "€ 150" else "₹ 13,400")
+        CostItem(Icons.Default.Home, "Living Expenses", "(Room, Food, Transport)", if (selectedCurrency == "EUR") "€ 11,400" else "₹ 10,19,000")
+        CostItem(Icons.Default.LocalHospital, "Health Insurance", "", if (selectedCurrency == "EUR") "€ 1,200" else "₹ 1,07,400")
+        CostItem(Icons.Default.Flight, "Visa & Travel Costs", "", if (selectedCurrency == "EUR") "€ 800" else "₹ 71,600")
+        CostItem(Icons.Default.Settings, "Initial Setup", "(Phone, Bank, etc.)", if (selectedCurrency == "EUR") "€ 1,200" else "₹ 1,07,400")
         
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color(0xFFE2E8F0))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -781,7 +784,7 @@ fun CostBreakdownList() {
 }
 
 @Composable
-fun CostItem(icon: ImageVector, title: String, subtitle: String, euro: String, inr: String) {
+fun CostItem(icon: ImageVector, title: String, subtitle: String, amount: String) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -800,8 +803,7 @@ fun CostItem(icon: ImageVector, title: String, subtitle: String, euro: String, i
             }
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(euro, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-            Text(inr, style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B))
+            Text(amount, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
         }
     }
 }
