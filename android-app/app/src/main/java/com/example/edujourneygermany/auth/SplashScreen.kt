@@ -32,7 +32,8 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedIn: () -> Unit = {}) {
     var animationState by remember { mutableStateOf(0) }
-    
+    var videoCompleted by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         Supabase.client.auth.sessionStatus.collectLatest { status ->
             if (status is SessionStatus.Authenticated) {
@@ -41,14 +42,21 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
         }
     }
 
+    // Show logo early then slide it up
     LaunchedEffect(Unit) {
-        delay(1000) // 0 to 1s: No text
-        animationState = 1 // 1s: Fade in logo at center
-        delay(1500) // Wait for fade in and let user read it
-        animationState = 2 // 2.5s: Slide up logo
-        delay(800) // Wait for slide up
-        animationState = 3 // Show other elements
+        delay(800)
+        animationState = 1        // Fade in logo centered
+        delay(1500)
+        animationState = 2        // Slide logo up
     }
+
+    // Reveal buttons ONLY after video finishes
+    LaunchedEffect(videoCompleted) {
+        if (videoCompleted) {
+            animationState = 3
+        }
+    }
+
 
     // Animations
     val logoAlpha by animateFloatAsState(
@@ -88,17 +96,17 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
                 VideoView(context).apply {
                     setVideoURI(Uri.parse("android.resource://${context.packageName}/${R.raw.splash_bg_video}"))
                     setOnPreparedListener { mp ->
-                        mp.isLooping = true
-                        mp.setVolume(0f, 0f) // Remove voice
-                        
+                        mp.isLooping = false          // Play once — full video
+                        mp.setVolume(0f, 0f)          // Silent
+
                         // Center Crop Logic
                         val videoWidth = mp.videoWidth.toFloat()
                         val videoHeight = mp.videoHeight.toFloat()
-                        
+
                         if (videoWidth > 0 && videoHeight > 0 && screenWidth > 0 && screenHeight > 0) {
                             val videoRatio = videoWidth / videoHeight
                             val screenRatio = screenWidth / screenHeight
-                            
+
                             val scale = if (videoRatio > screenRatio) {
                                 videoRatio / screenRatio
                             } else {
@@ -107,8 +115,12 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
                             this.scaleX = scale
                             this.scaleY = scale
                         }
-                        
+
                         start()
+                    }
+                    // When video ends → reveal Get Started button
+                    setOnCompletionListener {
+                        videoCompleted = true
                     }
                     layoutParams = android.view.ViewGroup.LayoutParams(
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
