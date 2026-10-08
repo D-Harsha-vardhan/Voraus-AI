@@ -52,7 +52,7 @@ class AiAdvisorViewModel : ViewModel() {
     val isFlowComplete: StateFlow<Boolean> = _isFlowComplete.asStateFlow()
 
     private var currentFlowIndex = 0
-    private val userAnswers = mutableMapOf<String, String>()
+    val userAnswers = mutableMapOf<String, String>()
     private var isFirstDronaHqMessage = true
 
     private val apiKey = com.example.edujourneygermany.BuildConfig.NVIDIA_API_KEY

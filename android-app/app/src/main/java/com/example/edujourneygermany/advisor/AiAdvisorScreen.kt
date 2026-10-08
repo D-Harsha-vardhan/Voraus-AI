@@ -255,6 +255,12 @@ fun AiAdvisorScreen(
                                 }
                                 webViewClient = WebViewClient()
                                 
+                                val userName = com.example.edujourneygermany.data.UserProfileStore.fullName
+                                val userGerman = com.example.edujourneygermany.data.UserProfileStore.germanLevel
+                                val userCgpa = viewModel.userAnswers["cgpa"] ?: ""
+                                val userCourse = viewModel.userAnswers["course"] ?: ""
+                                val userLevel = viewModel.userAnswers["level"] ?: ""
+                                
                                 val htmlContent = """
                                     <!DOCTYPE html>
                                     <html>
@@ -266,6 +272,16 @@ fun AiAdvisorScreen(
                                     </head>
                                     <body>
                                       <elevenlabs-convai agent-id="agent_0301m4ebw1qee439epz1b3fh56k9"></elevenlabs-convai>
+                                      <script>
+                                        const el = document.querySelector("elevenlabs-convai");
+                                        el.setAttribute("dynamic-variables", JSON.stringify({
+                                            name: "${userName}",
+                                            cgpa: "${userCgpa}",
+                                            german_score: "${userGerman}",
+                                            goal: "${userLevel}",
+                                            course: "${userCourse}"
+                                        }));
+                                      </script>
                                       <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
                                     </body>
                                     </html>
