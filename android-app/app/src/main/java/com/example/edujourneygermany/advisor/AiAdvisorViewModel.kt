@@ -55,7 +55,7 @@ class AiAdvisorViewModel : ViewModel() {
     private val userAnswers = mutableMapOf<String, String>()
     private var isFirstDronaHqMessage = true
 
-    private val apiKey = "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" // Note: In production, store this securely
+    private val apiKey = com.example.edujourneygermany.BuildConfig.NVIDIA_API_KEY
 
     init {
         showNextFlowQuestion()

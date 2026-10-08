@@ -24,8 +24,10 @@ android {
         versionCode = 1
         versionName = "1.0"
         
+        val nvidiaApiKey = properties.getProperty("NVIDIA_API_KEY") ?: ""
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
+        buildConfigField("String", "NVIDIA_API_KEY", "\"$nvidiaApiKey\"")
     }
 
     buildTypes {
