@@ -216,27 +216,53 @@ class AiAdvisorViewModel : ViewModel() {
                         } else chatMessage
                     }
                 }
-            } catch (e: retrofit2.HttpException) {
-                // Replace loading message with specific HTTP error
-                val errorMsg = if (e.code() == 401) {
-                    "I'm sorry, but my API key appears to be invalid or expired. Please update it in the dashboard."
-                } else {
-                    "Sorry, I couldn't reach the server right now. Error: HTTP ${e.code()}"
-                }
-                _messages.update { list ->
-                    list.mapIndexed { index, chatMessage ->
-                        if (index == loadingIndex) {
-                            ChatMessage(errorMsg, isUser = false)
-                        } else chatMessage
-                    }
-                }
             } catch (e: Exception) {
-                // Replace loading message with general error
-                _messages.update { list ->
-                    list.mapIndexed { index, chatMessage ->
-                        if (index == loadingIndex) {
-                            ChatMessage("Sorry, I couldn't reach the server right now. Error: ${e.localizedMessage}", isUser = false)
-                        } else chatMessage
+                // Nvidia failed (timeout or error) -> fallback to DronaHQ
+                try {
+                    val dronaHqUrl = com.example.edujourneygermany.BuildConfig.DRONAHQ_AGENT_URL
+                    val dronaHqKey = com.example.edujourneygermany.BuildConfig.DRONAHQ_API_KEY
+                    if (dronaHqUrl.isNotBlank()) {
+                        val request = DronaHqRequest(
+                            query = userText,
+                            profile = userAnswers
+                        )
+                        val response = DronaHqClient.api.sendMessage(
+                            url = dronaHqUrl,
+                            authHeader = if (dronaHqKey.isNotBlank()) "Bearer $dronaHqKey" else "",
+                            request = request
+                        )
+                        
+                        var aiResponseText = ""
+                        if (response.isJsonObject) {
+                            val obj = response.asJsonObject
+                            aiResponseText = obj.get("reply")?.asString ?: obj.get("answer")?.asString ?: obj.get("output")?.asString ?: obj.get("response")?.asString ?: ""
+                        }
+                        if (aiResponseText.isEmpty()) {
+                            aiResponseText = response.toString()
+                        }
+                        
+                        _messages.update { list ->
+                            list.mapIndexed { index, chatMessage ->
+                                if (index == loadingIndex) {
+                                    ChatMessage(aiResponseText, isUser = false)
+                                } else chatMessage
+                            }
+                        }
+                    } else {
+                        throw e
+                    }
+                } catch (dronaHqException: Exception) {
+                    val errorMsg = if (e is retrofit2.HttpException && e.code() == 401) {
+                        "I'm sorry, but my API key appears to be invalid or expired. Please update it in the dashboard."
+                    } else {
+                        "Sorry, I couldn't reach the server right now. Error: ${e.localizedMessage ?: "timeout"}"
+                    }
+                    _messages.update { list ->
+                        list.mapIndexed { index, chatMessage ->
+                            if (index == loadingIndex) {
+                                ChatMessage(errorMsg, isUser = false)
+                            } else chatMessage
+                        }
                     }
                 }
             }
