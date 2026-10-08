@@ -136,8 +136,9 @@ fun AppNavigation() {
             }
             composable("documents") {
                 DocumentsScreen(
-                    onNavigateToExtraction = { docType ->
-                        navController.navigate("extraction_review/$docType")
+                    onNavigateToExtraction = { docType, uri ->
+                        val encodedUri = java.net.URLEncoder.encode(uri, "UTF-8")
+                        navController.navigate("extraction_review/$docType?uri=$encodedUri")
                     }
                 )
             }
@@ -153,7 +154,7 @@ fun AppNavigation() {
             ) { backStackEntry ->
                 val docType = backStackEntry.arguments?.getString("docType") ?: "Document"
                 val uriStr = backStackEntry.arguments?.getString("uri")
-                val uri = if (!uriStr.isNullOrEmpty()) android.net.Uri.parse(java.net.URLDecoder.decode(uriStr, "UTF-8")) else null
+                val uri = if (!uriStr.isNullOrEmpty()) android.net.Uri.parse(uriStr) else null
                 ExtractionReviewScreen(
                     documentType = docType,
                     imageUri = uri,

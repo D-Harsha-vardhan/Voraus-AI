@@ -26,13 +26,28 @@ object OcrHelper {
         documentType: String
     ): Map<String, String> = withContext(Dispatchers.IO) {
         val updates = mutableMapOf<String, String>()
+        
+        val expectedKeysList = when (documentType) {
+            "Passport" -> listOf("full_name", "passport_number", "location")
+            "Degree", "Degree Certificate" -> listOf("degree", "university", "graduation_year")
+            "EnglishLanguage", "IELTS Certificate" -> listOf("english_level")
+            "GermanLanguage", "German Certificate" -> listOf("german_level")
+            "Resume", "CV" -> listOf("phone_number", "role", "company", "location")
+            else -> listOf("full_name", "passport_number", "phone_number", "location", "degree", "university", "graduation_year", "role", "company", "english_level", "german_level")
+        }
+        
+        // Pre-fill updates with empty strings so fields ALWAYS appear in the UI, even if image load fails
+        expectedKeysList.forEach { updates[it] = "" }
+        val targetKeys = expectedKeysList.joinToString(", ")
+
         try {
             val inputStream = context.contentResolver.openInputStream(uri) ?: return@withContext updates
             val originalBitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
             inputStream.close()
             
             if (originalBitmap == null) {
-                return@withContext mapOf("api_error" to "Could not decode image. Please ensure you uploaded a valid image file (JPEG, PNG), not a PDF.")
+                updates["api_error"] = "Could not decode image. Please ensure you uploaded a valid image file (JPEG, PNG), not a PDF."
+                return@withContext updates
             }
             
             // Downscale to max 2048 dimension
@@ -67,21 +82,15 @@ object OcrHelper {
             imageObj.put("image_url", imageUrlObj)
             imageObj.put("type", "image_url")
 
-            val targetKeys = when (documentType) {
-                "Passport" -> "full_name, passport_number, location"
-                "Degree" -> "degree, university, graduation_year"
-                "EnglishLanguage" -> "english_level"
-                "GermanLanguage" -> "german_level"
-                "Resume" -> "phone_number, role, company, location"
-                else -> "full_name, passport_number, phone_number, location, degree, university, graduation_year, role, company, english_level, german_level"
-            }
-
             val textObj = org.json.JSONObject()
             textObj.put("type", "text")
-            val contextHint = if (documentType.contains("Language")) {
-                " Note: 'english_level' is the English proficiency (e.g. IELTS 7.5, TOEFL 100, B2) and 'german_level' is the German proficiency (e.g. Goethe B1, TestDaF 4)."
-            } else ""
-            textObj.put("text", "Transcribe all text from this image and structure it. Return ONLY a valid JSON object. IMPORTANT: You must use the following EXACT keys if the information is present: $targetKeys.$contextHint Do NOT return keys if the information is not found. Do NOT include any explanations, safety warnings, or markdown blocks.")
+            val contextHint = when {
+                documentType == "Passport" -> " Note: For 'full_name', carefully combine the Given Name and Surname into a single string (e.g., 'John Doe'). Do NOT duplicate names from the MRZ."
+                documentType.contains("Language") || documentType.contains("Certificate") -> " Note: For language certificates, extract the overall 'CEFR Level' (e.g., B1, B2) or the test score band."
+                else -> ""
+            }
+            
+            textObj.put("text", "Extract the following specific fields from the image: $targetKeys.$contextHint Return ONLY a valid JSON object containing EXACTLY these keys. If a value cannot be found, set its value to an empty string. Do not add any conversational text or markdown blocks.")
 
             content.put(imageObj)
             content.put(textObj)
@@ -122,23 +131,18 @@ object OcrHelper {
                         val jsonStr = responseText.substring(startIndex, endIndex + 1)
                         val extractedJson = org.json.JSONObject(jsonStr)
                         val keys = extractedJson.keys()
-                        var count = 0
                         while (keys.hasNext()) {
                             val key = keys.next()
                             val value = extractedJson.get(key).toString()
                             if (!value.equals("Not Found", ignoreCase = true) && !value.equals("null", ignoreCase = true) && value.isNotBlank()) {
                                 updates[key] = value
-                                count++
                             }
                         }
-                        if (count == 0) updates["raw_response"] = responseText
                     } else {
                         Log.e("OcrHelper", "No JSON found in response: $responseText")
-                        updates["raw_response"] = responseText
                     }
                 } catch (e: Exception) {
                     Log.e("OcrHelper", "Failed to parse JSON from VLM response: $responseText", e)
-                    updates["raw_response"] = responseText
                 }
             } else {
                 val error = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "No error stream"

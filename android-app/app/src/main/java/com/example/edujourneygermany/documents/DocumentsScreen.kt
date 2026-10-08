@@ -22,7 +22,18 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DocumentsScreen(onNavigateToExtraction: (String) -> Unit) {
+fun DocumentsScreen(onNavigateToExtraction: (String, String) -> Unit) {
+    val selectedDocType = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null && selectedDocType.value != null) {
+            onNavigateToExtraction(selectedDocType.value!!, uri.toString())
+        }
+        selectedDocType.value = null
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -44,18 +55,18 @@ fun DocumentsScreen(onNavigateToExtraction: (String) -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f).padding(bottom = 100.dp) // Nav bar padding
             ) {
-                item { DocumentItem("CV / Resume", "Verified") { onNavigateToExtraction("CV") } }
-                item { DocumentItem("Degree Certificate", "Processing") { onNavigateToExtraction("Degree Certificate") } }
-                item { DocumentItem("Marksheet", "Verified") { onNavigateToExtraction("Marksheet") } }
-                item { DocumentItem("IELTS Certificate", "Missing") { onNavigateToExtraction("IELTS Certificate") } }
-                item { DocumentItem("German Certificate", "Not Uploaded") { onNavigateToExtraction("German Certificate") } }
-                item { DocumentItem("Experience Letter", "Not Uploaded") { onNavigateToExtraction("Experience Letter") } }
-                item { DocumentItem("Other Documents", "Not Uploaded") { onNavigateToExtraction("Other Documents") } }
+                item { DocumentItem("CV / Resume", "Verified") { selectedDocType.value = "CV"; launcher.launch("*/*") } }
+                item { DocumentItem("Degree Certificate", "Processing") { selectedDocType.value = "Degree Certificate"; launcher.launch("*/*") } }
+                item { DocumentItem("Marksheet", "Verified") { selectedDocType.value = "Marksheet"; launcher.launch("*/*") } }
+                item { DocumentItem("IELTS Certificate", "Missing") { selectedDocType.value = "IELTS Certificate"; launcher.launch("*/*") } }
+                item { DocumentItem("German Certificate", "Not Uploaded") { selectedDocType.value = "German Certificate"; launcher.launch("*/*") } }
+                item { DocumentItem("Experience Letter", "Not Uploaded") { selectedDocType.value = "Experience Letter"; launcher.launch("*/*") } }
+                item { DocumentItem("Other Documents", "Not Uploaded") { selectedDocType.value = "Other Documents"; launcher.launch("*/*") } }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { /* TODO: Launch file picker */ },
+                onClick = { selectedDocType.value = "Other Documents"; launcher.launch("*/*") },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
