@@ -33,7 +33,7 @@ data class SimpleUni(val name: String, val shortName: String, val type: String =
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QualificationScreen() {
+fun QualificationScreen(onBackClick: () -> Unit = {}) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) } // 0: Finance, 1: Visa
     var searchQuery by remember { mutableStateOf("") }
@@ -91,7 +91,7 @@ fun QualificationScreen() {
                     Text("Finance & Visa Agent", fontWeight = FontWeight.Bold, color = Color(0xFF1E293B), fontSize = 18.sp)
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Handle back if needed */ }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color(0xFF1E293B))
                     }
                 },
@@ -526,6 +526,8 @@ fun FinanceContent(
                     IconButton(onClick = onClearSearch) {
                         Icon(Icons.Default.Close, contentDescription = "Clear", tint = Color(0xFF64748B))
                     }
+                } else {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
             },
             modifier = Modifier.fillMaxWidth().menuAnchor(),
@@ -597,27 +599,87 @@ fun FinanceContent(
         }
     } else {
         // Selected University State
+        var expandedCourse by remember { mutableStateOf(false) }
+        var selectedCourse by remember { mutableStateOf("M.Sc. Computer Science") }
+        val courseOptions = listOf("M.Sc. Computer Science", "M.Sc. Data Science", "MBA", "M.Sc. Mechanical Engineering")
+
+        var expandedIntake by remember { mutableStateOf(false) }
+        var selectedIntake by remember { mutableStateOf("Winter Semester 2025") }
+        val intakeOptions = listOf("Winter Semester 2025", "Summer Semester 2025", "Winter Semester 2026")
+
         Text("Course & Intake", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B))
         Spacer(modifier = Modifier.height(12.dp))
         
-        OutlinedTextField(
-            value = "M.Sc. Computer Science",
-            onValueChange = {},
-            readOnly = true,
-            trailingIcon = { Icon(Icons.Default.KeyboardArrowDown, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        )
+        ExposedDropdownMenuBox(
+            expanded = expandedCourse,
+            onExpandedChange = { expandedCourse = it }
+        ) {
+            OutlinedTextField(
+                value = selectedCourse,
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCourse) },
+                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFFE2E8F0),
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White
+                )
+            )
+            ExposedDropdownMenu(
+                expanded = expandedCourse,
+                onDismissRequest = { expandedCourse = false }
+            ) {
+                courseOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            selectedCourse = option
+                            expandedCourse = false
+                        }
+                    )
+                }
+            }
+        }
+        
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = "Winter Semester 2025",
-            onValueChange = {},
-            readOnly = true,
-            leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(20.dp)) },
-            trailingIcon = { Icon(Icons.Default.KeyboardArrowDown, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        )
+        
+        ExposedDropdownMenuBox(
+            expanded = expandedIntake,
+            onExpandedChange = { expandedIntake = it }
+        ) {
+            OutlinedTextField(
+                value = selectedIntake,
+                onValueChange = {},
+                readOnly = true,
+                leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedIntake) },
+                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFFE2E8F0),
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White
+                )
+            )
+            ExposedDropdownMenu(
+                expanded = expandedIntake,
+                onDismissRequest = { expandedIntake = false }
+            ) {
+                intakeOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            selectedIntake = option
+                            expandedIntake = false
+                        }
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 

@@ -167,7 +167,9 @@ fun AppNavigation() {
                 )
             }
             composable("qualification") {
-                QualificationScreen()
+                QualificationScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
             }
             composable("merge_profile") {
                 // Dummy screen for AI merge, immediately finishes and goes to verification
