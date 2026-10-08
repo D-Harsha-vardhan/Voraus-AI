@@ -20,6 +20,8 @@ import com.example.edujourneygermany.data.Supabase
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.put
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 
 @OptIn(ExperimentalMaterial3Api::class)

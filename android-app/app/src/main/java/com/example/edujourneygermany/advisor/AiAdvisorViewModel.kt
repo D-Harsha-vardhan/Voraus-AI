@@ -205,6 +205,7 @@ class AiAdvisorViewModel : ViewModel() {
                                 uniList.add(ParsedUniversity(parts[0], parts[1], parts[2].replace("%", ""), "Public", "English-taught"))
                             }
                         }
+                    }
                 }
 
                 if (finalText.trim() == "UNKNOWN_QUERY") {

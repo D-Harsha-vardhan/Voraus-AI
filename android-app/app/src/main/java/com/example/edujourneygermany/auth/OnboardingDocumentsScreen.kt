@@ -41,9 +41,22 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
     var germanUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var resumeUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var otherUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var isUploading by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
+
+    fun uriToBase64(uriString: String): String? {
+        return try {
+            val uri = android.net.Uri.parse(uriString)
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val bytes = inputStream.readBytes()
+                android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     val passportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> 
         uri?.let {
@@ -268,8 +281,9 @@ fun OnboardingDocumentsScreen(navController: NavController, onNext: () -> Unit, 
                             }
 
                             // Upload Language
-                            if (languageUri != null) {
-                                val base64 = uriToBase64(languageUri!!)
+                            val langUri = englishUri ?: germanUri
+                            if (langUri != null) {
+                                val base64 = uriToBase64(langUri)
                                 if (base64 != null) {
                                     val res = RetrofitClient.api.uploadDocument(
                                         request = UploadDocumentRequestDto("language", base64)
