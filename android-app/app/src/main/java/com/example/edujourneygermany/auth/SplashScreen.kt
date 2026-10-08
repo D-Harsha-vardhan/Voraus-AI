@@ -43,21 +43,18 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
         }
     }
 
-    // Show logo early then slide it up
+    // Show logo early then slide it up, then show content
     LaunchedEffect(Unit) {
         delay(800)
         animationState = 1        // Fade in logo centered
         delay(1200)
         animationState = 2        // Slide logo up
-    }
-
-    LaunchedEffect(videoCompleted, isAuthenticated) {
-        if (videoCompleted) {
-            if (isAuthenticated) {
-                onAlreadyLoggedIn()
-            } else {
-                animationState = 3
-            }
+        delay(500)
+        
+        if (isAuthenticated) {
+            onAlreadyLoggedIn()
+        } else {
+            animationState = 3    // Show text and Get Started button
         }
     }
 

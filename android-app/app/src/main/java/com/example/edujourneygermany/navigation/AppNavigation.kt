@@ -46,6 +46,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val journeyViewModel: JourneyViewModel = viewModel()
     val sharedUniversityViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = viewModel()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -119,6 +120,7 @@ fun AppNavigation() {
                     onNavigateToQualification = { navController.navigate("qualification") },
                     onNavigateToEditProfile = { navController.navigate("edit_profile") },
                     onLogout = {
+                        com.example.edujourneygermany.data.LocalDocumentManager.clearCache(context)
                         navController.navigate("splash") {
                             popUpTo(0)
                         }
@@ -237,7 +239,10 @@ fun AppNavigation() {
             }
             composable("consultant_dashboard") {
                 ConsultantDashboardScreen(
-                    onLogout = { navController.navigate("register") { popUpTo(0) } }
+                    onLogout = { 
+                        com.example.edujourneygermany.data.LocalDocumentManager.clearCache(context)
+                        navController.navigate("register") { popUpTo(0) } 
+                    }
                 )
             }
             composable("opportunities") {

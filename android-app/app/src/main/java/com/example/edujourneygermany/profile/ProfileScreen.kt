@@ -42,6 +42,7 @@ fun ProfileScreen(
 ) {
     var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(Unit) {
         try {
@@ -68,6 +69,12 @@ fun ProfileScreen(
                 profileResult["german_level"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.germanLevel = it }
                 profileResult["date_of_birth"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.dob = it }
                 profileResult["nationality"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.nationality = it }
+                profileResult["professional_summary"]?.jsonPrimitive?.contentOrNull?.let { UserProfileStore.cvIntro = it }
+                
+                val localIntro = com.example.edujourneygermany.data.LocalDocumentManager.getCvIntroLocally(context)
+                if (localIntro.isNotBlank() && UserProfileStore.cvIntro.isBlank()) {
+                    UserProfileStore.cvIntro = localIntro
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
