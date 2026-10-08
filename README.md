@@ -1,92 +1,174 @@
 # Voraus AI 🚀
+*(Formerly EduJourney Germany)*
 
-Voraus AI (formerly EduJourney Germany) is a comprehensive, AI-powered platform designed to streamline the applicant journey for individuals planning to study, pursue vocational training (Ausbildung), or work in Germany. 
+**Voraus AI** is an end-to-end, AI-powered platform designed to empower international students, job-seekers, and vocational trainees (Ausbildung) navigating higher education, bureaucracy, and life in Germany. 
 
-Navigating German bureaucracy, university admissions, and visa processes can be overwhelming. Voraus AI acts as your personal digital consultant, managing your documents, tracking your progress, and providing AI-driven guidance every step of the way.
-
----
-
-## ✨ Key Features
-
-### 1. 📊 Interactive Dashboard & Journey Tracking
-- A centralized hub to track your progress (e.g., "Profile 40% Completed").
-- Step-by-step timeline of your journey: Document Uploads → Profile Verification → APS Setup → University/Job Applications.
-- Actionable alerts for your immediate next steps (e.g., "Upload APS Certificate").
-
-### 2. 🤖 AI Advisor
-- Chat directly with a specialized AI trained on German immigration and education processes.
-- Get personalized advice on required steps, opportunities, and documentation.
-- Dynamic query resolution for complex bureaucracy questions.
-
-### 3. 📂 Document & Qualification Verification
-- Securely upload and manage critical documents: Degrees, CVs, Passports, and Language Certifications (IELTS/Goethe).
-- Verification status tracking (Verified, Needs Review, Not Provided).
-- Automated extraction and checking (via Backend).
-
-### 4. 🎓 Opportunities & CV Generator
-- Explore personalized university programs or job opportunities tailored to your profile.
-- Built-in CV generator optimized for the German professional standard (Europass format integration).
+From automated Vision OCR document extraction and personalized university matching to real-time interactive mapping and dual-engine AI advisory, Voraus AI streamlines the complex German transition journey.
 
 ---
 
-## 🛠 Flowchart & Working of the Project
+## 🌟 What's New & Key Highlights
 
-The application follows a structured, state-driven workflow ensuring users always know what to do next:
+### 1. 🗺️ Interactive Live Student & Opportunity Map
+An interactive map built with **OpenStreetMap** and **Leaflet.js** embedded natively via Android WebViews:
+- **40+ Curated, Authentic Berlin Locations**:
+  - 🍛 **Indian Restaurants**: AMRIT Mitte, AMRIT Kreuzberg, Papadam, Mela Schöneberg, Khushi, Chutnify Neukölln, Saravanaa Bhavan, Shivani, Agra, Vedis (with ratings, addresses, and specialties).
+  - 🎓 **Universities & Colleges**: TU Berlin, HU Berlin, FU Berlin, HTW Berlin, HWR Berlin, Charité, ESMT Berlin, SRH Berlin, IU International, BHT Berlin.
+  - 💼 **English-Speaking Student Jobs (Werkstudent / Minijobs)**: Zalando SE Tech Hub, Delivery Hero HQ, N26 Mobile Bank, HelloFresh, Amazon Dev Center, Flink Mitte, Getir/Gorillas, Tier Mobility, SoundCloud, Babbel, Wayfair, Personio (with wage ranges, e.g., €14.50–€19.00/hr, role types, and shift flexibility).
+  - 🤝 **Indian Communities & Student Welfare**: Indian Association Berlin (IAB), ISA TU Berlin, Indian Embassy & Tagore Centre, Friends of India, Telugu Association (TABB), Tamil Sangam Berlin, Gurudwara Sri Guru Singh Sabha (free Langar & emergency shelter), Sri Ganesha Temple.
+- **Modern UI / UX Features**:
+  - **Live Search**: Instant client-side search filtering by keyword, location, company, or specialty.
+  - **Filter Chips with Live Count Badges**: Real-time filtering across `All (40)`, `💼 Jobs (12)`, `🍛 Restaurants (10)`, `🎓 Universities (10)`, `🤝 Communities (8)`.
+  - **Floating Popup Cards**: Detailed cards showing category pills, exact Berlin address, hourly pay / Google rating, brief description, a native `View more →` handler, and direct `Directions ↗` opening Google Maps.
+  - **Zero-Blank Offline Guarantee**: Bundled default dataset ensures the map loads instantly with all markings visible, even without an active internet connection.
+  - **Bidirectional Jetpack Compose Sync**: Native Compose tabs immediately control the WebView map layer with zero latency.
+
+### 2. ⚡ Python FastAPI Advisor Router & Anakin.io Integration (`advisor/`)
+- **Real-Time Data Feeds**: Endpoint `GET /map/data` serving categorized opportunity data.
+- **Live Anakin.io Web Extraction**: Integrated `POST /map/sync-anakin` using Anakin.io Search API for on-demand live web extraction of local German student opportunities.
+- **Webhook Ingestion**: `POST /map/webhook` ready for external crawlers and data syndication.
+- **Dual-Engine AI Advisor**:
+  - Primary AI: **NVIDIA NIM / Mixtral** engine.
+  - Automated Failover: Instant routing to **DronaHQ AI Agent** when Nvidia encounters unrecognized queries (`UNKNOWN_QUERY`) or upstream API rate limits.
+  - Structured extraction of university recommendations using strict delimiter blocks (`[UNIVERSITY_RECOMMENDATIONS]...[/UNIVERSITY_RECOMMENDATIONS]`).
+
+### 3. 📄 Vision OCR & Document Verification
+- **NVIDIA Vision OCR Pipeline**: Extracts key passport fields (Full Name, Date of Birth, Passport Number, Nationality), academic degree titles, institutions, graduation years, and language proficiency levels.
+- **Base64 Document Ingestion**: Secure mobile-to-backend upload flow feeding directly into user onboarding and profile storage (`UserProfileStore`).
+- **Dynamic Status Tracking**: Tracks statuses across `Verified`, `Needs Review`, and `Pending`.
+
+### 4. 🎯 University Matching & Opportunities Engine
+- **Profile-Driven Recommendations**: Dynamically calculates admission match percentages based on user CGPA, German grade conversion (Bavarian Formula), and degree criteria.
+- **Direct Application Portals**: One-tap buttons linking directly to official university application websites.
+- **Application Tracker**: Live tracking of application stages (`Applied`, `Shortlisted`, `In Review`).
+
+### 5. 💶 Finance & Visa Advisor
+- Complete visa preparation module with blocked account requirements (€11,904 threshold), public/private health insurance comparisons (TK, Barmer, Expatrio, Coracle), and consulate checklists for Indian visa application centers (VFS/consulates).
+
+### 6. 🎬 Video Splash Screen & Design Polish
+- Immersive background video splash screen (`splash_bg_video.mp4`) with smooth navigation into authentication and onboarding flows.
+
+---
+
+## 🏗️ System Architecture
 
 ```mermaid
 graph TD
-    A([Launch Voraus AI]) --> B{User Logged In?}
-    B -- No --> C[Splash / Login / Register]
-    C --> D[Select Goal: Study / Work / Vocational]
-    D --> E[Home Dashboard]
-    B -- Yes --> E
-    
-    E --> F[Profile Management]
-    F --> G[Upload Documents & Certifications]
-    G --> G1[Backend Verification & Processing]
-    
-    E --> H[AI Advisor Chat]
-    H --> I[Get personalized advice & next steps]
-    
-    E --> J[Track Journey Progress]
-    J --> K[APS Setup]
-    K --> L[University / Job Applications]
-    
-    E --> M[CV Generator & Opportunities]
+    subgraph Mobile ["Android App (Jetpack Compose)"]
+        UI[Home Dashboard & Screens]
+        Map[Interactive Map Screen]
+        WebMap[Leaflet OpenStreetMap WebView]
+        OCR[Vision OCR & Document Upload]
+        Advisor[AI Advisor Chat]
+    end
+
+    subgraph BackendServices ["Backend Services"]
+        Nest[NestJS API Gateway - Port 3000]
+        FastAPI[Python Advisor Router - Port 8000]
+        Prisma[Prisma ORM]
+        DB[(Supabase PostgreSQL)]
+    end
+
+    subgraph ExternalAPIs ["AI & External Services"]
+        Nvidia[NVIDIA AI NIM / Vision]
+        Drona[DronaHQ Agent Fallback]
+        Anakin[Anakin.io Web Search API]
+        OSM[OpenStreetMap Tile Servers]
+    end
+
+    Map --> WebMap
+    WebMap -.-> OSM
+    Map -->|GET /map/data| FastAPI
+    Advisor -->|Chat Query| FastAPI
+    FastAPI --> Nvidia
+    FastAPI -.->|Fallback on error| Drona
+    FastAPI -->|Live Scrapes| Anakin
+    OCR -->|Upload Documents| Nest
+    Nest --> Prisma
+    Prisma --> DB
+    UI --> Nest
 ```
 
 ---
 
-## 🏗 Tech Stack
+## 💻 Tech Stack
 
-The project is built as a full-stack application with a modern, scalable architecture.
-
-### Frontend (Android)
-- **Framework**: Jetpack Compose (Material 3 Design System)
-- **Language**: Kotlin
-- **Architecture**: MVVM (Model-View-ViewModel)
-- **Navigation**: Jetpack Navigation Compose
-- **Networking**: Retrofit & OkHttp
-
-### Backend & Database
-- **Framework**: NestJS (Node.js)
-- **Database**: Supabase (PostgreSQL)
-- **ORM**: Prisma
-- **Internal Admin Tools**: DronaHQ
-- **Language**: TypeScript
-- **Testing**: Vitest
+| Layer | Technology |
+|---|---|
+| **Android Mobile App** | Kotlin, Jetpack Compose, Material 3, Navigation Compose, Retrofit 2, OkHttp 3, Android WebView |
+| **Mapping Engine** | Leaflet.js 1.9.4, Leaflet MarkerCluster, OpenStreetMap Tiles, Plus Jakarta Sans |
+| **Python AI / Map Engine** | Python 3.12, FastAPI, Uvicorn, HTTPX, Pydantic, Dotenv |
+| **Backend API** | NestJS, TypeScript, Prisma ORM, Node.js |
+| **Database** | PostgreSQL hosted on Supabase |
+| **AI & Automation** | NVIDIA NIM API, DronaHQ API, Anakin.io Search API |
+| **Knowledge Base** | 45+ Curated CSV Datasets (Cost of Living, Visas, Course Matrices) |
 
 ---
 
-## 💻 Getting Started
+## 📂 Project Structure
 
-### Prerequisites
-- **Android Studio** (Koala or newer recommended)
-- **Node.js** (v18+)
-- **PostgreSQL** (or compatible database configured via Prisma)
+```
+EduGerman/
+├── advisor/                           # Python FastAPI AI Advisor & Map Backend
+│   ├── advisor_router.py              # Main router: /map/data, /advisor/text, Anakin sync
+│   ├── load_kb.py                     # Knowledge base loader
+│   └── prompts/                       # Nvidia & DronaHQ system prompts
+├── android-app/                       # Jetpack Compose Native Android App
+│   ├── app/src/main/
+│   │   ├── assets/
+│   │   │   ├── leaflet_cluster_map.html   # OpenStreetMap interactive map & UI
+│   │   │   ├── leaflet_heatmap.html       # Fallback heatmap layer
+│   │   │   └── germany_csv/               # Bundled offline dataset files
+│   │   ├── java/.../edujourneygermany/
+│   │   │   ├── advisor/               # AiAdvisorScreen & AiAdvisorViewModel
+│   │   │   ├── auth/                  # Onboarding, Login, Registration, Splash
+│   │   │   ├── heatmap/               # HeatMapScreen (Compose WebView bridge)
+│   │   │   ├── navigation/            # AppNavigation graph
+│   │   │   ├── network/               # Retrofit ApiService & DTOs
+│   │   │   ├── opportunities/         # University matching & application tracker
+│   │   │   └── presentation/          # Dashboard & details screens
+│   │   └── res/raw/                   # Video assets (splash_bg_video.mp4)
+├── backend/                           # NestJS Backend API
+│   ├── src/
+│   │   ├── ai/                        # AI endpoints & chat controllers
+│   │   ├── applicant/                 # Applicant profile management
+│   │   ├── documents/                 # Document upload & OCR processing
+│   │   ├── map/                       # Map module
+│   │   └── opportunities/             # Opportunities search & recommendation
+│   └── prisma/                        # Prisma schema & database migrations
+└── datasets/                          # 45+ German Higher Education CSV Knowledge Bases
+```
 
-### Running the Backend
-1. Open a terminal and navigate to the backend directory:
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- **Android Studio** (Koala or Ladybug recommended) with Android SDK 34+.
+- **Python 3.10+** (with pip).
+- **Node.js 18+** & npm.
+
+---
+
+### 2. Running the Python Advisor & Map Backend
+1. Open a terminal and navigate to `advisor/`:
+   ```bash
+   cd advisor
+   ```
+2. Install Python dependencies:
+   ```bash
+   pip install fastapi uvicorn httpx pydantic python-dotenv
+   ```
+3. Start the FastAPI server on port 8000:
+   ```bash
+   python -m uvicorn advisor_router:app --reload --port 8000
+   ```
+   *The server is now live at `http://127.0.0.1:8000` with Swagger docs at `http://127.0.0.1:8000/docs`.*
+
+---
+
+### 3. Running the NestJS Backend
+1. Navigate to `backend/`:
    ```bash
    cd backend
    ```
@@ -94,28 +176,27 @@ The project is built as a full-stack application with a modern, scalable archite
    ```bash
    npm install
    ```
-3. Set up your environment variables (`.env`) for Prisma and API keys.
-4. Run database migrations:
+3. Run Prisma migrations:
    ```bash
    npx prisma migrate dev
    ```
-5. Start the development server:
+4. Start the server:
    ```bash
    npm run start:dev
    ```
 
-### Running the Android App
+---
+
+### 4. Running the Android Application
 1. Open the `android-app` directory in **Android Studio**.
-2. Allow Gradle to sync and download all dependencies.
-3. In `RetrofitClient.kt` or your config file, ensure the Base URL points to your running backend (e.g., `http://10.0.2.2:3000` for the emulator).
-4. Build and Run the project on an Android Emulator or a physical device.
+2. Allow Gradle to sync and download dependencies.
+3. Verify that your backend endpoints are accessible (use `10.0.2.2` for emulators or your machine's LAN IP for physical devices).
+4. Connect your Android device or start an emulator.
+5. Click **Run (▶)** in Android Studio.
+6. Open the **Interactive Map** tab from the dashboard to explore Berlin's student ecosystem.
 
 ---
 
-## 🛠 Internal Tools & Database
-
-### Supabase
-We use **Supabase** as our primary backend-as-a-service and PostgreSQL database provider. It ensures secure, scalable, and real-time data management for user profiles, document statuses, and authentication.
-
-### DronaHQ
-To manage the platform, verify applicant documents, and oversee the AI interactions, we utilize **DronaHQ** as our internal tool builder. It allows our administrative team to seamlessly interact with the backend APIs, securely review user data, and update application statuses without needing to write custom dashboard code.
+## 🔒 Security & Privacy
+- **API Keys**: Stored securely via environment variables and BuildConfig.
+- **Document Handling**: User uploads are handled in compliance with GDPR guidelines for educational guidance purposes.
