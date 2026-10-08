@@ -207,14 +207,17 @@ fun AppNavigation() {
                     sharedViewModel = sharedUniversityViewModel
                 )
             }
-            composable("university_details/{uniName}/{programName}/{matchScore}") { backStackEntry ->
+            composable("university_details/{uniName}/{programName}/{matchScore}?tab={tab}") { backStackEntry ->
                 val uniName = backStackEntry.arguments?.getString("uniName") ?: ""
                 val programName = backStackEntry.arguments?.getString("programName") ?: ""
                 val matchScore = backStackEntry.arguments?.getString("matchScore") ?: ""
+                val tabString = backStackEntry.arguments?.getString("tab")
+                val initialTab = tabString?.toIntOrNull() ?: 0
                 com.example.edujourneygermany.presentation.UniversityDetailsScreen(
                     uniName = uniName,
                     programName = programName,
                     matchScore = matchScore,
+                    initialTab = initialTab,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -225,7 +228,13 @@ fun AppNavigation() {
             }
             composable("opportunities") {
                 OpportunitiesScreen(
-                    sharedViewModel = sharedUniversityViewModel
+                    sharedViewModel = sharedUniversityViewModel,
+                    onViewRequirements = { uniName, programName, matchScore ->
+                        val encodedUni = android.net.Uri.encode(uniName)
+                        val encodedProg = android.net.Uri.encode(programName)
+                        val encodedScore = android.net.Uri.encode(matchScore.replace("%", ""))
+                        navController.navigate("university_details/$encodedUni/$encodedProg/$encodedScore?tab=1")
+                    }
                 )
             }
             composable("notifications") {

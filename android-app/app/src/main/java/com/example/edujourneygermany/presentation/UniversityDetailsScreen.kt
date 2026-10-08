@@ -39,6 +39,7 @@ fun UniversityDetailsScreen(
     uniName: String,
     programName: String,
     matchScore: String,
+    initialTab: Int = 0,
     onBack: () -> Unit,
     viewModel: UniversityDetailsViewModel = viewModel()
 ) {
@@ -54,7 +55,7 @@ fun UniversityDetailsScreen(
     val uniProfile by viewModel.universityProfile.collectAsState()
     val programDetails by viewModel.programDetails.collectAsState()
 
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableStateOf(initialTab) }
 
     Scaffold(
         topBar = {

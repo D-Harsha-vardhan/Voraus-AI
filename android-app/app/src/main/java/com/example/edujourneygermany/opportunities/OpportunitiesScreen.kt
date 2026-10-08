@@ -21,7 +21,8 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OpportunitiesScreen(
-    sharedViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    sharedViewModel: com.example.edujourneygermany.presentation.SharedUniversityViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onViewRequirements: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val universities by sharedViewModel.recommendedUniversities.collectAsState()
@@ -82,7 +83,10 @@ fun OpportunitiesScreen(
                             matchBreakdown = "${uni.type} • ${uni.language}",
                             reasons = listOf("Matched based on your profile"),
                             missing = listOf("Check university portal for specifics"),
-                            iconLetter = uni.name.take(2).uppercase()
+                            iconLetter = uni.name.take(2).uppercase(),
+                            onViewRequirements = {
+                                onViewRequirements(uni.name, uni.program, uni.matchScore)
+                            }
                         )
                     }
                 }
@@ -100,7 +104,8 @@ fun OpportunityCard(
     matchBreakdown: String,
     reasons: List<String>,
     missing: List<String>,
-    iconLetter: String
+    iconLetter: String,
+    onViewRequirements: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -176,7 +181,7 @@ fun OpportunityCard(
             Spacer(modifier = Modifier.height(24.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 OutlinedButton(
-                    onClick = { /* TODO */ },
+                    onClick = onViewRequirements,
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
                     modifier = Modifier.weight(1f)
