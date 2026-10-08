@@ -157,6 +157,16 @@ fun QualificationScreen() {
                         searchQuery = ""
                         selectedUni = null
                         expanded = false
+                    },
+                    onCostCalculatorClick = {
+                        if (popularUnis.isNotEmpty()) {
+                            searchQuery = popularUnis.first().name
+                            selectedUni = popularUnis.first()
+                            expanded = false
+                        }
+                    },
+                    onVisaRequirementsClick = {
+                        selectedTab = 1
                     }
                 )
             } else {
@@ -490,7 +500,9 @@ fun FinanceContent(
     expanded: Boolean, onExpandedChange: (Boolean) -> Unit,
     filteredUnis: List<SimpleUni>, popularUnis: List<SimpleUni>,
     selectedUni: SimpleUni?, onUniSelected: (SimpleUni) -> Unit,
-    onClearSearch: () -> Unit
+    onClearSearch: () -> Unit,
+    onCostCalculatorClick: () -> Unit,
+    onVisaRequirementsClick: () -> Unit
 ) {
     // Search Bar with Dropdown
     Text("Search University or College", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B))
@@ -529,9 +541,10 @@ fun FinanceContent(
 
         ExposedDropdownMenu(
             expanded = expanded && filteredUnis.isNotEmpty(),
-            onDismissRequest = { onExpandedChange(false) }
+            onDismissRequest = { onExpandedChange(false) },
+            modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)
         ) {
-            filteredUnis.take(5).forEach { uni ->
+            filteredUnis.forEach { uni ->
                 DropdownMenuItem(
                     text = { Text(uni.name) },
                     onClick = { onUniSelected(uni) }
@@ -569,7 +582,8 @@ fun FinanceContent(
                 subtitle = "Get estimated expenses in € and ₹",
                 icon = Icons.Default.Calculate,
                 iconColor = Color(0xFF10B981),
-                iconBg = Color(0xFFD1FAE5)
+                iconBg = Color(0xFFD1FAE5),
+                onClick = onCostCalculatorClick
             )
             ToolCard(
                 modifier = Modifier.weight(1f),
@@ -577,7 +591,8 @@ fun FinanceContent(
                 subtitle = "Check documents & process",
                 icon = Icons.Default.VerifiedUser,
                 iconColor = Color(0xFF3B82F6),
-                iconBg = Color(0xFFDBEAFE)
+                iconBg = Color(0xFFDBEAFE),
+                onClick = onVisaRequirementsClick
             )
         }
     } else {
@@ -787,9 +802,9 @@ fun UniversityCard(name: String, shortName: String, onClick: () -> Unit) {
 }
 
 @Composable
-fun ToolCard(modifier: Modifier = Modifier, title: String, subtitle: String, icon: ImageVector, iconColor: Color, iconBg: Color) {
+fun ToolCard(modifier: Modifier = Modifier, title: String, subtitle: String, icon: ImageVector, iconColor: Color, iconBg: Color, onClick: () -> Unit = {}) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
