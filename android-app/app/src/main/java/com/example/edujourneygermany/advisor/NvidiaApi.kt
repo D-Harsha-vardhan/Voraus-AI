@@ -21,11 +21,19 @@ interface NvidiaApi {
 object RetrofitClient {
     private const val BASE_URL = "https://integrate.api.nvidia.com/"
 
+    private val okHttpClient = okhttp3.OkHttpClient.Builder()
+        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+
     val nvidiaApi: NvidiaApi by lazy {
         Retrofit.Builder()
+            .client(okHttpClient)
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(NvidiaApi::class.java)
     }
 }
+

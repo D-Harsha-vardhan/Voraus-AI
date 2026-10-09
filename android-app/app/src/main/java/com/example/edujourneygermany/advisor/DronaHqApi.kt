@@ -20,11 +20,19 @@ interface DronaHqApi {
 }
 
 object DronaHqClient {
+    private val okHttpClient = okhttp3.OkHttpClient.Builder()
+        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+
     val api: DronaHqApi by lazy {
         Retrofit.Builder()
+            .client(okHttpClient)
             .baseUrl("https://dummy.com/") // Base URL is overridden by @Url
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(DronaHqApi::class.java)
     }
 }
+

@@ -268,7 +268,7 @@ class AiAdvisorViewModel : ViewModel() {
                     } else if (e.message == "NVIDIA_UNKNOWN_QUERY") {
                         "I'm sorry, I couldn't find an answer to your question in my knowledge base."
                     } else {
-                        "I'm sorry, I couldn't find an answer to your question."
+                        "I'm sorry, I couldn't find an answer to your question. (Error: ${e.message} | ${dronaHqException.message})"
                     }
                     _messages.update { list ->
                         list.mapIndexed { index, chatMessage ->
@@ -282,3 +282,4 @@ class AiAdvisorViewModel : ViewModel() {
         }
     }
 }
+
