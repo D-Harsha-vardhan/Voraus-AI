@@ -58,54 +58,89 @@ class AiAdvisorViewModel : ViewModel() {
     private val apiKey = com.example.edujourneygermany.BuildConfig.NVIDIA_API_KEY
 
     init {
-        showNextFlowQuestion()
+        showNextFlowQuestion(simulateDelay = false)
     }
 
-    private fun showNextFlowQuestion() {
+    private fun showNextFlowQuestion(simulateDelay: Boolean = true) {
         viewModelScope.launch {
-            // Add loading message
-            val loadingIndex = _messages.value.size
-            _messages.update { it + ChatMessage("Thinking...", isUser = false, isLoading = true) }
-            
-            kotlinx.coroutines.delay(1000) // Simulate typing delay
-
-            if (currentFlowIndex < flowQuestions.size) {
-                val q = flowQuestions[currentFlowIndex]
-                _messages.update { list ->
-                    list.mapIndexed { index, chatMessage ->
-                        if (index == loadingIndex) {
-                            ChatMessage(q.question, isUser = false)
-                        } else chatMessage
+            if (simulateDelay) {
+                val loadingIndex = _messages.value.size
+                _messages.update { it + ChatMessage("Thinking...", isUser = false, isLoading = true) }
+                kotlinx.coroutines.delay(400) // Brief natural pause
+                
+                if (currentFlowIndex < flowQuestions.size) {
+                    val q = flowQuestions[currentFlowIndex]
+                    _messages.update { list ->
+                        list.mapIndexed { index, chatMessage ->
+                            if (index == loadingIndex) {
+                                ChatMessage(q.question, isUser = false)
+                            } else chatMessage
+                        }
+                    }
+                    _currentOptions.value = q.options
+                } else {
+                    _isFlowComplete.value = true
+                    _currentOptions.value = emptyList()
+                    _messages.update { list ->
+                        list.mapIndexed { index, chatMessage ->
+                            if (index == loadingIndex) {
+                                ChatMessage(afterFlowMessage, isUser = false)
+                            } else chatMessage
+                        }
                     }
                 }
-                _currentOptions.value = q.options
             } else {
-                _isFlowComplete.value = true
-                _currentOptions.value = emptyList()
-                _messages.update { list ->
-                    list.mapIndexed { index, chatMessage ->
-                        if (index == loadingIndex) {
-                            ChatMessage(afterFlowMessage, isUser = false)
-                        } else chatMessage
-                    }
+                // Immediate initial prompt so screen never starts blank or stuck in a loading state
+                if (currentFlowIndex < flowQuestions.size) {
+                    val q = flowQuestions[currentFlowIndex]
+                    _messages.update { it + ChatMessage(q.question, isUser = false) }
+                    _currentOptions.value = q.options
+                } else {
+                    _isFlowComplete.value = true
+                    _currentOptions.value = emptyList()
+                    _messages.update { it + ChatMessage(afterFlowMessage, isUser = false) }
                 }
             }
         }
     }
 
-    fun sendMessage(userText: String) {
-        if (userText.isBlank()) return
+    fun skipFlow() {
+        _isFlowComplete.value = true
+        _currentOptions.value = emptyList()
+        _messages.update { it + ChatMessage("Free query mode enabled. Ask me anything about German universities, visas, APS, or blocked accounts!", isUser = false) }
+    }
 
-        if (!_isFlowComplete.value) {
-            // We are still in the flow
+    fun resetChat() {
+        currentFlowIndex = 0
+        userAnswers.clear()
+        isFirstDronaHqMessage = true
+        _isFlowComplete.value = false
+        _currentOptions.value = emptyList()
+        _messages.value = emptyList()
+        showNextFlowQuestion(simulateDelay = false)
+    }
+
+    fun sendMessage(userText: String) {
+        val trimmed = userText.trim()
+        if (trimmed.isBlank()) return
+
+        if (!_isFlowComplete.value && currentFlowIndex < flowQuestions.size) {
             val q = flowQuestions[currentFlowIndex]
-            _messages.update { it + ChatMessage(userText, isUser = true, quotedQuestion = q.question) }
-            
-            userAnswers[q.key] = userText
-            currentFlowIndex++
-            _currentOptions.value = emptyList() // clear options briefly
-            showNextFlowQuestion()
-            return
+            val isOptionMatch = q.options.any { it.equals(trimmed, ignoreCase = true) }
+
+            if (isOptionMatch) {
+                // User answered the flow prompt
+                _messages.update { it + ChatMessage(trimmed, isUser = true, quotedQuestion = q.question) }
+                userAnswers[q.key] = trimmed
+                currentFlowIndex++
+                _currentOptions.value = emptyList()
+                showNextFlowQuestion(simulateDelay = true)
+                return
+            } else {
+                // User entered a free-form question! Mark flow as complete and answer their real question immediately
+                _isFlowComplete.value = true
+                _currentOptions.value = emptyList()
+            }
         }
 
         // Add user message for normal chat
