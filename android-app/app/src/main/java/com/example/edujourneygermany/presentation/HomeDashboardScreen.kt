@@ -205,7 +205,7 @@ fun HomeDashboardScreen(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.School, title = "Universities") { onNavigate("opportunities") }
+                    QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Assignment, title = "APS Generator") { onNavigate("aps") }
                     QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.ChatBubble, title = "AI Advisor") { onNavigate("advisor") }
                     QuickActionCard(modifier = Modifier.weight(1f), icon = Icons.Default.Description, title = "CV Generator") { onNavigate("cv") }
                 }

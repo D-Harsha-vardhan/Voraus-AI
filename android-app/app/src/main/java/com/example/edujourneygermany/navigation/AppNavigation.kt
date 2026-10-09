@@ -139,6 +139,11 @@ fun AppNavigation() {
             composable("cv") {
                 CvGeneratorScreen()
             }
+            composable("aps") {
+                com.example.edujourneygermany.profile.ApsGeneratorScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("video_intro") {
                 VideoIntroScreen(
                     onBack = { navController.popBackStack() },
