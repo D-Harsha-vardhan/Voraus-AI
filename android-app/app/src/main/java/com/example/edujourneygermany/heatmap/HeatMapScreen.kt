@@ -1,16 +1,16 @@
 package com.example.edujourneygermany.heatmap
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.webkit.JavascriptInterface
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.net.URL
-import java.net.HttpURLConnection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -18,6 +18,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,7 +34,7 @@ fun HeatMapScreen(
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var mapDataJson by remember { mutableStateOf("") }
-    
+
     // When user selects a filter tab in Compose, filter the map immediately
     LaunchedEffect(selectedFilter) {
         webViewRef?.evaluateJavascript("filterByCategory('$selectedFilter');", null)
@@ -52,7 +56,7 @@ fun HeatMapScreen(
                     connection.connectTimeout = 3000
                     connection.readTimeout = 3000
                     connection.setRequestProperty("Bypass-Tunnel-Reminder", "true")
-                    
+
                     if (connection.responseCode == 200) {
                         val response = connection.inputStream.bufferedReader().use { it.readText() }
                         val jsonObject = org.json.JSONObject(response)
@@ -127,18 +131,135 @@ fun HeatMapScreen(
                         settings.databaseEnabled = true
                         settings.allowFileAccess = true
                         settings.allowContentAccess = true
-                        
-                        // Add JS Interface
+
+                        // Add JS Interface for Native Actions
                         addJavascriptInterface(object {
                             @JavascriptInterface
-                            fun onViewMore(id: String) {
+                            fun onViewMore(id: String, website: String?) {
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                    Toast.makeText(context, "Opening details for $id...", Toast.LENGTH_SHORT).show()
+                                    val targetUrl = if (!website.isNullOrBlank()) {
+                                        website
+                                    } else {
+                                        "https://www.google.com/search?q=" + Uri.encode("$id Berlin official website")
+                                    }
+                                    try {
+                                        val safeUrl = if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) targetUrl else "https://$targetUrl"
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(safeUrl))
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Could not open website", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+
+                            @JavascriptInterface
+                            fun openWebsite(url: String) {
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    try {
+                                        val safeUrl = if (url.startsWith("http://") || url.startsWith("https://")) url else "https://$url"
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(safeUrl))
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Could not open website", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+
+                            @JavascriptInterface
+                            fun openDirections(title: String, lat: Double, lng: Double, address: String) {
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    val destination = Uri.encode("$title, $address")
+                                    // 1. Try launching Google Maps application with navigation/search intent
+                                    try {
+                                        val gmmIntentUri = Uri.parse("geo:$lat,$lng?q=$destination")
+                                        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                                        mapIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        mapIntent.setPackage("com.google.android.apps.maps")
+                                        if (mapIntent.resolveActivity(context.packageManager) != null) {
+                                            context.startActivity(mapIntent)
+                                            return@post
+                                        }
+                                    } catch (e: Exception) {
+                                        // Ignore and fallback to web
+                                    }
+
+                                    // 2. Fallback to Google Maps web directions in external browser
+                                    try {
+                                        val webMapsUrl = "https://www.google.com/maps/dir/?api=1&destination=$destination"
+                                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(webMapsUrl))
+                                        browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        context.startActivity(browserIntent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Could not open map directions", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             }
                         }, "Android")
-                        
+
                         webViewClient = object : WebViewClient() {
+                            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                                val uri = request?.url ?: return false
+                                val urlStr = uri.toString()
+
+                                // 1. Handle intent:// URLs (e.g., Google Maps redirects)
+                                if (urlStr.startsWith("intent://")) {
+                                    try {
+                                        val intent = Intent.parseUri(urlStr, Intent.URI_INTENT_SCHEME)
+                                        if (intent != null) {
+                                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                            val packageManager = context.packageManager
+                                            val info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+                                            if (info != null) {
+                                                context.startActivity(intent)
+                                                return true
+                                            }
+                                            // Fallback if target app is not installed
+                                            val fallbackUrl = intent.getStringExtra("browser_fallback_url")
+                                            if (!fallbackUrl.isNullOrEmpty()) {
+                                                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(fallbackUrl))
+                                                browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                                context.startActivity(browserIntent)
+                                                return true
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                    return true
+                                }
+
+                                // 2. Handle map, geo, tel, and mailto schemes
+                                if (urlStr.startsWith("geo:") || urlStr.startsWith("tel:") || urlStr.startsWith("mailto:") ||
+                                    urlStr.contains("maps.google.") || urlStr.contains("google.com/maps")
+                                ) {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        context.startActivity(intent)
+                                        return true
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
+
+                                // 3. All external http(s) links opened outside of our local asset HTML
+                                if (!urlStr.startsWith("file:///android_asset/")) {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        context.startActivity(intent)
+                                        return true
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                    return true
+                                }
+
+                                return false
+                            }
+
                             override fun onPageFinished(view: WebView?, url: String?) {
                                 super.onPageFinished(view, url)
                                 if (mapDataJson.isNotEmpty()) {
@@ -147,12 +268,14 @@ fun HeatMapScreen(
                                 view?.evaluateJavascript("filterByCategory('$selectedFilter');", null)
                             }
                         }
+
                         webChromeClient = object : WebChromeClient() {
                             override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
                                 android.util.Log.d("LeafletMap", "${consoleMessage?.message()} -- From line ${consoleMessage?.lineNumber()}")
                                 return super.onConsoleMessage(consoleMessage)
                             }
                         }
+
                         loadUrl("file:///android_asset/leaflet_cluster_map.html")
                         webViewRef = this
                     }

@@ -1,17 +1,22 @@
 package com.example.edujourneygermany.presentation.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PersonOutline
-import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,10 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -35,93 +41,98 @@ fun FloatingNavigationBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .navigationBarsPadding()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // White Navigation Bar
+        // Big, High-End & Professional Navigation Bar
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp),
-            shape = RoundedCornerShape(24.dp),
+                .height(82.dp),
+            shape = RoundedCornerShape(28.dp),
             color = Color.White,
-            shadowElevation = 8.dp
+            shadowElevation = 16.dp,
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(horizontal = 4.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // 1. Home
                 NavBarItem(
-                    icon = Icons.Default.Home,
+                    selectedIcon = Icons.Default.Home,
+                    unselectedIcon = Icons.Outlined.Home,
                     label = "Home",
                     isSelected = currentRoute == "home",
                     onClick = { onNavigate("home") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.0f)
                 )
+
+                // 2. Universities
                 NavBarItem(
-                    icon = Icons.Outlined.Timeline,
-                    label = "Journey",
+                    selectedIcon = Icons.Default.AccountBalance,
+                    unselectedIcon = Icons.Outlined.AccountBalance,
+                    label = "Universities",
                     isSelected = currentRoute == "opportunities",
                     onClick = { onNavigate("opportunities") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.28f)
                 )
-                
-                // Spacer for the center button
-                Spacer(modifier = Modifier.weight(0.8f))
-                
+
+                // 3. Applications / Deadlines
                 NavBarItem(
-                    icon = Icons.Outlined.ChatBubbleOutline,
-                    label = "Messages",
+                    selectedIcon = Icons.AutoMirrored.Filled.Assignment,
+                    unselectedIcon = Icons.AutoMirrored.Outlined.Assignment,
+                    label = "Applications",
+                    isSelected = currentRoute == "deadlines",
+                    onClick = { onNavigate("deadlines") },
+                    modifier = Modifier.weight(1.28f)
+                )
+
+                // 4. Chat
+                NavBarItem(
+                    selectedIcon = Icons.Default.ChatBubble,
+                    unselectedIcon = Icons.Outlined.ChatBubbleOutline,
+                    label = "Chat",
                     isSelected = currentRoute == "advisor",
                     onClick = { onNavigate("advisor") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.0f)
                 )
+
+                // 5. Profile
                 NavBarItem(
-                    icon = Icons.Outlined.PersonOutline,
+                    selectedIcon = Icons.Default.Person,
+                    unselectedIcon = Icons.Outlined.PersonOutline,
                     label = "Profile",
                     isSelected = currentRoute == "profile",
                     onClick = { onNavigate("profile") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.0f)
                 )
             }
-        }
-        
-        // Floating Action Button in the center overlapping the white bar
-        Box(
-            modifier = Modifier
-                .padding(bottom = 16.dp) // Lift it up to overlap slightly
-                .size(64.dp)
-                .shadow(8.dp, CircleShape)
-                .clip(CircleShape)
-                .background(Color(0xFF1C64F2)) // The blue color from image
-                .clickable { /* Action to add */ },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
         }
     }
 }
 
 @Composable
 fun NavBarItem(
-    icon: ImageVector,
+    selectedIcon: ImageVector,
+    unselectedIcon: ImageVector,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val color = if (isSelected) Color(0xFF1C64F2) else Color(0xFF8A93A6)
+    val activeColor = Color(0xFF1565C0)    // Brand Primary Blue
+    val inactiveColor = Color(0xFF64748B)  // Slate
+    val activePillBg = Color(0xFFE3F2FD)   // Soft Light Blue Container
+
     Column(
         modifier = modifier
             .fillMaxHeight()
+            .clip(RoundedCornerShape(20.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -130,18 +141,33 @@ fun NavBarItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = color,
-            modifier = Modifier.size(24.dp)
-        )
+        // Material 3 style active indicator pill
+        Box(
+            modifier = Modifier
+                .width(56.dp)
+                .height(34.dp)
+                .clip(RoundedCornerShape(17.dp))
+                .background(if (isSelected) activePillBg else Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isSelected) selectedIcon else unselectedIcon,
+                contentDescription = label,
+                tint = if (isSelected) activeColor else inactiveColor,
+                modifier = Modifier.size(25.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.height(4.dp))
+
         Text(
             text = label,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-            color = color
+            fontSize = 11.5.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+            color = if (isSelected) activeColor else inactiveColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
         )
     }
 }
