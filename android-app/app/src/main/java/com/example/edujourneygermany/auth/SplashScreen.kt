@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedIn: () -> Unit = {}) {
     var animationState by remember { mutableStateOf(0) }
-    var videoCompleted by remember { mutableStateOf(false) }
+    
     var isAuthenticated by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -97,7 +97,7 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
                 VideoView(context).apply {
                     setVideoURI(Uri.parse("android.resource://${context.packageName}/${R.raw.splash_bg_video}"))
                     setOnPreparedListener { mp ->
-                        mp.isLooping = false          // Play once — full video
+                        mp.isLooping = true          // Play once — full video
                         mp.setVolume(0f, 0f)          // Silent
 
                         // Center Crop Logic
@@ -120,9 +120,7 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
                         start()
                     }
                     // When video ends → reveal Get Started button
-                    setOnCompletionListener {
-                        videoCompleted = true
-                    }
+                    
                     layoutParams = android.view.ViewGroup.LayoutParams(
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -222,7 +220,7 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
                 
                 // Get Started Button
                 Button(
-                    onClick = { if (animationState >= 3) onGetStarted() },
+                    onClick = { if (animationState >= 3) onLogin() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -242,3 +240,5 @@ fun SplashScreen(onGetStarted: () -> Unit, onLogin: () -> Unit, onAlreadyLoggedI
         }
     }
 }
+
+
