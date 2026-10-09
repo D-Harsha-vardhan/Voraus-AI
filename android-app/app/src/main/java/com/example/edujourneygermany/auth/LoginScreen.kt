@@ -37,7 +37,7 @@ import com.example.edujourneygermany.theme.PrimaryBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit) {
+fun LoginScreen(onLoginSuccess: () -> Unit, onRegisterClick: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -327,7 +327,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 },
                 modifier = Modifier
                     .padding(bottom = 32.dp)
-                    .clickable { /* Navigate to register */ }
+                    .clickable { onRegisterClick() }
             )
         }
     }
