@@ -265,7 +265,6 @@ fun HomeDashboardScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-
                 // Row 2
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -273,9 +272,9 @@ fun HomeDashboardScreen(
                 ) {
                     QuickActionCard(
                         modifier = Modifier.weight(1f),
-                        icon = Icons.Default.School,
-                        title = "Universities",
-                        onClick = { onNavigate("opportunities") }
+                        icon = Icons.Default.Assignment,
+                        title = "APS Generator",
+                        onClick = { onNavigate("aps") }
                     )
                     QuickActionCard(
                         modifier = Modifier.weight(1f),
