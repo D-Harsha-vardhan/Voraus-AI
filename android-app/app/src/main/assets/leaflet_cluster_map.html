@@ -266,6 +266,9 @@
             margin-top: 4px;
         }
         .popup-btn {
+            background: transparent;
+            border: none;
+            padding: 6px 10px;
             font-size: 12.5px;
             font-weight: 600;
             color: #2563eb;
@@ -274,19 +277,34 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
+            font-family: inherit;
+            border-radius: 6px;
+            transition: all 0.15s ease;
         }
         .popup-btn:hover {
             color: #1d4ed8;
-            text-decoration: underline;
+            background: #eff6ff;
+            text-decoration: none;
         }
         .popup-dir-btn {
             background: #f1f5f9;
+            border: 1px solid #e2e8f0;
             color: #334155;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 8px;
             font-size: 11px;
             font-weight: 600;
             text-decoration: none;
+            cursor: pointer;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s ease;
+        }
+        .popup-dir-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
         }
 
         /* Bottom Status Counter Badge */
@@ -381,6 +399,7 @@
         // --- 1. INDIAN RESTAURANTS (10) ---
         {
             id: "rest_amrit_mitte",
+            website: "https://amrit.de",
             lat: 52.5250,
             lng: 13.3930,
             title: "AMRIT Restaurant Mitte",
@@ -392,6 +411,7 @@
         },
         {
             id: "rest_amrit_kreuzberg",
+            website: "https://amrit.de/amrit-kreuzberg/",
             lat: 52.4985,
             lng: 13.4285,
             title: "AMRIT Kreuzberg",
@@ -403,6 +423,7 @@
         },
         {
             id: "rest_papadam",
+            website: "https://papadam-restaurant.de",
             lat: 52.5630,
             lng: 13.3150,
             title: "Papadam Restaurant",
@@ -414,6 +435,7 @@
         },
         {
             id: "rest_mela",
+            website: "https://mela-restaurant.de",
             lat: 52.4880,
             lng: 13.3600,
             title: "Mela Indisches Restaurant",
@@ -425,6 +447,7 @@
         },
         {
             id: "rest_khushi",
+            website: "https://restaurant-khushi.de",
             lat: 52.5360,
             lng: 13.4180,
             title: "Khushi Restaurant",
@@ -436,6 +459,7 @@
         },
         {
             id: "rest_chutnify",
+            website: "https://www.chutnify.com",
             lat: 52.4912,
             lng: 13.4280,
             title: "Chutnify South Indian Street Food",
@@ -447,6 +471,7 @@
         },
         {
             id: "rest_saravanaa",
+            website: "https://saravanaabhavan.de",
             lat: 52.5020,
             lng: 13.3280,
             title: "Saravanaa Bhavan Berlin",
@@ -458,6 +483,7 @@
         },
         {
             id: "rest_shivani",
+            website: "https://shivani-restaurant.de",
             lat: 52.5115,
             lng: 13.4560,
             title: "Shivani Indisches Restaurant",
@@ -469,6 +495,7 @@
         },
         {
             id: "rest_agra",
+            website: "https://agra-restaurant-berlin.de",
             lat: 52.5225,
             lng: 13.3855,
             title: "Agra Indisches Restaurant",
@@ -480,6 +507,7 @@
         },
         {
             id: "rest_vedis",
+            website: "https://vedis-berlin.de",
             lat: 52.5410,
             lng: 13.4120,
             title: "Vedis Indian Fine Dining",
@@ -493,6 +521,7 @@
         // --- 2. UNIVERSITIES & COLLEGES (10) ---
         {
             id: "uni_tu_berlin",
+            website: "https://www.tu.berlin",
             lat: 52.5125,
             lng: 13.3269,
             title: "Technische Universität Berlin (TU Berlin)",
@@ -504,6 +533,7 @@
         },
         {
             id: "uni_hu_berlin",
+            website: "https://www.hu-berlin.de",
             lat: 52.5180,
             lng: 13.3933,
             title: "Humboldt-Universität zu Berlin (HU Berlin)",
@@ -515,6 +545,7 @@
         },
         {
             id: "uni_fu_berlin",
+            website: "https://www.fu-berlin.de",
             lat: 52.4537,
             lng: 13.2908,
             title: "Freie Universität Berlin (FU Berlin)",
@@ -526,6 +557,7 @@
         },
         {
             id: "uni_htw_berlin",
+            website: "https://www.htw-berlin.de",
             lat: 52.4578,
             lng: 13.5268,
             title: "HTW Berlin (Campus Wilhelminenhof)",
@@ -537,6 +569,7 @@
         },
         {
             id: "uni_hwr_berlin",
+            website: "https://www.hwr-berlin.de",
             lat: 52.4856,
             lng: 13.3364,
             title: "HWR Berlin (Schöneberg Campus)",
@@ -548,6 +581,7 @@
         },
         {
             id: "uni_charite",
+            website: "https://www.charite.de",
             lat: 52.5256,
             lng: 13.3789,
             title: "Charité – Universitätsmedizin Berlin",
@@ -559,6 +593,7 @@
         },
         {
             id: "uni_esmt",
+            website: "https://esmt.berlin",
             lat: 52.5162,
             lng: 13.4018,
             title: "ESMT Berlin (European School of Management)",
@@ -570,6 +605,7 @@
         },
         {
             id: "uni_srh",
+            website: "https://www.srh-berlin.de",
             lat: 52.5128,
             lng: 13.3219,
             title: "SRH Berlin University of Applied Sciences",
@@ -581,6 +617,7 @@
         },
         {
             id: "uni_iu",
+            website: "https://www.iu.de",
             lat: 52.5332,
             lng: 13.3920,
             title: "IU International University Berlin",
@@ -592,6 +629,7 @@
         },
         {
             id: "uni_bht",
+            website: "https://www.bht-berlin.de",
             lat: 52.5450,
             lng: 13.3520,
             title: "Berliner Hochschule für Technik (BHT)",
@@ -605,6 +643,7 @@
         // --- 3. PART-TIME STUDENT JOBS (12) ---
         {
             id: "job_zalando",
+            website: "https://jobs.zalando.com",
             lat: 52.5065,
             lng: 13.4435,
             title: "Zalando SE Tech Hub",
@@ -616,6 +655,7 @@
         },
         {
             id: "job_delivery_hero",
+            website: "https://careers.deliveryhero.com",
             lat: 52.5255,
             lng: 13.3905,
             title: "Delivery Hero Global HQ",
@@ -627,6 +667,7 @@
         },
         {
             id: "job_n26",
+            website: "https://n26.com/en-eu/careers",
             lat: 52.5145,
             lng: 13.4125,
             title: "N26 The Mobile Bank",
@@ -638,6 +679,7 @@
         },
         {
             id: "job_hellofresh",
+            website: "https://careers.hellofresh.com",
             lat: 52.5005,
             lng: 13.4060,
             title: "HelloFresh SE Global HQ",
@@ -649,6 +691,7 @@
         },
         {
             id: "job_amazon_berlin",
+            website: "https://www.amazon.jobs/en/locations/berlin-germany",
             lat: 52.5098,
             lng: 13.3950,
             title: "Amazon Development Center Berlin",
@@ -660,6 +703,7 @@
         },
         {
             id: "job_flink_mitte",
+            website: "https://www.goflink.com/en-DE/careers/",
             lat: 52.5310,
             lng: 13.3830,
             title: "Flink Delivery Hub Mitte",
@@ -671,6 +715,7 @@
         },
         {
             id: "job_gorillas_pberg",
+            website: "https://careers.getir.com",
             lat: 52.5400,
             lng: 13.4210,
             title: "Getir / Gorillas Hub",
@@ -682,6 +727,7 @@
         },
         {
             id: "job_tier",
+            website: "https://www.tier.app/careers",
             lat: 52.5070,
             lng: 13.3740,
             title: "Tier Mobility HQ",
@@ -693,6 +739,7 @@
         },
         {
             id: "job_soundcloud",
+            website: "https://careers.soundcloud.com",
             lat: 52.5375,
             lng: 13.3985,
             title: "SoundCloud Berlin Campus",
@@ -704,6 +751,7 @@
         },
         {
             id: "job_babbel",
+            website: "https://careers.babbel.com",
             lat: 52.5115,
             lng: 13.4315,
             title: "Babbel Learning HQ",
@@ -715,6 +763,7 @@
         },
         {
             id: "job_wayfair",
+            website: "https://www.wayfaircareers.com",
             lat: 52.4890,
             lng: 13.3910,
             title: "Wayfair Tech Hub Kreuzberg",
@@ -726,6 +775,7 @@
         },
         {
             id: "job_personio",
+            website: "https://www.personio.com/careers",
             lat: 52.5170,
             lng: 13.3880,
             title: "Personio Berlin Office",
@@ -739,6 +789,7 @@
         // --- 4. INDIAN COMMUNITIES & ASSOCIATIONS (8) ---
         {
             id: "comm_iab",
+            website: "https://www.iaberlin.de",
             lat: 52.4930,
             lng: 13.3880,
             title: "Indian Association Berlin e.V. (IAB)",
@@ -750,6 +801,7 @@
         },
         {
             id: "comm_isa_tu",
+            website: "https://www.tu.berlin/international/studierende-austausch/betreuung-angebote",
             lat: 52.5120,
             lng: 13.3275,
             title: "Indian Students Association (ISA Berlin)",
@@ -761,6 +813,7 @@
         },
         {
             id: "comm_embassy",
+            website: "https://indianembassyberlin.gov.in",
             lat: 52.5090,
             lng: 13.3590,
             title: "Embassy of India & Tagore Centre",
@@ -772,6 +825,7 @@
         },
         {
             id: "comm_friends_india",
+            website: "https://indianembassyberlin.gov.in/tagore-centre/",
             lat: 52.5215,
             lng: 13.4110,
             title: "Friends of India Association Berlin",
@@ -783,6 +837,7 @@
         },
         {
             id: "comm_telugu",
+            website: "https://teluguberlin.de",
             lat: 52.4830,
             lng: 13.3510,
             title: "Telugu Association Berlin-Brandenburg",
@@ -794,6 +849,7 @@
         },
         {
             id: "comm_tamil",
+            website: "https://tamilsangamberlin.de",
             lat: 52.4760,
             lng: 13.4420,
             title: "Tamil Sangam Berlin",
@@ -805,6 +861,7 @@
         },
         {
             id: "comm_gurudwara",
+            website: "https://www.gurudwaraberlin.de",
             lat: 52.4955,
             lng: 13.4310,
             title: "Gurudwara Sri Guru Singh Sabha",
@@ -816,6 +873,7 @@
         },
         {
             id: "comm_ganesha_temple",
+            website: "https://hindu-tempel-berlin.de",
             lat: 52.4845,
             lng: 13.4190,
             title: "Sri Ganesha Hindu Temple Berlin",
@@ -856,12 +914,27 @@
     });
     map.addLayer(markers);
 
-    // Call Android Native Interface
-    function handleViewMore(id) {
-        if (window.Android && window.Android.onViewMore) {
-            window.Android.onViewMore(id);
+    // Call Android Native Interface or open directly
+    function handleViewMore(id, website, title) {
+        var targetUrl = website;
+        if (!targetUrl || targetUrl.trim() === '') {
+            targetUrl = "https://www.google.com/search?q=" + encodeURIComponent((title || id) + " Berlin Germany official website");
+        }
+        if (window.Android && window.Android.openWebsite) {
+            window.Android.openWebsite(targetUrl);
+        } else if (window.Android && window.Android.onViewMore) {
+            window.Android.onViewMore(id, targetUrl);
         } else {
-            console.log("View more clicked for:", id);
+            window.open(targetUrl, '_blank');
+        }
+    }
+
+    function handleDirections(title, lat, lng, address) {
+        if (window.Android && window.Android.openDirections) {
+            window.Android.openDirections(title, lat, lng, address);
+        } else {
+            var mapUrl = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(title + ", " + address);
+            window.open(mapUrl, '_blank');
         }
     }
 
@@ -899,6 +972,11 @@
 
         var marker = L.marker([item.lat, item.lng], { icon: customIcon });
 
+        var safeTitle = (item.title || '').replace(/'/g, "\\'");
+        var safeAddress = (item.address || 'Berlin, Germany').replace(/'/g, "\\'");
+        var safeWebsite = (item.website || '').replace(/'/g, "\\'");
+        var safeId = (item.id || '').replace(/'/g, "\\'");
+
         // Build Popup Card (Matches Image 2 Moxo Card)
         var popupHtml = `
             <div class="popup-card">
@@ -908,12 +986,12 @@
                 ${item.highlight ? `<div class="popup-highlight">${item.highlight}</div>` : ''}
                 <div class="popup-desc">${item.desc}</div>
                 <div class="popup-actions">
-                    <a class="popup-btn" onclick="handleViewMore('${item.id}')">
+                    <button type="button" class="popup-btn" onclick="handleViewMore('${safeId}', '${safeWebsite}', '${safeTitle}')">
                         View more <span>→</span>
-                    </a>
-                    <a class="popup-dir-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title + ' ' + (item.address || 'Berlin'))}" target="_blank">
+                    </button>
+                    <button type="button" class="popup-dir-btn" onclick="handleDirections('${safeTitle}', ${item.lat}, ${item.lng}, '${safeAddress}')">
                         Directions ↗
-                    </a>
+                    </button>
                 </div>
             </div>
         `;
