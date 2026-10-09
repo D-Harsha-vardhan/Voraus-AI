@@ -1,12 +1,5 @@
 package com.example.edujourneygermany.advisor
 
-import android.Manifest
-import android.webkit.PermissionRequest
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -14,29 +7,49 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import androidx.compose.ui.unit.sp
+
+import android.content.Intent
+import android.net.Uri
+
+import android.Manifest
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
+
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +60,7 @@ fun AiAdvisorScreen(
     viewModel: AiAdvisorViewModel = viewModel()
 ) {
     var messageText by remember { mutableStateOf("") }
+    var showOptionsSheet by remember { mutableStateOf(false) }
     val messages by viewModel.messages.collectAsState()
     val currentOptions by viewModel.currentOptions.collectAsState()
     val isFlowComplete by viewModel.isFlowComplete.collectAsState()
@@ -57,6 +71,7 @@ fun AiAdvisorScreen(
             listState.animateScrollToItem(messages.size - 1)
         }
     }
+    
 
     var showVoiceAgent by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -68,328 +83,146 @@ fun AiAdvisorScreen(
         }
     )
 
-    // Curated quick prompt starters
-    val promptStarters = listOf(
-        "🎓 English Master's in CS",
-        "🏛️ TU Munich Deadlines",
-        "📜 APS Certificate Steps",
-        "💶 Blocked Account 2026/27",
-        "🇩🇪 Language Requirements"
-    )
-
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-            topBar = {
-                Surface(
-                    color = Color.White,
-                    shadowElevation = 1.dp
-                ) {
-                    Column {
-                        TopAppBar(
-                            title = {
-                                Column {
-                                    Text(
-                                        "AI Advisor",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 19.sp,
-                                        color = Color(0xFF0F172A)
-                                    )
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(top = 2.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(7.dp)
-                                                .background(Color(0xFF10B981), CircleShape)
-                                        )
-                                        Spacer(modifier = Modifier.width(5.dp))
-                                        Text(
-                                            "Online • Voraus Llama 3.2 NIM",
-                                            fontSize = 11.5.sp,
-                                            color = Color(0xFF64748B),
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-                            },
-                            actions = {
-                                IconButton(
-                                    onClick = { viewModel.resetChat() }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Refresh,
-                                        contentDescription = "Restart Chat",
-                                        tint = Color(0xFF64748B),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                                Surface(
-                                    shape = RoundedCornerShape(20.dp),
-                                    color = Color(0xFF1E3A8A).copy(alpha = 0.08f),
-                                    border = BorderStroke(1.dp, Color(0xFF1E3A8A).copy(alpha = 0.2f)),
-                                    modifier = Modifier
-                                        .clickable { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) }
-                                        .padding(end = 12.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Mic,
-                                            contentDescription = null,
-                                            tint = Color(0xFF1E3A8A),
-                                            modifier = Modifier.size(15.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(5.dp))
-                                        Text(
-                                            "Voice Agent",
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF1E3A8A)
-                                        )
-                                    }
-                                }
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+        topBar = {
+            val context = LocalContext.current
+            TopAppBar(
+                title = { Text("AI Advisor", fontWeight = FontWeight.Bold) },
+                actions = {
+                                        TextButton(onClick = {
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }) {
+                        Icon(Icons.Default.Mic, contentDescription = "Voice Agent", modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Voice Agent")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(bottom = 100.dp) // Nav bar padding
+        ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
+            ) {
+                items(messages.size) { index ->
+                    val msg = messages[index]
+                    if (msg.isUser) {
+                        UserMessage(msg.text, msg.quotedQuestion)
+                    } else {
+                        // Show "Choose" button only on the last message if flow is not complete
+                        val isLastAndFlowActive = !isFlowComplete && index == messages.lastIndex && !msg.isLoading
+                        AiSimpleMessage(
+                            text = msg.text, 
+                            isLoading = msg.isLoading,
+                            onOptionsClick = if (isLastAndFlowActive) { { showOptionsSheet = true } } else null
                         )
-                        HorizontalDivider(color = Color(0xFFE2E8F0))
+                        if (!msg.universities.isNullOrEmpty()) {
+                            LaunchedEffect(msg.universities) {
+                                sharedViewModel.updateRecommendations(msg.universities)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TopUniversityRecommendationsCard(
+                                universities = msg.universities,
+                                onViewDetails = onViewDetails
+                            )
+                        }
                     }
                 }
             }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(Color(0xFFF8FAFC))
-            ) {
-                // Messages List
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(top = 16.dp, bottom = 12.dp)
-                ) {
-                    // Welcome Onboarding Card
-                    item {
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(0xFF1E3A8A).copy(alpha = 0.1f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            Icons.Default.School,
-                                            contentDescription = null,
-                                            tint = Color(0xFF1E3A8A),
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            "Voraus German Study & Visa Advisor",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.5.sp,
-                                            color = Color(0xFF0F172A)
-                                        )
-                                        Text(
-                                            "TU9 Admissions • APS • Deadlines • Blocked Account",
-                                            fontSize = 11.5.sp,
-                                            color = Color(0xFF64748B)
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(
-                                    "Guten Tag! Ask me any question about applying to German public universities, tuition fees, language requirements, or visa appointments.",
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF475569),
-                                    lineHeight = 18.sp
-                                )
-                            }
-                        }
-                    }
 
-                    // Conversation Messages
-                    items(messages.size) { index ->
-                        val msg = messages[index]
-                        if (msg.isUser) {
-                            UserMessage(msg.text, msg.quotedQuestion)
-                        } else {
-                            AiSimpleMessage(
-                                text = msg.text,
-                                isLoading = msg.isLoading
-                            )
-                            if (!msg.universities.isNullOrEmpty()) {
-                                LaunchedEffect(msg.universities) {
-                                    sharedViewModel.updateRecommendations(msg.universities)
-                                }
-                                Spacer(modifier = Modifier.height(6.dp))
-                                TopUniversityRecommendationsCard(
-                                    universities = msg.universities,
-                                    onViewDetails = onViewDetails
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Interactive Option & Suggestion Chips Strip
-                val activeChips = if (currentOptions.isNotEmpty()) currentOptions else if (messages.size <= 2) promptStarters else emptyList()
-                if (activeChips.isNotEmpty()) {
-                    LazyRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(activeChips) { option ->
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = Color.White,
-                                border = BorderStroke(1.dp, Color(0xFF3B82F6).copy(alpha = 0.45f)),
-                                shadowElevation = 1.dp,
-                                modifier = Modifier.clickable {
-                                    viewModel.sendMessage(option)
-                                }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = option,
-                                        color = Color(0xFF1E3A8A),
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 13.sp
-                                    )
-                                }
-                            }
-                        }
-
-                        if (currentOptions.isNotEmpty()) {
-                            item {
-                                Surface(
-                                    shape = RoundedCornerShape(20.dp),
-                                    color = Color(0xFFF1F5F9),
-                                    border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                                    modifier = Modifier.clickable {
-                                        viewModel.skipFlow()
-                                    }
-                                ) {
-                                    Text(
-                                        text = "Skip setup ⚡",
-                                        color = Color(0xFF64748B),
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 12.5.sp,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ALWAYS-AVAILABLE Floating Minimalist Input Dock (Clears bottom navigation bar cleanly)
+            if (isFlowComplete) {
+                // Input field area
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .padding(bottom = 96.dp) // Perfect clearance above 82dp floating bottom navigation bar
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(28.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                        shadowElevation = 3.dp,
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White, RoundedCornerShape(24.dp))
+                            .border(1.dp, Color.LightGray.copy(alpha = 0.8f), RoundedCornerShape(24.dp))
+                            .padding(horizontal = 8.dp, vertical = 0.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        TextField(
+                            value = messageText,
+                            onValueChange = { messageText = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Ask me anything...", color = Color.Gray) },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color.Black
+                            )
+                        )
+                        IconButton(onClick = { 
+                            if (messageText.isNotBlank()) {
+                                viewModel.sendMessage(messageText)
+                                messageText = ""
+                            }
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = Color(0xFF1976D2))
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (showOptionsSheet && currentOptions.isNotEmpty()) {
+            ModalBottomSheet(
+                onDismissRequest = { showOptionsSheet = false },
+                containerColor = MaterialTheme.colorScheme.surface
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp, top = 8.dp)
+                ) {
+                    Text(
+                        text = "Choose",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    currentOptions.forEach { option ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 14.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .clickable {
+                                    viewModel.sendMessage(option)
+                                    showOptionsSheet = false
+                                }
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = Color(0xFF1E3A8A),
-                                modifier = Modifier.size(19.dp)
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.bodyLarge
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            TextField(
-                                value = messageText,
-                                onValueChange = { messageText = it },
-                                modifier = Modifier.weight(1f),
-                                placeholder = {
-                                    Text(
-                                        "Ask about universities, visas, APS...",
-                                        color = Color(0xFF94A3B8),
-                                        fontSize = 14.sp
-                                    )
-                                },
-                                maxLines = 3,
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    focusedTextColor = Color(0xFF0F172A),
-                                    unfocusedTextColor = Color(0xFF0F172A),
-                                    cursorColor = Color(0xFF1E3A8A)
-                                )
+                            RadioButton(
+                                selected = false,
+                                onClick = null
                             )
-                            if (messageText.isNotBlank()) {
-                                IconButton(
-                                    onClick = {
-                                        val textToSend = messageText
-                                        messageText = ""
-                                        viewModel.sendMessage(textToSend)
-                                    },
-                                    modifier = Modifier
-                                        .size(38.dp)
-                                        .background(Color(0xFF1E3A8A), CircleShape)
-                                ) {
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.Send,
-                                        contentDescription = "Send",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            } else {
-                                IconButton(
-                                    onClick = {
-                                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                                    },
-                                    modifier = Modifier
-                                        .size(38.dp)
-                                        .background(Color(0xFFF1F5F9), CircleShape)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Mic,
-                                        contentDescription = "Voice",
-                                        tint = Color(0xFF1E3A8A),
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
                         }
                     }
                 }
@@ -465,6 +298,7 @@ fun AiAdvisorScreen(
         }
     }
 }
+}
 
 @Composable
 fun UserMessage(text: String, quotedQuestion: String? = null) {
@@ -475,48 +309,52 @@ fun UserMessage(text: String, quotedQuestion: String? = null) {
     ) {
         Card(
             shape = RoundedCornerShape(
-                topStart = 18.dp,
-                topEnd = 4.dp,
-                bottomStart = 18.dp,
-                bottomEnd = 18.dp
+                topStart = 20.dp,
+                topEnd = 20.dp,
+                bottomStart = 20.dp,
+                bottomEnd = 4.dp
             ),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            modifier = Modifier.widthIn(max = 300.dp)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+            modifier = Modifier.widthIn(max = 280.dp)
         ) {
-            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+            Column(modifier = Modifier.padding(8.dp)) {
                 if (quotedQuestion != null) {
                     Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.22f)),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 6.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.2f)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                            // Green accent bar
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .width(3.dp)
-                                    .background(Color(0xFF34D399))
+                                    .width(4.dp)
+                                    .background(Color(0xFF10B981))
                             )
-                            Text(
-                                text = quotedQuestion,
-                                color = Color.White.copy(alpha = 0.85f),
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 2,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                fontSize = 11.5.sp
-                            )
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(
+                                    text = "Educaro AI",
+                                    color = Color(0xFF10B981),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = quotedQuestion,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 2
+                                )
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
                 Text(
                     text = text,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     color = Color.White,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.Normal
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -530,47 +368,20 @@ fun AiSimpleMessage(text: String, isLoading: Boolean = false, onOptionsClick: ((
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.Top
     ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF1E3A8A)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.SmartToy,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(17.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
         Card(
             shape = RoundedCornerShape(
-                topStart = 4.dp,
-                topEnd = 18.dp,
-                bottomStart = 18.dp,
-                bottomEnd = 18.dp
+                topStart = 20.dp,
+                topEnd = 20.dp,
+                bottomStart = 4.dp,
+                bottomEnd = 20.dp
             ),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            modifier = Modifier.widthIn(max = 310.dp)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            modifier = Modifier.widthIn(max = 280.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 if (isLoading) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        TypingIndicator()
-                        Text(
-                            "AI Advisor is thinking...",
-                            fontSize = 12.sp,
-                            color = Color(0xFF64748B),
-                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                        )
-                    }
+                    TypingIndicator()
                 } else {
                     val lines = text.split("\n")
                     for (line in lines) {
@@ -578,23 +389,51 @@ fun AiSimpleMessage(text: String, isLoading: Boolean = false, onOptionsClick: ((
                         if (trimmed.startsWith("[UNIVERSITY]")) {
                             val parts = trimmed.removePrefix("[UNIVERSITY]").split("|").map { it.trim() }
                             if (parts.size >= 3) {
-                                Spacer(modifier = Modifier.height(6.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                                 EmbeddedUniversityCard(
                                     iconInitial = parts[0].take(1),
                                     university = parts[0],
                                     program = parts[1],
                                     location = parts[2]
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
-                        } else if (trimmed.isNotBlank()) {
-                            Text(
-                                text = trimmed,
-                                color = Color(0xFF0F172A),
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp
+                        } else {
+                            if (trimmed.isNotBlank()) {
+                                Text(
+                                    text = trimmed,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                        }
+                    }
+                    
+                    if (onOptionsClick != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOptionsClick() }
+                                .padding(top = 12.dp, bottom = 4.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.FormatListBulleted, 
+                                contentDescription = "Choose",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.height(3.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Choose",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
                 }
