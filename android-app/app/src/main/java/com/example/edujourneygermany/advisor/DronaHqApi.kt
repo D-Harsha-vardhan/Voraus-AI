@@ -14,7 +14,7 @@ interface DronaHqApi {
     @POST
     suspend fun sendMessage(
         @Url url: String,
-        @Header("Authorization") authHeader: String,
+        @Header("api-key") apiKeyHeader: String,
         @Body request: DronaHqRequest
     ): JsonElement
 }

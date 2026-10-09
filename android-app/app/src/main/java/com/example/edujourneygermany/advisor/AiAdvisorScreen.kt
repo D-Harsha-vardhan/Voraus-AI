@@ -16,9 +16,27 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.ui.unit.sp
+
+import android.content.Intent
+import android.net.Uri
+
+import android.Manifest
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,10 +72,32 @@ fun AiAdvisorScreen(
         }
     }
     
-    Scaffold(
+
+    var showVoiceAgent by remember { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                showVoiceAgent = true
+            }
+        }
+    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
         topBar = {
+            val context = LocalContext.current
             TopAppBar(
                 title = { Text("AI Advisor", fontWeight = FontWeight.Bold) },
+                actions = {
+                                        TextButton(onClick = {
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }) {
+                        Icon(Icons.Default.Mic, contentDescription = "Voice Agent", modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Voice Agent")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
@@ -188,7 +228,76 @@ fun AiAdvisorScreen(
                 }
             }
         }
+
+        if (showVoiceAgent) {
+            Dialog(
+                onDismissRequest = { showVoiceAgent = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = true)
+            ) {
+                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
+                    IconButton(
+                        onClick = { showVoiceAgent = false },
+                        modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).padding(top = 24.dp)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                    
+                    AndroidView(
+                        factory = { ctx ->
+                            WebView(ctx).apply {
+                                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                                settings.javaScriptEnabled = true
+                                settings.domStorageEnabled = true
+                                settings.mediaPlaybackRequiresUserGesture = false
+                                webChromeClient = object : WebChromeClient() {
+                                    override fun onPermissionRequest(request: PermissionRequest) {
+                                        request.grant(request.resources)
+                                    }
+                                }
+                                webViewClient = WebViewClient()
+                                
+                                val userName = com.example.edujourneygermany.data.UserProfileStore.fullName
+                                val userGerman = com.example.edujourneygermany.data.UserProfileStore.germanLevel
+                                val userCgpa = viewModel.userAnswers["cgpa"] ?: ""
+                                val userCourse = viewModel.userAnswers["course"] ?: ""
+                                val userLevel = viewModel.userAnswers["level"] ?: ""
+                                
+                                val htmlContent = """
+                                    <!DOCTYPE html>
+                                    <html>
+                                    <head>
+                                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                                    <style>
+                                      body { margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: transparent; }
+                                    </style>
+                                    </head>
+                                    <body>
+                                      <elevenlabs-convai agent-id="${com.example.edujourneygermany.BuildConfig.ELEVENLABS_AGENT_ID}"></elevenlabs-convai>
+                                      <script>
+                                        const el = document.querySelector("elevenlabs-convai");
+                                        el.setAttribute("dynamic-variables", JSON.stringify({
+                                            name: "${userName}",
+                                            cgpa: "${userCgpa}",
+                                            german_score: "${userGerman}",
+                                            goal: "${userLevel}",
+                                            course: "${userCourse}"
+                                        }));
+                                      </script>
+                                      <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+                                    </body>
+                                    </html>
+                                """.trimIndent()
+                                
+                                loadDataWithBaseURL("https://elevenlabs.io", htmlContent, "text/html", "UTF-8", null)
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize().padding(top = 80.dp)
+                    )
+                }
+            }
+        }
     }
+}
 }
 
 @Composable
@@ -600,3 +709,4 @@ fun EmbeddedUniversityCard(iconInitial: String, university: String, program: Str
         }
     }
 }
+

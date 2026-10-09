@@ -32,9 +32,18 @@ fun HomeDashboardScreen(
 ) {
     val primaryBlue = Color(0xFF1976D2)
     val lightBlueBg = Color(0xFFE3F2FD)
-    val warningOrange = Color(0xFFF57C00)
-    val darkOrange = Color(0xFFE65100)
-    val warningBg = Color(0xFFFFF3E0)
+
+    val fields = listOf(
+        UserProfileStore.email, UserProfileStore.fullName, UserProfileStore.dob, UserProfileStore.gender, UserProfileStore.nationality,
+        UserProfileStore.passportNumber, UserProfileStore.phone, UserProfileStore.location,
+        UserProfileStore.degree, UserProfileStore.university, UserProfileStore.graduationYear,
+        UserProfileStore.role, UserProfileStore.company, UserProfileStore.experienceDuration,
+        UserProfileStore.englishLevel, UserProfileStore.germanLevel,
+        UserProfileStore.linkedIn, UserProfileStore.github
+    )
+    val filledFieldsCount = fields.count { it.isNotBlank() }
+    val progressFraction = if (fields.isNotEmpty()) filledFieldsCount.toFloat() / fields.size else 0f
+    val progressPercentage = (progressFraction * 100).toInt()
 
     Scaffold(
         containerColor = Color(0xFFF8FAFC)
@@ -120,14 +129,14 @@ fun HomeDashboardScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Profile 40% Completed",
+                                text = "Profile $progressPercentage% Completed",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF0F172A)
                             )
                         }
                         Text(
-                            text = "40%",
+                            text = "$progressPercentage%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = primaryBlue
@@ -135,7 +144,7 @@ fun HomeDashboardScreen(
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     LinearProgressIndicator(
-                        progress = { 0.4f },
+                        progress = { progressFraction },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)
@@ -216,65 +225,7 @@ fun HomeDashboardScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // 3. Next Step Card (Warning Alert)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = warningBg),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = "Alert",
-                            tint = warningOrange,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Next Step",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = warningOrange,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Upload APS Certificate",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = darkOrange
-                    )
-                    Text(
-                        text = "Required for university applications",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = darkOrange.copy(alpha = 0.85f)
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Button(
-                        onClick = { onNavigate("documents") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(46.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = warningOrange)
-                    ) {
-                        Text(
-                            text = "Upload Now",
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // 4. Quick Actions
             Text(

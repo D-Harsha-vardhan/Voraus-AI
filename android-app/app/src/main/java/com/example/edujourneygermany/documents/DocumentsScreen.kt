@@ -46,29 +46,46 @@ fun DocumentsScreen(onNavigateToExtraction: (String, String) -> Unit) {
     
     val scope = rememberCoroutineScope()
     
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     LaunchedEffect(Unit) {
+        // First check local cache
+        docStatuses.keys.toList().forEach { docType ->
+            val localPath = com.example.edujourneygermany.data.LocalDocumentManager.getLocalDocumentPath(context, docType)
+            if (localPath != null) {
+                docStatuses[docType] = "Verified"
+            }
+        }
+
         try {
             val bucket = Supabase.client.storage["user_documents"]
-            val email = Supabase.client.auth.currentUserOrNull()?.email ?: ""
-            val files = bucket.list()
-            val allNames = files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) }
+            val email = Supabase.client.auth.currentUserOrNull()?.email ?: com.example.edujourneygermany.auth.UserSession.userEmail
+            val allNames = if (email.isNotBlank()) {
+                val files = bucket.list()
+                files.map { it.name.lowercase() }.filter { it.startsWith(email.lowercase()) }
+            } else emptyList()
             
             docStatuses.keys.toList().forEach { docType ->
-                val searchKeys = when(docType) {
-                    "CV / Resume" -> listOf("_cv", "_resume")
-                    "Degree Certificate" -> listOf("_degree")
-                    "German Certificate" -> listOf("_german")
-                    "IELTS Certificate" -> listOf("_ielts")
-                    else -> listOf("_${docType.lowercase()}")
+                // If it's already verified locally, skip Supabase check
+                if (docStatuses[docType] != "Verified") {
+                    val searchKeys = when(docType) {
+                        "CV / Resume" -> listOf("_cv", "_resume")
+                        "Degree Certificate" -> listOf("_degree")
+                        "German Certificate" -> listOf("_german")
+                        "IELTS Certificate" -> listOf("_ielts")
+                        else -> listOf("_${docType.lowercase()}")
+                    }
+                    
+                    val exists = allNames.any { name -> searchKeys.any { key -> name.contains(key) } }
+                    docStatuses[docType] = if (exists) "Verified" else "Not Uploaded"
                 }
-                
-                val exists = allNames.any { name -> searchKeys.any { key -> name.contains(key) } }
-                docStatuses[docType] = if (exists) "Verified" else "Not Uploaded"
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            // Fallback
-            docStatuses.keys.toList().forEach { docStatuses[it] = "Not Uploaded" }
+            // Fallback for missing ones
+            docStatuses.keys.toList().forEach { 
+                if (docStatuses[it] == "Loading...") docStatuses[it] = "Not Uploaded" 
+            }
         }
     }
     
@@ -90,8 +107,18 @@ fun DocumentsScreen(onNavigateToExtraction: (String, String) -> Unit) {
             scope.launch {
                 isLoadingImage = true
                 try {
+                    // Try to load locally first
+                    val localPath = com.example.edujourneygermany.data.LocalDocumentManager.getLocalDocumentPath(context, docType)
+                    if (localPath != null) {
+                        val file = java.io.File(localPath)
+                        viewingImageUrl = file.toURI().toString()
+                        isLoadingImage = false
+                        return@launch
+                    }
+
+                    // Fallback to Supabase
                     val bucket = Supabase.client.storage["user_documents"]
-                    val email = Supabase.client.auth.currentUserOrNull()?.email ?: ""
+                    val email = Supabase.client.auth.currentUserOrNull()?.email ?: com.example.edujourneygermany.auth.UserSession.userEmail
                     
                     val searchKeys = when(docType) {
                         "CV / Resume" -> listOf("_cv", "_resume")
@@ -107,13 +134,21 @@ fun DocumentsScreen(onNavigateToExtraction: (String, String) -> Unit) {
                         searchKeys.any { key -> lowerName.contains(key) } && lowerName.startsWith(email.lowercase())
                     }
                     
-                    android.util.Log.d("DocumentsScreen", "Found ${docFiles.size} files for $docType")
                     if (docFiles.isNotEmpty()) {
                         val latestFile = docFiles.maxByOrNull { it.createdAt?.toString() ?: "" } ?: docFiles.first()
-                        viewingImageUrl = bucket.publicUrl(latestFile.name)
+                        
+                        // Download and cache it locally for next time!
+                        val bytes = bucket.downloadAuthenticated(latestFile.name)
+                        com.example.edujourneygermany.data.LocalDocumentManager.saveDocumentBytesLocally(context, docType, bytes)
+                        
+                        // Show the local file now
+                        val newLocalPath = com.example.edujourneygermany.data.LocalDocumentManager.getLocalDocumentPath(context, docType)
+                        if (newLocalPath != null) {
+                            viewingImageUrl = java.io.File(newLocalPath).toURI().toString()
+                        } else {
+                            viewingImageUrl = bucket.publicUrl(latestFile.name)
+                        }
                     } else {
-                        // Fallback if not found but marked as verified (mock data)
-                        // In a real app, we'd show a "Not Found" message
                         viewingImageUrl = "not_found" 
                     }
                 } catch (e: Exception) {

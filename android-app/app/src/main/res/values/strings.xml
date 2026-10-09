@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Educaro</string>
+    <string name="app_name">Voraus AI</string>
     <string name="welcome_back">Welcome Back</string>
     <string name="sign_in_subtitle">Sign in to continue your journey</string>
     <string name="student_tab">Student</string>
@@ -16,7 +16,7 @@
     <string name="your_dreams_our_ai">Your Dreams.\nOur AI. Germany.</string>
     <string name="from_your_goals">From your goals to your future —\nwe build your path, step by step.</string>
     <string name="get_started">Get Started -></string>
-    <string name="educaro_brand">Educaro</string>
+    <string name="educaro_brand">Voraus AI</string>
     <string name="educaro_tagline">Your Germany Journey, Powered by AI</string>
 
     <string name="step_1_goal">1. Goal</string>
